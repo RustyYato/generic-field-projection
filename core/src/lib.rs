@@ -1,4 +1,4 @@
-#![feature(const_fn_union)]
+#![feature(const_fn_union, const_fn)]
 #![forbid(missing_docs)]
 #![no_std]
 
