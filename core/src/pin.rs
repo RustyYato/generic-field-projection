@@ -1,7 +1,23 @@
 use super::*;
 
+/// A marker trait that specifies that the given field is safe to pin-project to
+/// 
+/// # Safety
+/// 
+/// For the field represented by the field type `F`, three things need to be ensured:
+/// * If the struct implements `Drop`, the drop method is not allowed to move the value of the field.
+/// * If the struct wants to implement `Unpin`, it has to do so conditionally: The struct can only implement `Unpin` if the field's type is `Unpin`.
+/// * The struct must not be #[repr(packed)].
+/// 
+/// See [pinning is structural for field](https://doc.rust-lang.org/std/pin/#pinning-is-structural-for-field) for more information
 pub unsafe trait PinProjectable<F: Field<Parent = Self> + ?Sized> {}
-pub unsafe trait PinnablePointer: std::ops::Deref {}
+
+/// A marker trait that specifies pointer safely project inside of a pin
+/// 
+/// # Safety
+/// 
+/// TODO: add safety docs
+pub unsafe trait PinnablePointer: core::ops::Deref {}
 
 #[repr(transparent)]
 pub struct PinProjectableField<F: Field + ?Sized> {
@@ -50,26 +66,26 @@ impl<F: Field + ?Sized> PinProjectableField<F> {
 
     pub unsafe fn from_ref_new_unchecked(field: &F) -> &Self {
         #[allow(clippy::transmute_ptr_to_ptr)]
-        std::mem::transmute::<&F, &Self>(field)
+        core::mem::transmute::<&F, &Self>(field)
     }
     
     pub fn from_ref(field: &F) -> &Self where F::Parent: PinProjectable<F> {
         unsafe {
             #[allow(clippy::transmute_ptr_to_ptr)]
-            std::mem::transmute::<&F, &Self>(field)
+            core::mem::transmute::<&F, &Self>(field)
         }
     }
 
     pub fn from_ref_unpin(field: &F) -> &Self where F::Parent: Unpin {
         unsafe {
             #[allow(clippy::transmute_ptr_to_ptr)]
-            std::mem::transmute::<&F, &Self>(field)
+            core::mem::transmute::<&F, &Self>(field)
         }
     }
 
     pub fn as_dyn_pin(&self) -> PinProjectableField<FieldType<F::Parent, F::Type>> {
         unsafe {
-            let field_type = FieldType::new_unchecked(self.field.field_descriptor());
+            let field_type = FieldType { descriptor: self.field.field_descriptor() };
             PinProjectableField::new_unchecked(field_type)
         }
     }

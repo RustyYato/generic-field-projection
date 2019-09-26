@@ -1,5 +1,6 @@
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
+/// Represents the offset of the field inside the `Parent` type
 pub struct FieldDescriptor<Parent: ?Sized, Type: ?Sized> {
     offset: usize,
     
@@ -26,6 +27,12 @@ union Pointer<T: ?Sized, U: ?Sized> {
 }
 
 impl<Parent: ?Sized, Type: ?Sized> FieldDescriptor<Parent, Type> {
+    /// Create a new `FieldDescriptor` from the given offset
+    /// 
+    /// # Safety
+    /// 
+    /// `offset` muust be the offset of a field that has the type `Type`
+    /// the field must reside in the type `Parent`
     pub const unsafe fn from_offset(offset: usize) -> Self {
         Self { offset, field: PhantomData }
     }
@@ -38,6 +45,12 @@ impl<Parent: ?Sized, Type: ?Sized> FieldDescriptor<Parent, Type> {
     //     * This is subject to change in the future
     // * `dyn Trait` have the pointer in the first `std::mem::size_of::<usize>()` bytes, so they are fine
     //     * This is subject to change in the future
+    
+    /// Create a new `FieldDescriptor` from a pair of pointers
+    /// 
+    /// # Safety
+    /// 
+    /// `field` must reside in the same allocation as `parent`, and must be a field of `Parent`
     pub const unsafe fn from_pointers(parent: *mut Parent, field: *mut Type) -> Self {
         let parent = Pointer::<_, ()> { fat_ptr_mut: parent };
         let field = Pointer::<_, ()> { fat_ptr_mut: field };
@@ -53,9 +66,15 @@ impl<Parent: ?Sized, Type: ?Sized> FieldDescriptor<Parent, Type> {
     //     * This is subject to change in the future
     // * `dyn Trait` have the pointer in the first `std::mem::size_of::<usize>()` bytes, so they are fine
     //     * This is subject to change in the future
+    
+    /// projects the raw pointer `parent` to a field of type `Type`
+    /// 
+    /// # Safety
+    /// 
+    /// `parent` must point to a valid allocation of type `Parent`
     pub unsafe fn project_raw_unchecked(self, parent: *const Parent) -> *const Type {
         let mut pointer = Pointer { fat_ptr: parent };
-
+        
         // offset in bytes
         pointer.ptr = pointer.ptr.add(self.offset);
 
@@ -69,7 +88,13 @@ impl<Parent: ?Sized, Type: ?Sized> FieldDescriptor<Parent, Type> {
     // * `[_]` have the pointer in the first `std::mem::size_of::<usize>()` bytes, so they are fine
     //     * This is subject to change in the future
     // * `dyn Trait` have the pointer in the first `std::mem::size_of::<usize>()` bytes, so they are fine
-    //     * This is subject to change in the future
+    //     * This is subject to change in the futurefuture
+    
+    /// projects the raw pointer `parent` to a field of type `Type`
+    /// 
+    /// # Safety
+    /// 
+    /// `parent` must point to a valid allocation of type `Parent`
     pub unsafe fn project_raw_mut_unchecked(self, parent: *mut Parent) -> *mut Type {
         let mut pointer = Pointer { fat_ptr_mut: parent };
 
@@ -86,7 +111,9 @@ impl<Parent: ?Sized, Type: ?Sized> FieldDescriptor<Parent, Type> {
     // * `[_]` have the pointer in the first `std::mem::size_of::<usize>()` bytes, so they are fine
     //     * This is subject to change in the future
     // * `dyn Trait` have the pointer in the first `std::mem::size_of::<usize>()` bytes, so they are fine
-    //     * This is subject to change in the future
+    //     * This is subject to change in the futurefuture
+    
+    /// projects the raw pointer `parent` to a field of type `Type`
     pub fn project_raw(self, parent: *const Parent) -> *const Type {
         unsafe {
             let mut pointer = Pointer { fat_ptr: parent };
@@ -106,6 +133,8 @@ impl<Parent: ?Sized, Type: ?Sized> FieldDescriptor<Parent, Type> {
     //     * This is subject to change in the future
     // * `dyn Trait` have the pointer in the first `std::mem::size_of::<usize>()` bytes, so they are fine
     //     * This is subject to change in the future
+    
+    /// projects the raw pointer `parent` to a field of type `Type`
     pub fn project_raw_mut(self, parent: *mut Parent) -> *mut Type {
         unsafe {
             let mut pointer = Pointer { fat_ptr_mut: parent };

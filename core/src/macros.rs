@@ -1,4 +1,5 @@
 
+/// Create a new field descriptor for the given type
 #[macro_export]
 macro_rules! field_descriptor {
     ($field:ident, $value:expr) => {{
@@ -11,6 +12,20 @@ macro_rules! field_descriptor {
     }};
 }
 
+/// Create a new dynamic field type for the given field
+#[macro_export]
+macro_rules! field_type {
+    ($field:ident, $value:expr) => {{
+        let mut value = $value;
+        let parent: *mut _ = &mut value;
+        let field: *mut _ = &mut value.$field;
+        unsafe {
+            $crate::FieldType::new_unchecked($crate::FieldDescriptor::from_pointers(parent, field))
+        }
+    }};
+}
+
+/// Create a new compile-time field type for the given field
 #[macro_export]
 macro_rules! field {
     ($field_ty_name:ident ($parent:ty => $field_ty:ty), $field:ident, $value:expr) => {
@@ -22,13 +37,7 @@ macro_rules! field {
             
             #[deny(safe_packed_borrows)]
             fn field_descriptor(&self) -> FieldDescriptor<Self::Parent, Self::Type> {
-                let mut value = $value;
-                let parent: *mut $parent = &mut value;
-                let field: *mut $field_ty = &mut value.$field;
-
-                unsafe {
-                    $crate::FieldDescriptor::from_pointers(parent, field)
-                }
+                $crate::field_descriptor!($field, $value)
             }
         }
 

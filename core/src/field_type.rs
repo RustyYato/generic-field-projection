@@ -1,7 +1,9 @@
 use super::*;
 
+/// Represents a dynamic `FieldType` that can point to any field of that satisfy the given types
 pub struct FieldType<Parent: ?Sized, Type: ?Sized> {
-    descriptor: FieldDescriptor<Parent, Type>,
+    /// The descriptor for the field type
+    pub descriptor: FieldDescriptor<Parent, Type>
 }
 
 unsafe impl<Parent: ?Sized, Type: ?Sized> Field for FieldType<Parent, Type> {
@@ -14,11 +16,5 @@ unsafe impl<Parent: ?Sized, Type: ?Sized> Field for FieldType<Parent, Type> {
 
     fn into_dyn(self) -> FieldType<Self::Parent, Self::Type> {
         self
-    }
-}
-
-impl<Parent: ?Sized, Type: ?Sized> FieldType<Parent, Type> {
-    pub unsafe fn new_unchecked(descriptor: FieldDescriptor<Parent, Type>) -> Self {
-        Self { descriptor }
     }
 }

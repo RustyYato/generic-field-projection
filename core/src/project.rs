@@ -1,6 +1,6 @@
 use super::*;
 
-use std::pin::Pin;
+use core::pin::Pin;
 
 unsafe impl<F: ?Sized> PinnablePointer for &F {}
 impl<'a, F: Field + ?Sized> ProjectTo<F> for &'a F::Parent
@@ -27,7 +27,7 @@ where F::Parent: 'a, F::Type: 'a {
 }
 
 impl<'a, F: Field + ?Sized, P: PinnablePointer + ProjectTo<F>> ProjectTo<PinProjectableField<F>> for Pin<P>
-where P::Projection: std::ops::Deref<Target = F::Type> {
+where P::Projection: core::ops::Deref<Target = F::Type> {
     type Projection = Pin<P::Projection>;
 
     fn project_to(self, pin_field: &PinProjectableField<F>) -> Self::Projection {
