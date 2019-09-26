@@ -17,6 +17,11 @@ pub use self::pin::*;
 pub use self::field_type::*;
 pub use self::descriptor::*;
 
+#[doc(hidden)]
+pub mod derive {
+    pub use core::marker::PhantomData;
+}
+
 /// Projects a type to the given field
 pub trait ProjectTo<F: Field + ?Sized> {
     /// The projection of the type, can be used to directly access the field
@@ -170,7 +175,7 @@ pub fn generic_test() {
 }
 
 #[test]
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, dead_code)]
 fn test_dyn() {
     struct MyType {
         x: u8,
