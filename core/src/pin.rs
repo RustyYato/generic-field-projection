@@ -19,6 +19,7 @@ pub unsafe trait PinProjectable<F: Field<Parent = Self> + ?Sized> {}
 /// TODO: add safety docs
 pub unsafe trait PinnablePointer: core::ops::Deref {}
 
+/// A field-type which is pin-projectable
 #[repr(transparent)]
 pub struct PinProjectableField<F: Field + ?Sized> {
     field: F
@@ -34,24 +35,21 @@ unsafe impl<F: Field + ?Sized> Field for PinProjectableField<F> {
 }
 
 impl<F: Field> PinProjectableField<F> {
+    /// You must validate the safety notes of [PinProjectable](trait.PinProjectable.html)
     pub unsafe fn new_unchecked(field: F) -> Self {
         Self {
             field
         }
     }
     
+    /// Create a new pin-projectable field, validated by [`PinProjectable<F>`](trait.PinProjectable.html) trait
     pub fn new(field: F) -> Self where F::Parent: PinProjectable<F> {
         Self {
             field
         }
     }
 
-    pub fn new_unpin(field: F) -> Self where F::Parent: Unpin {
-        Self {
-            field
-        }
-    }
-
+    /// Convert to a dynamically dispatched field projection
     pub fn into_dyn_pin(self) -> PinProjectableField<FieldType<F::Parent, F::Type>> {
         unsafe {
             PinProjectableField::new_unchecked(self.field.into_dyn())
@@ -64,11 +62,13 @@ impl<F: Field + ?Sized> PinProjectableField<F> {
         &self.field
     }
 
+    /// You must validate the safety notes of [PinProjectable](trait.PinProjectable.html)
     pub unsafe fn from_ref_new_unchecked(field: &F) -> &Self {
         #[allow(clippy::transmute_ptr_to_ptr)]
         core::mem::transmute::<&F, &Self>(field)
     }
     
+    /// Create a new pin-projectable field, validated by [`PinProjectable<F>`](trait.PinProjectable.html) trait
     pub fn from_ref(field: &F) -> &Self where F::Parent: PinProjectable<F> {
         unsafe {
             #[allow(clippy::transmute_ptr_to_ptr)]
@@ -76,13 +76,7 @@ impl<F: Field + ?Sized> PinProjectableField<F> {
         }
     }
 
-    pub fn from_ref_unpin(field: &F) -> &Self where F::Parent: Unpin {
-        unsafe {
-            #[allow(clippy::transmute_ptr_to_ptr)]
-            core::mem::transmute::<&F, &Self>(field)
-        }
-    }
-
+    /// Convert to a dynamically dispatched field projection
     pub fn as_dyn_pin(&self) -> PinProjectableField<FieldType<F::Parent, F::Type>> {
         unsafe {
             let field_type = FieldType { descriptor: self.field.field_descriptor() };

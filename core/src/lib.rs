@@ -1,5 +1,5 @@
 #![feature(const_fn_union)]
-// #![forbid(missing_docs)]
+#![forbid(missing_docs)]
 #![no_std]
 
 /*!
@@ -91,7 +91,7 @@ fn simple_test() {
 
     impl MyType_z {
         pub fn pin() -> PinProjectableField<Self> {
-            PinProjectableField::new_unpin(Self::new())
+            unsafe { PinProjectableField::new_unchecked(Self::new()) }
         }
     }
 
