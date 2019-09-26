@@ -4,6 +4,7 @@ mod project;
 mod pin;
 mod field_type;
 mod descriptor;
+mod macros;
 
 pub use self::pin::*;
 pub use self::field_type::*;
@@ -32,39 +33,25 @@ pub unsafe trait Field {
 }
 
 #[test]
+#[allow(non_camel_case_types)]
 fn simple_test() {
-    #[repr(C)]
     struct MyType {
-        x: u8,
-        y: u8,
-        z: u32
+        _x: u8,
+        _y: u8,
+        z: u32,
     }
 
-    #[allow(non_camel_case_types)]
-    struct MyType_z;
-
-    unsafe impl Field for MyType_z {
-        type Parent = MyType;
-        type Type = u32;
-
-        fn field_descriptor(&self) -> FieldDescriptor<MyType, u32> {
-            unsafe { FieldDescriptor::from_offset(4) }
-        }
-    }
+    field!(MyType_z(MyType => u32), z, MyType { _x: 0, _y: 0, z: 0 });
 
     impl MyType_z {
-        pub fn new() -> Self {
-            Self
-        }
-        
         pub fn pin() -> PinProjectableField<Self> {
             PinProjectableField::new_unpin(Self::new())
         }
     }
 
     let my_type = MyType {
-        x: 0,
-        y: 1,
+        _x: 0,
+        _y: 1,
         z: 3
     };
 
