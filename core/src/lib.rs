@@ -3,8 +3,6 @@
 #![no_std]
 
 /*!
-# generic field projection
-
 This crate provides a generic interface to project to fields, think of it as an extended version
 of `Deref` that handles all pointer types equally.
 */
@@ -33,6 +31,7 @@ pub trait ProjectTo<F: Field + ?Sized> {
 /// e.x.
 /// 
 /// ```rust
+/// # use gfp_core::*;
 /// #[repr(C)]
 /// struct Foo {
 ///     y: u8,
@@ -41,7 +40,7 @@ pub trait ProjectTo<F: Field + ?Sized> {
 /// 
 /// struct Foo_x;
 /// 
-/// impl Field for Foo_x {
+/// unsafe impl Field for Foo_x {
 ///     // Parent type of `Foo_x` is `Foo`, because field `x` is from type `Foo`
 ///     type Parent = Foo;
 ///     
@@ -49,7 +48,7 @@ pub trait ProjectTo<F: Field + ?Sized> {
 ///     type Type = u32;
 ///     
 ///     // Field `x` is offset `4` bytes from the start of `Foo`
-///     fn field_descriptor(self) -> FieldType<Self::Parent, Self::Type> {
+///     fn field_descriptor(&self) -> FieldDescriptor<Self::Parent, Self::Type> {
 ///         unsafe { FieldDescriptor::from_offset(4) }
 ///     }
 /// }
@@ -168,4 +167,30 @@ pub fn generic_test() {
     let my_type_pin = Pin::new(&my_type);
 
     assert_eq!(*my_type_pin.project_to(&MyType_z::pin()), 3);
+}
+
+#[test]
+#[allow(non_camel_case_types)]
+fn test_dyn() {
+    struct MyType {
+        x: u8,
+        y: u8,
+        z: u8,
+    }
+
+    field!(MyType_x(MyType => u8), x, MyType { x: 0, y: 0, z: 0 });
+    field!(MyType_y(MyType => u8), y, MyType { x: 0, y: 0, z: 0 });
+    field!(MyType_z(MyType => u8), z, MyType { x: 0, y: 0, z: 0 });
+
+    let my_type = MyType {
+        x: 0,
+        y: 1,
+        z: 2
+    };
+
+    let fields = [MyType_x.into_dyn(), MyType_y.into_dyn(), MyType_z.into_dyn()];
+
+    for (i, field) in fields.iter().enumerate() {
+        assert_eq!(*my_type.project_to(field), i as u8)
+    }
 }

@@ -35,7 +35,7 @@ unsafe impl<F: Field + ?Sized> Field for PinProjectableField<F> {
 }
 
 impl<F: Field> PinProjectableField<F> {
-    /// You must validate the safety notes of [PinProjectable](trait.PinProjectable.html)
+    /// You must validate the safety notes of [`PinProjectable<F>`](trait.PinProjectable.html)
     pub unsafe fn new_unchecked(field: F) -> Self {
         Self {
             field
@@ -62,7 +62,7 @@ impl<F: Field + ?Sized> PinProjectableField<F> {
         &self.field
     }
 
-    /// You must validate the safety notes of [PinProjectable](trait.PinProjectable.html)
+    /// You must validate the safety notes of [`PinProjectable<F>`](trait.PinProjectable.html)
     pub unsafe fn from_ref_new_unchecked(field: &F) -> &Self {
         #[allow(clippy::transmute_ptr_to_ptr)]
         core::mem::transmute::<&F, &Self>(field)
