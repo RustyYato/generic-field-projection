@@ -12,10 +12,12 @@ mod pin;
 mod field_type;
 mod descriptor;
 mod macros;
+mod chain;
 
 pub use self::pin::*;
 pub use self::field_type::*;
 pub use self::descriptor::*;
+pub use self::chain::*;
 
 /// Projects a type to the given field
 pub trait ProjectTo<F: Field + ?Sized> {
@@ -77,7 +79,7 @@ pub unsafe trait Field {
     type Type: ?Sized;
 
     /// An iterator that returns the fuully qualified name of the field
-    type Name: IntoIterator<Item = &'static str>;
+    type Name: Iterator<Item = &'static str>;
 
     /// An iterator that returns the fully qualified name of the field
     /// 
@@ -98,6 +100,11 @@ pub unsafe trait Field {
     /// 
     /// `ptr` must point to a valid, initialized allocation of `Parent`
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type;
+
+    /// Chains the projection of this field with another field `F`
+    fn chain<F: Field<Parent = Self::Type>>(self, f: F) -> Chain<Self, F> where Self: Sized {
+        Chain::new(self, f)
+    }
 }
 
 unsafe impl<F: ?Sized + Field> Field for &F {
@@ -265,4 +272,36 @@ fn test_dyn() {
     for (i, field) in fields.iter().enumerate() {
         assert_eq!(*my_type.project_to(field), i as u8)
     }
+}
+
+#[test]
+#[allow(non_camel_case_types, unused)]
+fn test_chain() {
+    #[derive(Default)]
+    struct Foo {
+        x: u8,
+        y: Bar,
+    }
+
+    #[derive(Default)]
+    struct Bar {
+        a: u16,
+        b: u32,
+    }
+
+    field!(Foo_y(Foo => Bar), y, Foo::default());
+    field!(Bar_b(Bar => u32), b, Bar::default());
+
+    let my_type = Foo {
+        x: 0,
+        y: Bar {
+            a: 1,
+            b: 2
+        }
+    };
+
+    assert_eq!(
+        *my_type.project_to(&Foo_y.chain(Bar_b)),
+        2
+    );
 }
