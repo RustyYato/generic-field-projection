@@ -1,5 +1,5 @@
 #![feature(const_fn_union, const_fn)]
-#![forbid(missing_docs)]
+// #![forbid(missing_docs)]
 #![no_std]
 
 /*!
@@ -8,16 +8,15 @@ of `Deref` that handles all pointer types equally.
 */
 
 mod project;
+mod project_set;
 mod pin;
-mod field_type;
-mod descriptor;
 mod macros;
 mod chain;
+mod set;
 
 pub use self::pin::*;
-pub use self::field_type::*;
-pub use self::descriptor::*;
 pub use self::chain::*;
+pub use self::set::{FieldSet, tuple::*};
 
 /// Projects a type to the given field
 pub trait ProjectTo<F: Field + ?Sized> {
@@ -26,6 +25,15 @@ pub trait ProjectTo<F: Field + ?Sized> {
 
     /// projects to the given field
     fn project_to(self, field: &F) -> Self::Projection;
+}
+
+/// Projects a type to the given field
+pub trait ProjectToSet<F: FieldSet + ?Sized> {
+    /// The projection of the type, can be used to directly access the field
+    type Projection;
+
+    /// projects to the given field
+    fn project_set_to(self, field: F) -> Self::Projection;
 }
 
 /// Represents a field of some `Parent` type
@@ -261,7 +269,7 @@ fn test_dyn() {
     field!(MyType_y(MyType => u8), y, MyType { x: 0, y: 0, z: 0 });
     field!(MyType_z(MyType => u8), z, MyType { x: 0, y: 0, z: 0 });
 
-    let my_type = MyType {
+    let mut my_type = MyType {
         x: 0,
         y: 1,
         z: 2
@@ -289,10 +297,12 @@ fn test_chain() {
         b: u32,
     }
 
+    field!(Foo_x(Foo => u8), x, Foo::default());
     field!(Foo_y(Foo => Bar), y, Foo::default());
+    field!(Bar_a(Bar => u16), a, Bar::default());
     field!(Bar_b(Bar => u32), b, Bar::default());
 
-    let my_type = Foo {
+    let mut my_type = Foo {
         x: 0,
         y: Bar {
             a: 1,
@@ -304,4 +314,10 @@ fn test_chain() {
         *my_type.project_to(&Foo_y.chain(Bar_b)),
         2
     );
+
+    (&mut my_type).project_set_to(&(
+        Foo_x,
+        Foo_y.chain(Bar_a),
+        Foo_y.chain(Bar_b),
+    ));
 }
