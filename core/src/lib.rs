@@ -32,7 +32,6 @@ pub trait ProjectTo<F: Field + ?Sized> {
 /// 
 /// ```rust
 /// # use gfp_core::*;
-/// #[repr(C)]
 /// struct Foo {
 ///     y: u8,
 ///     x: u32,
@@ -46,10 +45,19 @@ pub trait ProjectTo<F: Field + ?Sized> {
 ///     
 ///     // Field `x` of type `Foo` has the type ` 
 ///     type Type = u32;
+/// 
+///     type Name = std::iter::Once<&'static str>;
 ///     
-///     // Field `x` is offset `4` bytes from the start of `Foo`
-///     fn field_descriptor(&self) -> FieldDescriptor<Self::Parent, Self::Type> {
-///         unsafe { FieldDescriptor::from_offset(4) }
+///     fn name(&self) -> Self::Name {
+///         std::iter::once("x")
+///     }
+///     
+///     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+///         &(*ptr).x
+///     }
+/// 
+///     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+///         &mut (*ptr).x
 ///     }
 /// }
 /// ```
@@ -68,12 +76,69 @@ pub unsafe trait Field {
     /// The type of the field itself
     type Type: ?Sized;
 
-    /// Get the field descriptor that can be used to access the field
-    fn field_descriptor(&self) -> FieldDescriptor<Self::Parent, Self::Type>;
+    /// An iterator that returns the fuully qualified name of the field
+    type Name: IntoIterator<Item = &'static str>;
 
-    /// Convert to an efficient dynamic representation
-    fn into_dyn(self) -> FieldType<Self::Parent, Self::Type> where Self:Sized {
-        FieldType { descriptor: self.field_descriptor() }
+    /// An iterator that returns the fully qualified name of the field
+    /// 
+    /// This must be unique for each field of the given `Parent` type
+    fn name(&self) -> Self::Name;
+
+    /// projects the raw pointer from the `Parent` type to the field `Type`
+    /// 
+    /// # Safety
+    /// 
+    /// * `ptr` must point to a valid, initialized allocation of `Parent`
+    /// * the projection is not safe to write to
+    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type;
+    
+    /// projects the raw pointer from the `Parent` type to the field `Type`
+    /// 
+    /// # Safety
+    /// 
+    /// `ptr` must point to a valid, initialized allocation of `Parent`
+    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type;
+}
+
+unsafe impl<F: ?Sized + Field> Field for &F {
+    type Parent = F::Parent;
+    type Type = F::Type;
+    type Name = F::Name;
+
+    #[inline]
+    fn name(&self) -> Self::Name {
+        F::name(self)
+    }
+    
+    #[inline]
+    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+        F::project_raw(self, ptr)
+    }
+    
+    #[inline]
+    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+        F::project_raw_mut(self, ptr)
+    }
+}
+
+unsafe impl<F: ?Sized + Field> Field for &mut F {
+    type Parent = F::Parent;
+    type Type = F::Type;
+    type Name = F::Name;
+
+    #[inline]
+    fn name(&self) -> Self::Name {
+        F::name(self)
+    }
+ 
+    #[inline]   
+    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+        F::project_raw(self, ptr)
+    }
+    
+    #[inline]
+    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+        F::project_raw_mut(self, ptr)
     }
 }
 
@@ -124,11 +189,18 @@ pub fn generic_test() {
     unsafe impl<T> Field for MyType_z<T> {
         type Parent = MyType<T>;
         type Type = T;
+        type Name = core::iter::Once<&'static str>;
 
-        fn field_descriptor(&self) -> FieldDescriptor<MyType<T>, T> {
-            unsafe {
-                FieldDescriptor::from_offset(core::mem::align_of::<T>().max(2))
-            }
+        fn name(&self) -> Self::Name {
+            core::iter::once("z")
+        }
+
+        unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+            &(*ptr).z
+        }
+        
+        unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+            &mut (*ptr).z
         }
     }
 
@@ -170,7 +242,7 @@ pub fn generic_test() {
 }
 
 #[test]
-#[allow(non_camel_case_types)]
+#[allow(non_camel_case_types, unused)]
 fn test_dyn() {
     struct MyType {
         x: u8,
@@ -188,7 +260,7 @@ fn test_dyn() {
         z: 2
     };
 
-    let fields = [MyType_x.into_dyn(), MyType_y.into_dyn(), MyType_z.into_dyn()];
+    let fields: [&dyn Field<Parent = MyType, Type = u8, Name = _>; 3] = [&MyType_x, &MyType_y, &MyType_z];
 
     for (i, field) in fields.iter().enumerate() {
         assert_eq!(*my_type.project_to(field), i as u8)

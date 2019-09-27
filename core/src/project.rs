@@ -9,7 +9,7 @@ where F::Parent: 'a, F::Type: 'a {
 
     fn project_to(self, field: &F) -> Self::Projection {
         unsafe {
-            &*field.field_descriptor().project_raw_unchecked(self)
+            &*field.project_raw(self)
         }
     }
 }
@@ -21,7 +21,7 @@ where F::Parent: 'a, F::Type: 'a {
 
     fn project_to(self, field: &F) -> Self::Projection {
         unsafe {
-            &mut *field.field_descriptor().project_raw_mut_unchecked(self)
+            &mut *field.project_raw_mut(self)
         }
     }
 }

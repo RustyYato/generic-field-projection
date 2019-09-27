@@ -1,4 +1,6 @@
 
+pub use core::iter::{Once, once};
+
 /// Create a new field descriptor for the given type
 #[macro_export]
 macro_rules! field_descriptor {
@@ -31,13 +33,24 @@ macro_rules! field {
     ($field_ty_name:ident ($parent:ty => $field_ty:ty), $field:ident, $value:expr) => {
         struct $field_ty_name;
 
+        #[deny(safe_packed_borrows)]
         unsafe impl Field for $field_ty_name {
             type Parent = $parent;
             type Type = $field_ty;
+            type Name = $crate::macros::Once<&'static str>;
+    
+            fn name(&self) -> Self::Name {
+                $crate::macros::once(stringify!($field))
+            }
+
+            #[inline]
+            unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+                &(*ptr).$field
+            }
             
-            #[deny(safe_packed_borrows)]
-            fn field_descriptor(&self) -> FieldDescriptor<Self::Parent, Self::Type> {
-                $crate::field_descriptor!($field, $value)
+            #[inline]
+            unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+                &mut (*ptr).$field
             }
         }
 
