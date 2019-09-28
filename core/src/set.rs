@@ -5,7 +5,7 @@ pub mod func;
 
 use tuple::Tuple;
 
-pub unsafe trait FieldSet {
+pub unsafe trait FieldSet: Tuple {
     /// The type that the field comes from
     type Parent: ?Sized;
 
@@ -30,20 +30,6 @@ pub unsafe trait FieldSet {
     /// * `ptr` must point to a valid, initialized allocation of `Parent`
     /// * the projection is not safe to write to
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> Self::TypeSetMut;
-}
-
-unsafe impl<F: FieldSet + ?Sized> FieldSet for &F {
-    type Parent = F::Parent;
-    type TypeSet = F::TypeSet;
-    type TypeSetMut = F::TypeSetMut;
-
-    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> Self::TypeSet {
-        F::project_raw(self, ptr)
-    }
-
-    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> Self::TypeSetMut {
-        F::project_raw_mut(self, ptr)
-    }
 }
 
 macro_rules! impl_tuple {

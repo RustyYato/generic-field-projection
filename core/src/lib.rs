@@ -1,4 +1,4 @@
-#![feature(const_fn_union, const_fn)]
+#![feature(const_fn_union, const_fn, specialization)]
 // #![forbid(missing_docs)]
 #![no_std]
 
@@ -10,7 +10,8 @@ of `Deref` that handles all pointer types equally.
 mod project;
 mod project_set;
 mod pin;
-mod macros;
+#[doc(hidden)]
+pub mod macros;
 mod chain;
 mod set;
 
@@ -19,16 +20,16 @@ pub use self::chain::*;
 pub use self::set::{FieldSet, tuple::*};
 
 /// Projects a type to the given field
-pub trait ProjectTo<F: Field + ?Sized> {
+pub trait ProjectTo<F: Field> {
     /// The projection of the type, can be used to directly access the field
     type Projection;
 
     /// projects to the given field
-    fn project_to(self, field: &F) -> Self::Projection;
+    fn project_to(self, field: F) -> Self::Projection;
 }
 
 /// Projects a type to the given field
-pub trait ProjectToSet<F: FieldSet + ?Sized> {
+pub trait ProjectToSet<F: FieldSet> {
     /// The projection of the type, can be used to directly access the field
     type Projection;
 
@@ -155,169 +156,4 @@ unsafe impl<F: ?Sized + Field> Field for &mut F {
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
         F::project_raw_mut(self, ptr)
     }
-}
-
-#[test]
-#[allow(non_camel_case_types)]
-fn simple_test() {
-    struct MyType {
-        _x: u8,
-        _y: u8,
-        z: u32,
-    }
-
-    field!(MyType_z(MyType => u32), z, MyType { _x: 0, _y: 0, z: 0 });
-
-    impl MyType_z {
-        pub fn pin() -> PinProjectableField<Self> {
-            unsafe { PinProjectableField::new_unchecked(Self::new()) }
-        }
-    }
-
-    let my_type = MyType {
-        _x: 0,
-        _y: 1,
-        z: 3
-    };
-
-    use core::pin::Pin;
-
-    let my_type_pin = Pin::new(&my_type);
-
-    assert_eq!(*my_type_pin.project_to(&MyType_z::pin()), 3);
-}
-
-#[test]
-pub fn generic_test() {
-    use core::marker::PhantomData;
-
-    #[repr(C)]
-    struct MyType<T> {
-        x: u8,
-        y: u8,
-        z: T
-    }
-
-    #[allow(non_camel_case_types)]
-    struct MyType_z<T>(PhantomData<fn(T) -> T>);
-
-    unsafe impl<T> Field for MyType_z<T> {
-        type Parent = MyType<T>;
-        type Type = T;
-        type Name = core::iter::Once<&'static str>;
-
-        fn name(&self) -> Self::Name {
-            core::iter::once("z")
-        }
-
-        unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
-            &(*ptr).z
-        }
-        
-        unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
-            &mut (*ptr).z
-        }
-    }
-
-    impl<T> MyType_z<T> {
-        pub fn new() -> Self {
-            Self(PhantomData)
-        }
-        
-        pub fn pin() -> PinProjectableField<Self> {
-            unsafe {
-                PinProjectableField::new_unchecked(Self::new())
-            }
-        }
-    }
-
-    assert_eq!(core::mem::size_of_val(&MyType_z::<u32>::pin()), 0);
-
-    use core::pin::Pin;
-
-    let my_type = MyType {
-        x: 0,
-        y: 1,
-        z: 3u8
-    };
-
-    let my_type_pin = Pin::new(&my_type);
-
-    assert_eq!(*my_type_pin.project_to(&MyType_z::pin()), 3);
-    
-    let my_type = MyType {
-        x: 0,
-        y: 1,
-        z: 3u32
-    };
-
-    let my_type_pin = Pin::new(&my_type);
-
-    assert_eq!(*my_type_pin.project_to(&MyType_z::pin()), 3);
-}
-
-#[test]
-#[allow(non_camel_case_types, unused)]
-fn test_dyn() {
-    struct MyType {
-        x: u8,
-        y: u8,
-        z: u8,
-    }
-
-    field!(MyType_x(MyType => u8), x, MyType { x: 0, y: 0, z: 0 });
-    field!(MyType_y(MyType => u8), y, MyType { x: 0, y: 0, z: 0 });
-    field!(MyType_z(MyType => u8), z, MyType { x: 0, y: 0, z: 0 });
-
-    let mut my_type = MyType {
-        x: 0,
-        y: 1,
-        z: 2
-    };
-
-    let fields: [&dyn Field<Parent = MyType, Type = u8, Name = _>; 3] = [&MyType_x, &MyType_y, &MyType_z];
-
-    for (i, field) in fields.iter().enumerate() {
-        assert_eq!(*my_type.project_to(field), i as u8)
-    }
-}
-
-#[test]
-#[allow(non_camel_case_types, unused)]
-fn test_chain() {
-    #[derive(Default)]
-    struct Foo {
-        x: u8,
-        y: Bar,
-    }
-
-    #[derive(Default)]
-    struct Bar {
-        a: u16,
-        b: u32,
-    }
-
-    field!(Foo_x(Foo => u8), x, Foo::default());
-    field!(Foo_y(Foo => Bar), y, Foo::default());
-    field!(Bar_a(Bar => u16), a, Bar::default());
-    field!(Bar_b(Bar => u32), b, Bar::default());
-
-    let mut my_type = Foo {
-        x: 0,
-        y: Bar {
-            a: 1,
-            b: 2
-        }
-    };
-
-    assert_eq!(
-        *my_type.project_to(&Foo_y.chain(Bar_b)),
-        2
-    );
-
-    (&mut my_type).project_set_to(&(
-        Foo_x,
-        Foo_y.chain(Bar_a),
-        Foo_y.chain(Bar_b),
-    ));
 }

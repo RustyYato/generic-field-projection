@@ -48,16 +48,22 @@ impl<F: Field> PinProjectableField<F> {
             field: &self.field
         }
     }
+    
+    pub(crate) fn field(self) -> F {
+        self.field
+    }
 }
 
 impl<F: Field + ?Sized> PinProjectableField<F> {
-    pub(crate) fn field(&self) -> &F {
-        &self.field
-    }
-
     /// You must validate the safety notes of [`PinProjectable<F>`](trait.PinProjectable.html)
     pub unsafe fn from_ref_unchecked(field: &F) -> &Self {
         #[allow(clippy::transmute_ptr_to_ptr)]
         core::mem::transmute::<&F, &Self>(field)
+    }
+
+    pub fn as_ref(&self) -> PinProjectableField<&F> {
+        unsafe {
+            PinProjectableField::new_unchecked(&self.field)
+        }
     }
 }

@@ -9,21 +9,7 @@ pub trait TypeFunction<Input> {
 
 pub trait Tuple {}
 
-pub trait TupleRef<'a>: 'a {
-    type Ref: Tuple + 'a;
-    type RefMut: Tuple + 'a;
-
-    fn as_tup_ref(&'a self) -> Self::Ref;
-    fn as_tup_ref_mut(&'a mut self) -> Self::RefMut;
-}
-
-// pub trait TupleRef<'a>: 'a {
-//     type Ref: Tuple + 'a;
-//     type RefMut: Tuple + 'a;
-
-//     fn as_tup_ref(&'a self) -> Self::Ref;
-//     fn as_tup_ref_mut(&'a mut self) -> Self::RefMut;
-// }
+pub type TMap<T, F> = <T as TupleMap<F>>::Output;
 
 pub trait TupleMap<F>: Tuple + Sized {
     type Output;
@@ -32,20 +18,12 @@ pub trait TupleMap<F>: Tuple + Sized {
 }
 
 pub trait TupleAny<F>: Tuple + Sized {
-    fn tup_any(self, f: F) -> bool;
+    fn tup_any(&self, f: F) -> bool;
 }
 
 macro_rules! impl_tuple {
     () => {
         impl Tuple for () {}
-
-        impl<'a> TupleRef<'a> for () {
-            type Ref = ();
-            type RefMut = ();
-
-            fn as_tup_ref(&self) -> Self::Ref {}
-            fn as_tup_ref_mut(&mut self) -> Self::RefMut {}
-        }
 
         impl<Func> TupleMap<Func> for () {
             type Output = ();
@@ -54,7 +32,7 @@ macro_rules! impl_tuple {
         }
         
         impl<Func> TupleAny<Func> for () {
-            fn tup_any(self, _: Func) -> bool {
+            fn tup_any(&self, _: Func) -> bool {
                 false
             }
         }
@@ -64,22 +42,6 @@ macro_rules! impl_tuple {
         
         #[allow(non_snake_case)]
         impl<$($T,)+> Tuple for ($($T,)+) {}
-
-        #[allow(non_snake_case)]
-        impl<'a $(, $T: 'a)*> TupleRef<'a> for ($($T,)+) {
-            type Ref = ($(&'a $T,)+);
-            type RefMut = ($(&'a mut $T,)+);
-
-            fn as_tup_ref(&'a self) -> Self::Ref {
-                let ($($T,)+) = self;
-                ($($T,)+)
-            }
-
-            fn as_tup_ref_mut(&'a mut self) -> Self::RefMut {
-                let ($($T,)+) = self;
-                ($($T,)+)
-            }
-        }
 
         #[allow(non_snake_case)]
         impl<Func $(, $T)+> TupleMap<Func> for ($($T,)+)
@@ -97,8 +59,8 @@ macro_rules! impl_tuple {
         
         #[allow(non_snake_case)]
         impl<Func $(, $T)+> TupleAny<Func> for ($($T,)+)
-        where $(Func: TypeFunction<$T, Output = bool>),+  {
-            fn tup_any(self, mut func: Func) -> bool {
+        where $(Func: for<'a> TypeFunction<&'a $T, Output = bool>),+  {
+            fn tup_any(&self, mut func: Func) -> bool {
                 let ($($T,)+) = self;
 
                 $(

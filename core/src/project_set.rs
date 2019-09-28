@@ -2,7 +2,7 @@ use super::*;
 
 use crate::set::{
     tuple::TypeFunction,
-    func::{PtrToRef, PtrToRefMut, Enumerate}
+    func::{PtrToRef, PtrToRefMut}
 };
 
 impl<'a, F: FieldSet> ProjectToSet<F> for &'a F::Parent
@@ -18,60 +18,58 @@ where F::Parent: 'a,
     }
 }
 
-pub struct FindOverlap<'a, S>(&'a S);
+pub struct FindOverlap<S> {
+    counter: u64,
+    set: S
+}
 
-impl<'a, S, I: Field> TypeFunction<(u64, I)> for FindOverlap<'a, S>
-where S: FieldSet + TupleRef<'a>,
-      S::Ref: TupleMap<Enumerate>,
-      <S::Ref as TupleMap<Enumerate>>::Output: TupleAny<FindOverlapInner<I>> {
+impl<'a, S: TupleAny<FindOverlapInner<&'a I>>, I: Field> TypeFunction<&'a I> for FindOverlap<&S> {
     type Output = bool;
 
-    fn call(&mut self, (id, input): (u64, I)) -> bool {
-        self.0.as_tup_ref()
-            .tup_map(Enumerate::start_at(0))
-            .tup_any(FindOverlapInner(id, input))
+    default fn call(&mut self, input: &'a I) -> bool {
+        self.counter += 1;
+        self.set.tup_any(FindOverlapInner {
+            id: self.counter,
+            counter: 0,
+            field: input
+        })
     }
 }
 
-pub struct FindOverlapInner<I>(u64, I);
+pub struct FindOverlapInner<I> {
+    id: u64,
+    counter: u64,
+    field: I
+}
 
-impl<I: Field, J: Field> TypeFunction<(u64, &J)> for FindOverlapInner<&I> {
+impl<I: Field, J: Field> TypeFunction<&J> for FindOverlapInner<&I> {
     type Output = bool;
 
-    fn call(&mut self, (id, input): (u64, &J)) -> bool {
-        if self.0 <= id {
+    fn call(&mut self, input: &J) -> bool {
+        self.counter += 1;
+
+        if self.id <= self.counter {
             return false
         }
 
-        let mut i = self.1.name();
-        let mut j = input.name();
-        
-        loop {
-            match (i.next(), j.next()) {
-                (Some(x), Some(y)) => {
-                    if x != y {
-                        return false
-                    }
-                },
-                _ => return true
-            }
-        }
+        self.field.name().zip(input.name())
+            .all(|(i, j)| i == j)
     }
 }
 
-impl<'a, 'b, F: FieldSet + TupleRef<'b>> ProjectToSet<&'b F> for &'a mut F::Parent
+impl<'a, F: FieldSet> ProjectToSet<F> for &'a mut F::Parent
 where F::Parent: 'a,
       F::TypeSetMut: TupleMap<PtrToRefMut<'a>>,
       
-      F::Ref: TupleMap<Enumerate>,
-      <F::Ref as TupleMap<Enumerate>>::Output: TupleAny<FindOverlap<'b, F>> {
+      for<'b> F: TupleAny<FindOverlap<&'b F>> {
     type Projection = <F::TypeSetMut as TupleMap<PtrToRefMut<'a>>>::Output;
 
-    fn project_set_to(self, field: &'b F) -> Self::Projection {
+    fn project_set_to(self, field: F) -> Self::Projection {
         unsafe {
-            if field.as_tup_ref()
-                .tup_map(Enumerate::start_at(0))
-                .tup_any(FindOverlap(field)) {
+            if field.tup_any(FindOverlap {
+                    counter: 0,
+                    set: &field
+                }) {
                 panic!("Found overlapping fields")
             } else {
                 let type_set = field.project_raw_mut(self);
