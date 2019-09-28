@@ -2,30 +2,6 @@ use crate::set::tuple::TypeFunction;
 use core::marker::PhantomData;
 use core::pin::Pin;
 
-pub struct Enumerate(u64);
-
-impl Default for Enumerate {
-    fn default() -> Self {
-        Self(0)
-    }
-}
-
-impl Enumerate {
-    pub fn start_at(start: u64) -> Self {
-        Self(start)
-    }
-}
-
-impl<T> TypeFunction<T> for Enumerate {
-    type Output = (u64, T);
-
-    fn call(&mut self, input: T) -> Self::Output {
-        let count = self.0;
-        self.0 += 1;
-        (count, input)
-    }
-}
-
 pub struct PtrToRef<'a>(PhantomData<&'a ()>);
 
 impl<'a> PtrToRef<'a> {
