@@ -9,7 +9,7 @@ use quote::quote;
 use proc_macro2;
 use syn;
 
-#[proc_macro_derive(Field, attributes(pin, default))]
+#[proc_macro_derive(Field)]
 pub fn derive_field(ty: TokenStream) -> TokenStream {
     let ty = syn::parse_macro_input!(ty as syn::DeriveInput);
 
@@ -34,13 +34,32 @@ macro_rules! expr {
     }}
 }
 
+// macro_rules! attr {
+//     ($($tokens:tt)*) => {{
+//         let quote = TokenStream::from(quote!($($tokens)*));
+//         syn::parse_macro_input!(quote as syn::Attribute)
+//     }}
+// }
+
 fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
+    match ty.data {
+        syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Named(_), .. }) => derive_named(ty),
+        syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Unnamed(_), .. }) => derive_named(ty),
+        syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Unit, .. }) => {
+            syn::Error::new(ty.ident.span(), "Unit structs are not supported")
+                .to_compile_error().into()
+        },
+        _ => unreachable!()
+    }
+}
+
+fn derive_named(ty: syn::DeriveInput) -> TokenStream {
     let syn::DeriveInput {
         attrs: _, vis, ident: input_ident, generics, data
     } = ty;
 
-    let data = if let syn::Data::Struct(data) = data {
-        data
+    let fields = if let syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Named(fields), .. }) = data {
+        fields
     } else {
         unreachable!()
     };
@@ -59,12 +78,17 @@ fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
     let mut fields_marker = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
     let mut fields_new = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
 
+    contents.push(item!(
+        use super::*;
+    ));
+
     let (generic_header, generic, where_clause) = generics.split_for_impl();
-    for (i, field) in data.fields.iter().enumerate() {
+    for (i, field) in fields.named.iter().enumerate() {
         let ident = field.ident.as_ref().cloned()
-            .unwrap_or_else(|| syn::Ident::new(&i.to_string(), proc_macro2::Span::call_site()));
-        
+            .unwrap_or_else(|| syn::Ident::new(&format!("_{}", i), proc_macro2::Span::call_site()));
+
         contents.push(item!(
+            #[allow(non_camel_case_types)]
             pub struct #ident<T>(PhantomData<T>);
         ));
         
@@ -76,15 +100,34 @@ fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
             }
         ));
 
+        contents.push(item!(
+            impl<T> Clone for #ident<T> {
+                fn clone(&self) -> Self { *self }
+            }
+        ));
+
+        contents.push(item!(
+            impl<T> Copy for #ident<T> {}
+        ));
+
         let ty = &field.ty;
         
         contents.push(item!(
-            unsafe impl #generic_header gfp_core::Field for #ident<super::#input_ident#generic> {
-                type Parent = super::#input_ident#generic;
+            unsafe impl #generic_header gfp_core::Field for #ident<super::#input_ident #generic> {
+                type Parent = super::#input_ident #generic;
                 type Type = #ty;
+                type Name = gfp_core::derive::Once<&'static str>;
 
-                fn field_descriptor(&self) -> FieldDescriptor<Self::Parent, Self::Type> {
-                    unimplemented!()
+                fn name(&self) -> Self::Name {
+                    gfp_core::derive::once(stringify!(#ident))
+                }
+
+                unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+                    &(*ptr).#ident
+                }
+
+                unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+                    &mut (*ptr).#ident
                 }
             }
         ));
@@ -110,6 +153,7 @@ fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
         
         fields_marker.push(item);
     }
+
     let field_type_name = input_ident.append("Fields");
 
     TokenStream::from(quote! {
@@ -122,7 +166,7 @@ fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
         }
 
         impl#generic_header #input_ident #generic #where_clause {
-            pub fn fields(&self) -> #field_type_name #generic {
+            pub fn fields() -> #field_type_name #generic {
                 #field_type_name {
                     #fields_new
                 }
@@ -131,7 +175,7 @@ fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
     })
 }
 
-fn derive_union(ty: syn::DeriveInput) -> TokenStream {
+fn derive_union(_ty: syn::DeriveInput) -> TokenStream {
     unimplemented!("Unions are currently unsupported")
 }
 

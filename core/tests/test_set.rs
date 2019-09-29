@@ -2,45 +2,36 @@
 
 use gfp_core::*;
 
-#[derive(Default)]
+#[derive(Default, Field)]
 struct Foo {
     x: u8,
     y: Bar,
     z: u128,
 }
 
-#[derive(Default)]
+#[derive(Default, Field)]
 struct Bar {
     a: u16,
     b: u32,
     c: Quaz,
 }
 
-#[derive(Default)]
+#[derive(Default, Field)]
 struct Quaz {
     q: (u16, u32),
     r: u32,
 }
-
-field!(Foo_x(Foo => u8), x, Foo::default());
-field!(Foo_y(Foo => Bar), y, Foo::default());
-field!(Foo_z(Foo => u128), z, Foo::default());
-
-field!(Bar_a(Bar => u16), a, Bar::default());
-field!(Bar_b(Bar => u32), b, Bar::default());
-field!(Bar_c(Bar => Quaz), c, Bar::default());
-
-field!(Quaz_q(Quaz => (u16, u32)), q, Quaz::default());
-field!(Quaz_r(Quaz => u32), r, Quaz::default());
 
 #[test]
 fn simple() {
     let mut foo = Foo::default();
     let foo_ref = &mut foo;
 
+    let FooFields { x, y, .. } = Foo::fields();
+    let BarFields { a, .. } = Bar::fields();
+
     let (x, y_a) = foo_ref.project_set_to((
-        Foo_x,
-        Foo_y.chain(Bar_a)
+        x, y.chain(a)
     ));
 
     *x = 1;
@@ -55,12 +46,15 @@ fn pin() {
     use std::pin::Pin;
     use gfp_core::{PPF, PTR};
 
+    let FooFields { x, y, .. } = Foo::fields();
+    let BarFields { a, .. } = Bar::fields();
+
     let mut foo = Foo::default();
     let foo_ref = Pin::new(&mut foo);
 
     let (mut x, y_a) = foo_ref.project_set_to((
-        unsafe { PPF::new_unchecked(Foo_x) },
-        PTR::new(Foo_y.chain(Bar_a))
+        unsafe { PPF::new_unchecked(x) },
+        PTR::new(y.chain(a))
     ));
 
     *x = 1;

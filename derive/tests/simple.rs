@@ -3,15 +3,14 @@
 use gfp_core::*;
 use gfp_derive::*;
 
-#[derive(Field)]
-#[default]
-struct Foo<T, U: Copy> {
-    x: T,
+// #[derive(Field)]
+// #[repr(packed)]
+// struct Foo<T, U: Copy> {
+//     x: T,
+//     y: U
+// }
 
-    #[pin]
-    y: U
-}
-
-fn test(f: &Foo<u32, u32>) -> impl gfp_core::Field<Parent = Foo<u32, u32>, Type = u32> {
-    f.fields().x
+fn test() {
+    // let FooFields { x, y } = Foo::<u32, u16>::fields();
+    // let BarFields { } = Bar::fields();
 }

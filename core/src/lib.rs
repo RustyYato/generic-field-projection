@@ -18,10 +18,12 @@ mod set;
 pub use self::pin::*;
 pub use self::chain::*;
 pub use self::set::{FieldSet, tuple::*};
+pub use gfp_derive::Field;
 
 #[doc(hidden)]
 pub mod derive {
     pub use core::marker::PhantomData;
+    pub use core::iter::{Once, once};
 }
 
 /// Projects a type to the given field
