@@ -9,6 +9,7 @@ pub unsafe trait PinnablePointer: core::ops::Deref {}
 
 /// A field-type which is pin-projectable
 #[repr(transparent)]
+#[derive(Copy, Clone)]
 pub struct PinProjectableField<F: Field + ?Sized> {
     field: F
 }

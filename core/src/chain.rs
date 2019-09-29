@@ -1,6 +1,7 @@
 use super::*;
 
 /// Chains two projections together
+#[derive(Clone, Copy)]
 pub struct Chain<A, B> {
     a: A,
     b: B

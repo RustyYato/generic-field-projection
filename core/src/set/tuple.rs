@@ -18,7 +18,7 @@ pub trait TupleMap<F>: Tuple + Sized {
 }
 
 pub trait TupleAny<F>: Tuple + Sized {
-    fn tup_any(&self, f: F) -> bool;
+    fn tup_any(self, f: F) -> bool;
 }
 
 macro_rules! impl_tuple {
@@ -32,7 +32,7 @@ macro_rules! impl_tuple {
         }
         
         impl<Func> TupleAny<Func> for () {
-            fn tup_any(&self, _: Func) -> bool {
+            fn tup_any(self, _: Func) -> bool {
                 false
             }
         }
@@ -59,8 +59,8 @@ macro_rules! impl_tuple {
         
         #[allow(non_snake_case)]
         impl<Func $(, $T)+> TupleAny<Func> for ($($T,)+)
-        where $(Func: for<'a> TypeFunction<&'a $T, Output = bool>),+  {
-            fn tup_any(&self, mut func: Func) -> bool {
+        where $(Func: TypeFunction<$T, Output = bool>),+  {
+            fn tup_any(self, mut func: Func) -> bool {
                 let ($($T,)+) = self;
 
                 $(

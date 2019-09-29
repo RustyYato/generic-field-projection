@@ -1,5 +1,7 @@
 use super::*;
 
+use core::pin::Pin;
+
 use crate::set::{
     tuple::TypeFunction,
     func::{PtrToRef, PtrToRefMut}
@@ -23,10 +25,11 @@ pub struct FindOverlap<S> {
     set: S
 }
 
-impl<'a, S: TupleAny<FindOverlapInner<&'a I>>, I: Field> TypeFunction<&'a I> for FindOverlap<&S> {
+impl<S, I: Field> TypeFunction<I> for FindOverlap<S>
+where S: Copy + TupleAny<FindOverlapInner<I>> {
     type Output = bool;
 
-    default fn call(&mut self, input: &'a I) -> bool {
+    fn call(&mut self, input: I) -> bool {
         self.counter += 1;
         self.set.tup_any(FindOverlapInner {
             id: self.counter,
@@ -42,10 +45,10 @@ pub struct FindOverlapInner<I> {
     field: I
 }
 
-impl<I: Field, J: Field> TypeFunction<&J> for FindOverlapInner<&I> {
+impl<I: Field, J: Field> TypeFunction<J> for FindOverlapInner<I> {
     type Output = bool;
 
-    fn call(&mut self, input: &J) -> bool {
+    fn call(&mut self, input: J) -> bool {
         self.counter += 1;
 
         if self.id <= self.counter {
@@ -61,14 +64,14 @@ impl<'a, F: FieldSet> ProjectToSet<F> for &'a mut F::Parent
 where F::Parent: 'a,
       F::TypeSetMut: TupleMap<PtrToRefMut<'a>>,
       
-      for<'b> F: TupleAny<FindOverlap<&'b F>> {
+      F: Copy + TupleAny<FindOverlap<F>> {
     type Projection = <F::TypeSetMut as TupleMap<PtrToRefMut<'a>>>::Output;
 
     fn project_set_to(self, field: F) -> Self::Projection {
         unsafe {
             if field.tup_any(FindOverlap {
                     counter: 0,
-                    set: &field
+                    set: field
                 }) {
                 panic!("Found overlapping fields")
             } else {

@@ -31,6 +31,7 @@ macro_rules! field_type {
 #[macro_export]
 macro_rules! field {
     ($field_ty_name:ident ($parent:ty => $field_ty:ty), $field:ident, $value:expr) => {
+        #[derive(Clone, Copy)]
         struct $field_ty_name;
 
         #[deny(safe_packed_borrows)]
