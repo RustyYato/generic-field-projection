@@ -38,13 +38,33 @@ fn simple() {
     let mut foo = Foo::default();
     let foo_ref = &mut foo;
 
-    let (x, y) = foo_ref.project_set_to((
+    let (x, y_a) = foo_ref.project_set_to((
         Foo_x,
-        Foo_y
+        Foo_y.chain(Bar_a)
     ));
 
     *x = 1;
-    y.a = 10;
+    *y_a = 10;
+
+    assert_eq!(foo.x, 1);
+    assert_eq!(foo.y.a, 10);
+}
+
+#[test]
+fn pin() {
+    use std::pin::Pin;
+    use gfp_core::{PPF, PTR};
+
+    let mut foo = Foo::default();
+    let foo_ref = Pin::new(&mut foo);
+
+    let (mut x, y_a) = foo_ref.project_set_to((
+        unsafe { PPF::new_unchecked(Foo_x) },
+        PTR::new(Foo_y.chain(Bar_a))
+    ));
+
+    *x = 1;
+    *y_a = 10;
 
     assert_eq!(foo.x, 1);
     assert_eq!(foo.y.a, 10);

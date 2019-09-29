@@ -1,6 +1,5 @@
 use crate::set::tuple::TypeFunction;
 use core::marker::PhantomData;
-use core::pin::Pin;
 
 pub struct PtrToRef<'a>(PhantomData<&'a ()>);
 
@@ -31,21 +30,5 @@ impl<'a, T: ?Sized + 'a> TypeFunction<*mut T> for PtrToRefMut<'a> {
 
     fn call(&mut self, input: *mut T) -> Self::Output {
         unsafe { &mut *input }
-    }
-}
-
-pub struct PinNewUnchecked(());
-
-impl PinNewUnchecked {
-    pub(crate) unsafe fn new() -> Self {
-        Self(())
-    }
-}
-
-impl<P: core::ops::Deref> TypeFunction<P> for PinNewUnchecked {
-    type Output = Pin<P>;
-
-    fn call(&mut self, input: P) -> Self::Output {
-        unsafe { Pin::new_unchecked(input) }
     }
 }

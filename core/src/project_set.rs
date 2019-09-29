@@ -1,6 +1,9 @@
 use super::*;
 
 use core::pin::Pin;
+use core::ops::Deref;
+
+use crate::pin::*;
 
 use crate::set::{
     tuple::TypeFunction,
@@ -10,7 +13,7 @@ use crate::set::{
 impl<'a, F: FieldSet> ProjectToSet<F> for &'a F::Parent
 where F::Parent: 'a,
       F::TypeSet: TupleMap<PtrToRef<'a>> {
-    type Projection = <F::TypeSet as TupleMap<PtrToRef<'a>>>::Output;
+    type Projection = TMap<F::TypeSet, PtrToRef<'a>>;
 
     fn project_set_to(self, field: F) -> Self::Projection {
         unsafe {
@@ -65,7 +68,7 @@ where F::Parent: 'a,
       F::TypeSetMut: TupleMap<PtrToRefMut<'a>>,
       
       F: Copy + TupleAny<FindOverlap<F>> {
-    type Projection = <F::TypeSetMut as TupleMap<PtrToRefMut<'a>>>::Output;
+    type Projection = TMap<F::TypeSetMut, PtrToRefMut<'a>>;
 
     fn project_set_to(self, field: F) -> Self::Projection {
         unsafe {
@@ -78,6 +81,59 @@ where F::Parent: 'a,
                 let type_set = field.project_raw_mut(self);
                 type_set.tup_map(PtrToRefMut::new())
             }
+        }
+    }
+}
+
+pub struct MakePin;
+pub struct MakeRef;
+
+pub struct CheckMake;
+
+impl<F: Field> TypeFunction<PPF<F>> for CheckMake {
+    type Output = MakePin;
+
+    fn call(&mut self, _: PPF<F>) -> Self::Output { MakePin }
+}
+
+impl<F: Field> TypeFunction<PTR<F>> for CheckMake {
+    type Output = MakeRef;
+
+    fn call(&mut self, _: PTR<F>) -> Self::Output { MakeRef }
+}
+
+pub struct PinCombine;
+
+impl<T: Deref> TypeFunction<(MakePin, T)> for PinCombine {
+    type Output = Pin<T>;
+
+    fn call(&mut self, (MakePin, value): (MakePin, T)) -> Self::Output {
+        unsafe { Pin::new_unchecked(value) }
+    }
+}
+
+impl<T> TypeFunction<(MakeRef, T)> for PinCombine {
+    type Output = T;
+
+    fn call(&mut self, (MakeRef, value): (MakeRef, T)) -> Self::Output {
+        value
+    }
+}
+
+impl<F: Copy + FieldSet, P: ProjectToSet<F> + Deref> ProjectToSet<F> for Pin<P>
+where
+    F: TupleMap<CheckMake>,
+    TMap<F, CheckMake>: TupleZip<P::Projection, PinCombine>
+{
+    type Projection = TZip<TMap<F, CheckMake>, P::Projection, PinCombine>;
+
+    fn project_set_to(self, field: F) -> Self::Projection {
+        let check_make = field.tup_map(CheckMake);
+        unsafe {
+            let project = Pin::into_inner_unchecked(self)
+                .project_set_to(field);
+            
+            check_make.tup_zip(project, PinCombine)
         }
     }
 }
