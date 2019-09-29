@@ -94,9 +94,7 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
         
         contents.push(item!(
             impl<T> #ident<T> {
-                pub fn new() -> Self {
-                    Self(PhantomData)
-                }
+                pub const INIT: Self = Self(PhantomData);
             }
         ));
 
@@ -140,7 +138,7 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
         let field_name = &field.ident;
 
         fields_new.push(expr!(
-            #field_name: #module_name::#ident::new()
+            #field_name: #module_name::#ident::INIT
         ));
 
         let item = syn::Field {
@@ -166,7 +164,11 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
         }
 
         impl#generic_header #input_ident #generic #where_clause {
-            pub fn fields() -> #field_type_name #generic {
+            const FIELDS: #field_type_name #generic = #field_type_name {
+                #fields_new
+            };
+            
+            fn fields() -> #field_type_name #generic {
                 #field_type_name {
                     #fields_new
                 }
