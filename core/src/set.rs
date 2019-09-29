@@ -1,7 +1,6 @@
 use super::*;
 
 pub mod tuple;
-pub mod func;
 
 use tuple::Tuple;
 

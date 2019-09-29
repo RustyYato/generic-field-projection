@@ -36,7 +36,7 @@ fn simple_test() {
     let x = Foo::fields().x;
 
     unsafe {
-        assert_eq!(*foo_pin.project_to(PinProjectableField::new_unchecked(x)), 3);
+        assert_eq!(*foo_pin.project_to(PinToPin::new_unchecked(x)), 3);
     }
 }
 
@@ -50,9 +50,9 @@ struct MyType<T> {
 #[test]
 pub fn generic_test() {
     impl<T> MyType_fields::z<MyType<T>> {
-        pub fn pin(self) -> PinProjectableField<Self> {
+        pub fn pin(self) -> PinToPin<Self> {
             unsafe {
-                PinProjectableField::new_unchecked(self)
+                PinToPin::new_unchecked(self)
             }
         }
     }

@@ -7,21 +7,18 @@ use super::*;
 /// TODO: add safety docs
 pub unsafe trait PinnablePointer: core::ops::Deref {}
 
-pub type PPF<F> = PinProjectableField<F>;
-pub type PTR<F> = PinToRef<F>;
-
 #[repr(transparent)]
 #[derive(Copy, Clone)]
-pub struct PinToRef<F: Field + ?Sized>(pub F);
+pub struct PinToPtr<F: Field + ?Sized>(pub F);
 
 /// A field-type which is pin-projectable
 #[repr(transparent)]
 #[derive(Copy, Clone)]
-pub struct PinProjectableField<F: Field + ?Sized> {
+pub struct PinToPin<F: Field + ?Sized> {
     field: F
 }
 
-unsafe impl<F: ?Sized + Field> Field for PinProjectableField<F> {
+unsafe impl<F: ?Sized + Field> Field for PinToPin<F> {
     type Parent = F::Parent;
     type Type = F::Type;
     type Name = F::Name;
@@ -42,7 +39,7 @@ unsafe impl<F: ?Sized + Field> Field for PinProjectableField<F> {
     }
 }
 
-unsafe impl<F: ?Sized + Field> Field for PinToRef<F> {
+unsafe impl<F: ?Sized + Field> Field for PinToPtr<F> {
     type Parent = F::Parent;
     type Type = F::Type;
     type Name = F::Name;
@@ -63,7 +60,7 @@ unsafe impl<F: ?Sized + Field> Field for PinToRef<F> {
     }
 }
 
-impl<F: Field> PinProjectableField<F> {
+impl<F: Field> PinToPin<F> {
     /// You must validate the safety notes of [`PinProjectable<F>`](trait.PinProjectable.html)
     #[inline]
     pub unsafe fn new_unchecked(field: F) -> Self {
@@ -74,8 +71,8 @@ impl<F: Field> PinProjectableField<F> {
     
     /// Convert to a dynamically dispatched field projection
     #[inline]
-    pub fn as_dyn_pin(&self) -> PinProjectableField<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>> {
-        PinProjectableField {
+    pub fn as_dyn_pin(&self) -> PinToPin<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>> {
+        PinToPin {
             field: &self.field
         }
     }
@@ -86,7 +83,7 @@ impl<F: Field> PinProjectableField<F> {
     }
 }
 
-impl<F: Field + ?Sized> PinProjectableField<F> {
+impl<F: Field + ?Sized> PinToPin<F> {
     /// You must validate the safety notes of [`PinProjectable<F>`](trait.PinProjectable.html)
     #[inline]
     pub unsafe fn from_ref_unchecked(field: &F) -> &Self {
@@ -95,14 +92,14 @@ impl<F: Field + ?Sized> PinProjectableField<F> {
     }
 
     #[inline]
-    pub fn as_ref(&self) -> PinProjectableField<&F> {
+    pub fn as_ref(&self) -> PinToPin<&F> {
         unsafe {
-            PinProjectableField::new_unchecked(&self.field)
+            PinToPin::new_unchecked(&self.field)
         }
     }
 }
 
-impl<F: Field> PinToRef<F> {
+impl<F: Field> PinToPtr<F> {
     /// You must validate the safety notes of [`PinProjectable<F>`](trait.PinProjectable.html)
     #[inline]
     pub fn new(field: F) -> Self {
@@ -111,12 +108,12 @@ impl<F: Field> PinToRef<F> {
     
     /// Convert to a dynamically dispatched field projection
     #[inline]
-    pub fn as_dyn_pin(&self) -> PinToRef<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>> {
-        PinToRef(&self.0)
+    pub fn as_dyn_pin(&self) -> PinToPtr<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>> {
+        PinToPtr(&self.0)
     }
 }
 
-impl<F: Field + ?Sized> PinToRef<F> {
+impl<F: Field + ?Sized> PinToPtr<F> {
     /// You must validate the safety notes of [`PinProjectable<F>`](trait.PinProjectable.html)
     #[inline]
     pub fn from_ref(field: &F) -> &Self {
@@ -127,7 +124,7 @@ impl<F: Field + ?Sized> PinToRef<F> {
     }
 
     #[inline]
-    pub fn as_ref(&self) -> PinToRef<&F> {
-        PinToRef(&self.0)
+    pub fn as_ref(&self) -> PinToPtr<&F> {
+        PinToPtr(&self.0)
     }
 }

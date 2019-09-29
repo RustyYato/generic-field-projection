@@ -71,10 +71,6 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
     let contents = &mut module.content.as_mut().unwrap().1;
 
-    let item_use = TokenStream::from(quote!(use ::gfp_core::derive::PhantomData;));
-    let item_use: syn::ItemUse = syn::parse_macro_input!(item_use as _);
-    contents.push(syn::Item::Use(item_use));
-
     let mut fields_marker = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
     let mut fields_new = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
 
@@ -88,12 +84,12 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
         contents.push(item!(
             #[allow(non_camel_case_types)]
-            pub struct #ident<T>(PhantomData<T>);
+            pub struct #ident<T>(::gfp_core::derive::Invariant<T>);
         ));
         
         contents.push(item!(
             impl<T> #ident<T> {
-                pub const INIT: Self = Self(PhantomData);
+                pub const INIT: Self = Self(::gfp_core::derive::Invariant(::gfp_core::derive::PhantomData));
             }
         ));
 
@@ -195,10 +191,6 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
     let contents = &mut module.content.as_mut().unwrap().1;
 
-    let item_use = TokenStream::from(quote!(use ::gfp_core::derive::PhantomData;));
-    let item_use: syn::ItemUse = syn::parse_macro_input!(item_use as _);
-    contents.push(syn::Item::Use(item_use));
-
     let mut fields_marker = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
     let mut fields_new = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
 
@@ -212,12 +204,12 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
         contents.push(item!(
             #[allow(non_camel_case_types)]
-            pub struct #ident<T>(PhantomData<T>);
+            pub struct #ident<T>(::gfp_core::derive::Invariant<T>);
         ));
         
         contents.push(item!(
             impl<T> #ident<T> {
-                pub const INIT: Self = Self(PhantomData);
+                pub const INIT: Self = Self(::gfp_core::derive::Invariant(::gfp_core::derive::PhantomData));
             }
         ));
 
@@ -301,6 +293,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 }
 
 fn derive_union(_ty: syn::DeriveInput) -> TokenStream {
+    // TODO: implement union support
     unimplemented!("Unions are currently unsupported")
 }
 

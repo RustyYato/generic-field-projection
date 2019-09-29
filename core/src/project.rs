@@ -1,52 +1,13 @@
 use super::*;
 
+mod from_pin;
+mod from_mut;
+mod from_ref;
+
 use core::pin::Pin;
+use core::ops::Deref;
+use core::marker::PhantomData;
 
-unsafe impl<F: ?Sized> PinnablePointer for &F {}
-impl<'a, F: Field> ProjectTo<F> for &'a F::Parent
-where F::Parent: 'a, F::Type: 'a {
-    type Projection = &'a F::Type;
+use crate::pin::*;
 
-    fn project_to(self, field: F) -> Self::Projection {
-        unsafe {
-            &*field.project_raw(self)
-        }
-    }
-}
-
-unsafe impl<F: ?Sized> PinnablePointer for &mut F {}
-impl<'a, F: Field> ProjectTo<F> for &'a mut F::Parent
-where F::Parent: 'a, F::Type: 'a {
-    type Projection = &'a mut F::Type;
-
-    fn project_to(self, field: F) -> Self::Projection {
-        unsafe {
-            &mut *field.project_raw_mut(self)
-        }
-    }
-}
-
-impl<'a, F: Field, P: PinnablePointer + ProjectTo<F>> ProjectTo<PinProjectableField<F>> for Pin<P>
-where P::Projection: core::ops::Deref<Target = F::Type> {
-    type Projection = Pin<P::Projection>;
-
-    fn project_to(self, pin_field: PinProjectableField<F>) -> Self::Projection {
-        unsafe {
-            let inner = Pin::into_inner_unchecked(self);
-
-            Pin::new_unchecked(inner.project_to(pin_field.field()))
-        }
-    }
-}
-
-impl<'a, F: Field, P: PinnablePointer + ProjectTo<F>> ProjectTo<PinToRef<F>> for Pin<P> {
-    type Projection = P::Projection;
-
-    fn project_to(self, pin_field: PinToRef<F>) -> Self::Projection {
-        unsafe {
-            let inner = Pin::into_inner_unchecked(self);
-
-            inner.project_to(pin_field.0)
-        }
-    }
-}
+use crate::set::tuple::TypeFunction;

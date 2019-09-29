@@ -44,7 +44,7 @@ fn simple() {
 #[test]
 fn pin() {
     use std::pin::Pin;
-    use gfp_core::{PPF, PTR};
+    use gfp_core::{PinToPin, PinToRef};
 
     let FooFields { x, y, .. } = Foo::fields();
     let BarFields { a, .. } = Bar::fields();
@@ -53,8 +53,8 @@ fn pin() {
     let foo_ref = Pin::new(&mut foo);
 
     let (mut x, y_a) = foo_ref.project_set_to((
-        unsafe { PPF::new_unchecked(x) },
-        PTR::new(y.chain(a))
+        unsafe { PinToPin::new_unchecked(x) },
+        PinToRef::new(y.chain(a))
     ));
 
     *x = 1;

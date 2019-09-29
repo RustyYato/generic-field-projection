@@ -8,7 +8,6 @@ of `Deref` that handles all pointer types equally.
 */
 
 mod project;
-mod project_set;
 mod pin;
 #[doc(hidden)]
 pub mod macros;
@@ -17,13 +16,23 @@ mod set;
 
 pub use self::pin::*;
 pub use self::chain::*;
-pub use self::set::{FieldSet, tuple::*};
+pub use self::set::FieldSet;
 pub use gfp_derive::Field;
+
+pub(crate) use self::set::tuple::*;
 
 #[doc(hidden)]
 pub mod derive {
     pub use core::marker::PhantomData;
     pub use core::iter::{Once, once};
+
+    pub struct Invariant<T: ?Sized>(pub PhantomData<*mut T>);
+
+    unsafe impl<T: ?Sized> Send for Invariant<T> {}
+    unsafe impl<T: ?Sized> Sync for Invariant<T> {}
+    
+    impl<T: ?Sized> Clone for Invariant<T> { fn clone(&self) -> Self { *self } }
+    impl<T: ?Sized> Copy for Invariant<T> {}
 }
 
 /// Projects a type to the given field
