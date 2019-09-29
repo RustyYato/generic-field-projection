@@ -37,6 +37,7 @@ unsafe impl<F: ?Sized + Field> Field for PinProjectableField<F> {
 
 impl<F: Field> PinProjectableField<F> {
     /// You must validate the safety notes of [`PinProjectable<F>`](trait.PinProjectable.html)
+    #[inline]
     pub unsafe fn new_unchecked(field: F) -> Self {
         Self {
             field
@@ -44,12 +45,14 @@ impl<F: Field> PinProjectableField<F> {
     }
     
     /// Convert to a dynamically dispatched field projection
+    #[inline]
     pub fn as_dyn_pin(&self) -> PinProjectableField<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>> {
         PinProjectableField {
             field: &self.field
         }
     }
     
+    #[inline]
     pub(crate) fn field(self) -> F {
         self.field
     }
@@ -57,11 +60,13 @@ impl<F: Field> PinProjectableField<F> {
 
 impl<F: Field + ?Sized> PinProjectableField<F> {
     /// You must validate the safety notes of [`PinProjectable<F>`](trait.PinProjectable.html)
+    #[inline]
     pub unsafe fn from_ref_unchecked(field: &F) -> &Self {
         #[allow(clippy::transmute_ptr_to_ptr)]
         core::mem::transmute::<&F, &Self>(field)
     }
 
+    #[inline]
     pub fn as_ref(&self) -> PinProjectableField<&F> {
         unsafe {
             PinProjectableField::new_unchecked(&self.field)
