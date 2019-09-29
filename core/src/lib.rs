@@ -18,6 +18,13 @@ mod set;
 pub use self::pin::*;
 pub use self::chain::*;
 pub use self::set::{FieldSet, tuple::*};
+pub use gfp_derive::Field;
+
+#[doc(hidden)]
+pub mod derive {
+    pub use core::marker::PhantomData;
+    pub use core::iter::{Once, once};
+}
 
 /// Projects a type to the given field
 pub trait ProjectTo<F: Field> {
@@ -38,6 +45,19 @@ pub trait ProjectToSet<F: FieldSet> {
 }
 
 /// Represents a field of some `Parent` type
+/// You can derive this trait for all fields of `Parent` by using
+/// 
+/// ```rust
+/// # mod __ {
+/// use gfp_core::Field;
+/// 
+/// #[derive(Field)]
+/// struct Foo {
+///     bar: u32,
+///     val: String
+/// }
+/// # }
+/// ```
 /// 
 /// # Safety
 /// 
@@ -99,6 +119,50 @@ pub trait ProjectToSet<F: FieldSet> {
 ///         &mut (*ptr).bar.tap.val
 ///     }
 /// }
+/// ```
+/// 
+/// But it is better to just derive `Field` on the types that you need to, and then use the [`chain`](trait.Fields.html#method.chain)
+/// combinator to project to the fields of fields
+/// 
+/// ```rust
+/// # mod main {
+/// use gfp_core::Field;
+/// 
+/// #[derive(Field)]
+/// struct Foo {
+///     bar: Bar
+/// }
+/// 
+/// #[derive(Field)]
+/// struct Bar {
+///     tap: Tap
+/// }
+/// 
+/// #[derive(Field)]
+/// struct Tap {
+///     val: u32
+/// }
+/// 
+/// fn main() {
+///     let foo_to_val = Foo::fields().bar.chain(
+///         Bar::fields().tap
+///     ).chain(
+///         Tap::fields().val
+///     );
+/// 
+///     // or if you are going to use that projection a lot
+///     
+///     use gfp_core::Chain;
+///     
+///     const FOO_TO_VAL: Chain<Chain<Foo_fields::bar::<Foo>, Bar_fields::tap::<Bar>>, Tap_fields::val::<Tap>> = Chain::new(
+///         Chain::new(
+///             Foo::FIELDS.bar,
+///             Bar::FIELDS.tap,
+///         ),
+///         Tap::FIELDS.val,
+///     );
+/// }
+/// # }
 /// ```
 /// 
 pub unsafe trait Field {

@@ -1,0 +1,20 @@
+[package]
+name = "gfp-derive"
+version = "0.1.0"
+authors = ["Ozaren <krishna.sd.2012@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+
+proc-macro = true
+
+[dependencies]
+proc-macro2 = '*'
+syn = { version = '*', features = ['full'] }
+quote = '*'
+proc_macro_roids = '*'
+
+[dev-dependencies]
+gfp-core = { path = '../core' }
