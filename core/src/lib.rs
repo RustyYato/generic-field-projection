@@ -45,6 +45,19 @@ pub trait ProjectToSet<F: FieldSet> {
 }
 
 /// Represents a field of some `Parent` type
+/// You can derive this trait for all fields of `Parent` by using
+/// 
+/// ```rust
+/// # mod __ {
+/// use gfp_core::Field;
+/// 
+/// #[derive(Field)]
+/// struct Foo {
+///     y: u8,
+///     x: u32,
+/// }
+/// # }
+/// ```
 /// 
 /// e.x.
 /// 
