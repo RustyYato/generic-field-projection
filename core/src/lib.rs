@@ -53,8 +53,7 @@ pub trait ProjectToSet<F: FieldSet> {
 /// 
 /// #[derive(Field)]
 /// struct Foo {
-///     y: u8,
-///     x: u32,
+///     bar: Bar
 /// }
 /// # }
 /// ```
