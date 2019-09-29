@@ -38,3 +38,15 @@ where P::Projection: core::ops::Deref<Target = F::Type> {
         }
     }
 }
+
+impl<'a, F: Field, P: PinnablePointer + ProjectTo<F>> ProjectTo<PinToRef<F>> for Pin<P> {
+    type Projection = P::Projection;
+
+    fn project_to(self, pin_field: PinToRef<F>) -> Self::Projection {
+        unsafe {
+            let inner = Pin::into_inner_unchecked(self);
+
+            inner.project_to(pin_field.0)
+        }
+    }
+}
