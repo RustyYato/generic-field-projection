@@ -1,5 +1,5 @@
-#![feature(const_fn_union, const_fn)]
-#![forbid(missing_docs)]
+#![feature(const_fn_union, const_fn, specialization)]
+// #![forbid(missing_docs)]
 #![no_std]
 
 /*!
@@ -8,14 +8,16 @@ of `Deref` that handles all pointer types equally.
 */
 
 mod project;
+mod project_set;
 mod pin;
-mod field_type;
-mod descriptor;
-mod macros;
+#[doc(hidden)]
+pub mod macros;
+mod chain;
+mod set;
 
 pub use self::pin::*;
-pub use self::field_type::*;
-pub use self::descriptor::*;
+pub use self::chain::*;
+pub use self::set::{FieldSet, tuple::*};
 
 #[doc(hidden)]
 pub mod derive {
@@ -23,12 +25,21 @@ pub mod derive {
 }
 
 /// Projects a type to the given field
-pub trait ProjectTo<F: Field + ?Sized> {
+pub trait ProjectTo<F: Field> {
     /// The projection of the type, can be used to directly access the field
     type Projection;
 
     /// projects to the given field
-    fn project_to(self, field: &F) -> Self::Projection;
+    fn project_to(self, field: F) -> Self::Projection;
+}
+
+/// Projects a type to the given field
+pub trait ProjectToSet<F: FieldSet> {
+    /// The projection of the type, can be used to directly access the field
+    type Projection;
+
+    /// projects to the given field
+    fn project_set_to(self, field: F) -> Self::Projection;
 }
 
 /// Represents a field of some `Parent` type
@@ -37,7 +48,6 @@ pub trait ProjectTo<F: Field + ?Sized> {
 /// 
 /// ```rust
 /// # use gfp_core::*;
-/// #[repr(C)]
 /// struct Foo {
 ///     y: u8,
 ///     x: u32,
@@ -51,10 +61,19 @@ pub trait ProjectTo<F: Field + ?Sized> {
 ///     
 ///     // Field `x` of type `Foo` has the type ` 
 ///     type Type = u32;
+/// 
+///     type Name = std::iter::Once<&'static str>;
 ///     
-///     // Field `x` is offset `4` bytes from the start of `Foo`
-///     fn field_descriptor(&self) -> FieldDescriptor<Self::Parent, Self::Type> {
-///         unsafe { FieldDescriptor::from_offset(4) }
+///     fn name(&self) -> Self::Name {
+///         std::iter::once("x")
+///     }
+///     
+///     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+///         &(*ptr).x
+///     }
+/// 
+///     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+///         &mut (*ptr).x
 ///     }
 /// }
 /// ```
@@ -73,129 +92,73 @@ pub unsafe trait Field {
     /// The type of the field itself
     type Type: ?Sized;
 
-    /// Get the field descriptor that can be used to access the field
-    fn field_descriptor(&self) -> FieldDescriptor<Self::Parent, Self::Type>;
+    /// An iterator that returns the fuully qualified name of the field
+    type Name: Iterator<Item = &'static str>;
 
-    /// Convert to an efficient dynamic representation
-    fn into_dyn(self) -> FieldType<Self::Parent, Self::Type> where Self:Sized {
-        FieldType { descriptor: self.field_descriptor() }
-    }
-}
+    /// An iterator that returns the fully qualified name of the field
+    /// 
+    /// This must be unique for each field of the given `Parent` type
+    fn name(&self) -> Self::Name;
 
-#[test]
-#[allow(non_camel_case_types)]
-fn simple_test() {
-    struct MyType {
-        _x: u8,
-        _y: u8,
-        z: u32,
-    }
-
-    field!(MyType_z(MyType => u32), z, MyType { _x: 0, _y: 0, z: 0 });
-
-    impl MyType_z {
-        pub fn pin() -> PinProjectableField<Self> {
-            unsafe { PinProjectableField::new_unchecked(Self::new()) }
-        }
-    }
-
-    let my_type = MyType {
-        _x: 0,
-        _y: 1,
-        z: 3
-    };
-
-    use core::pin::Pin;
-
-    let my_type_pin = Pin::new(&my_type);
-
-    assert_eq!(*my_type_pin.project_to(&MyType_z::pin()), 3);
-}
-
-#[test]
-pub fn generic_test() {
-    use core::marker::PhantomData;
-
-    #[repr(C)]
-    struct MyType<T> {
-        x: u8,
-        y: u8,
-        z: T
-    }
-
-    #[allow(non_camel_case_types)]
-    struct MyType_z<T>(PhantomData<fn(T) -> T>);
-
-    unsafe impl<T> Field for MyType_z<T> {
-        type Parent = MyType<T>;
-        type Type = T;
-
-        fn field_descriptor(&self) -> FieldDescriptor<MyType<T>, T> {
-            unsafe {
-                FieldDescriptor::from_offset(core::mem::align_of::<T>().max(2))
-            }
-        }
-    }
-
-    impl<T> MyType_z<T> {
-        pub fn new() -> Self {
-            Self(PhantomData)
-        }
-        
-        pub fn pin() -> PinProjectableField<Self> {
-            unsafe {
-                PinProjectableField::new_unchecked(Self::new())
-            }
-        }
-    }
-
-    assert_eq!(core::mem::size_of_val(&MyType_z::<u32>::pin()), 0);
-
-    use core::pin::Pin;
-
-    let my_type = MyType {
-        x: 0,
-        y: 1,
-        z: 3u8
-    };
-
-    let my_type_pin = Pin::new(&my_type);
-
-    assert_eq!(*my_type_pin.project_to(&MyType_z::pin()), 3);
+    /// projects the raw pointer from the `Parent` type to the field `Type`
+    /// 
+    /// # Safety
+    /// 
+    /// * `ptr` must point to a valid, initialized allocation of `Parent`
+    /// * the projection is not safe to write to
+    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type;
     
-    let my_type = MyType {
-        x: 0,
-        y: 1,
-        z: 3u32
-    };
+    /// projects the raw pointer from the `Parent` type to the field `Type`
+    /// 
+    /// # Safety
+    /// 
+    /// `ptr` must point to a valid, initialized allocation of `Parent`
+    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type;
 
-    let my_type_pin = Pin::new(&my_type);
-
-    assert_eq!(*my_type_pin.project_to(&MyType_z::pin()), 3);
+    /// Chains the projection of this field with another field `F`
+    fn chain<F: Field<Parent = Self::Type>>(self, f: F) -> Chain<Self, F> where Self: Sized {
+        Chain::new(self, f)
+    }
 }
 
-#[test]
-#[allow(non_camel_case_types, dead_code)]
-fn test_dyn() {
-    struct MyType {
-        x: u8,
-        y: u8,
-        z: u8,
+unsafe impl<F: ?Sized + Field> Field for &F {
+    type Parent = F::Parent;
+    type Type = F::Type;
+    type Name = F::Name;
+
+    #[inline]
+    fn name(&self) -> Self::Name {
+        F::name(self)
     }
+    
+    #[inline]
+    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+        F::project_raw(self, ptr)
+    }
+    
+    #[inline]
+    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+        F::project_raw_mut(self, ptr)
+    }
+}
 
-    field!(MyType_x(MyType => u8), x, MyType { x: 0, y: 0, z: 0 });
-    field!(MyType_y(MyType => u8), y, MyType { x: 0, y: 0, z: 0 });
-    field!(MyType_z(MyType => u8), z, MyType { x: 0, y: 0, z: 0 });
+unsafe impl<F: ?Sized + Field> Field for &mut F {
+    type Parent = F::Parent;
+    type Type = F::Type;
+    type Name = F::Name;
 
-    let my_type = MyType {
-        x: 0,
-        y: 1,
-        z: 2
-    };
-
-    let fields = [MyType_x.into_dyn(), MyType_y.into_dyn(), MyType_z.into_dyn()];
-
-    for (i, field) in fields.iter().enumerate() {
-        assert_eq!(*my_type.project_to(field), i as u8)
+    #[inline]
+    fn name(&self) -> Self::Name {
+        F::name(self)
+    }
+ 
+    #[inline]   
+    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+        F::project_raw(self, ptr)
+    }
+    
+    #[inline]
+    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+        F::project_raw_mut(self, ptr)
     }
 }
