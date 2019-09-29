@@ -1,4 +1,21 @@
 
+#[macro_export]
+macro_rules! type_function {
+    (
+        $($(for($($g_params:tt)*))? fn($self:ident:$func:ty $(, $param:ident: $type:ty )* $(,)? ) -> $output:ty $block:block)*
+    ) => {$(
+        #[allow(unused_parens)]
+        impl $(<$($g_params)*>)? $crate::TypeFunction<($($type),*)> for $func {
+            type Output = $output;
+
+            #[inline]
+            fn call(&mut $self, ($($param),*): ($($type),*)) -> Self::Output {
+                $block
+            }
+        }
+    )*};
+}
+
 pub type FuncOut<F, I> = <F as TypeFunction<I>>::Output;
 
 pub trait TypeFunction<Input> {

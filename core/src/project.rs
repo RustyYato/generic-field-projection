@@ -9,5 +9,3 @@ use core::ops::Deref;
 use core::marker::PhantomData;
 
 use crate::pin::*;
-
-use crate::set::tuple::TypeFunction;

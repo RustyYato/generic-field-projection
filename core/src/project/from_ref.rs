@@ -3,19 +3,10 @@ use super::*;
 
 pub struct PtrToRef<'a>(PhantomData<&'a ()>);
 
-impl<'a> PtrToRef<'a> {
-    #[inline]
-    pub(crate) unsafe fn new() -> Self {
-        Self(PhantomData)
-    }
-}
-
-impl<'a, T: ?Sized + 'a> TypeFunction<*const T> for PtrToRef<'a> {
-    type Output = &'a T;
-
-    #[inline]
-    fn call(&mut self, input: *const T) -> Self::Output {
-        unsafe { &*input }
+type_function! {
+    for('a, T: 'a + ?Sized)
+    fn(self: PtrToRef<'a>, ptr: *const T) -> &'a T {
+        unsafe { &*ptr }
     }
 }
 
@@ -40,7 +31,7 @@ where F::Parent: 'a,
     fn project_set_to(self, field: F) -> Self::Projection {
         unsafe {
             let type_set = field.project_raw(self);
-            type_set.tup_map(PtrToRef::new())
+            type_set.tup_map(PtrToRef(PhantomData))
         }
     }
 }

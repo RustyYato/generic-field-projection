@@ -9,12 +9,10 @@ impl<'a> PtrToRefMut<'a> {
     }
 }
 
-impl<'a, T: ?Sized + 'a> TypeFunction<*mut T> for PtrToRefMut<'a> {
-    type Output = &'a mut T;
-
-    #[inline]
-    fn call(&mut self, input: *mut T) -> Self::Output {
-        unsafe { &mut *input }
+type_function! {
+    for('a, T: 'a + ?Sized)
+    fn(self: PtrToRefMut<'a>, ptr: *mut T) -> &'a mut T {
+        unsafe { &mut *ptr }
     }
 }
 
@@ -35,12 +33,15 @@ pub struct FindOverlap<S> {
     set: S
 }
 
-impl<S, I: Field> TypeFunction<I> for FindOverlap<S>
-where S: Copy + TupleAny<FindOverlapInner<I>> {
-    type Output = bool;
+pub struct FindOverlapInner<I> {
+    id: u64,
+    counter: u64,
+    field: I
+}
 
-    #[inline]
-    fn call(&mut self, input: I) -> bool {
+type_function! {
+    for(S: Copy + TupleAny<FindOverlapInner<I>>, I: Field)
+    fn(self: FindOverlap<S>, input: I) -> bool {
         self.counter += 1;
         self.set.tup_any(FindOverlapInner {
             id: self.counter,
@@ -48,19 +49,9 @@ where S: Copy + TupleAny<FindOverlapInner<I>> {
             field: input
         })
     }
-}
-
-pub struct FindOverlapInner<I> {
-    id: u64,
-    counter: u64,
-    field: I
-}
-
-impl<I: Field, J: Field> TypeFunction<J> for FindOverlapInner<I> {
-    type Output = bool;
-
-    #[inline]
-    fn call(&mut self, input: J) -> bool {
+    
+    for(I: Field, J: Field)
+    fn(self: FindOverlapInner<I>, input: J) -> bool {
         self.counter += 1;
 
         if self.id <= self.counter {

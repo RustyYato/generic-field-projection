@@ -26,59 +26,37 @@ impl<'a, F: Field, P: PinnablePointer + ProjectTo<F>> ProjectTo<PinToPtr<F>> for
 }
 
 pub struct MakePin;
-pub struct MakeRef;
+pub struct MakePtr;
 
-pub struct CheckMake;
+pub struct CreateTag;
 
-impl<F: Field> TypeFunction<PinToPin<F>> for CheckMake {
-    type Output = MakePin;
+pub struct BuildOutput;
 
-    #[inline]
-    fn call(&mut self, _: PinToPin<F>) -> Self::Output { MakePin }
-}
+type_function! {
+    for(F: Field) fn(self: CreateTag, _pin_to_pin: PinToPin<F>) -> MakePin { MakePin }
 
-impl<F: Field> TypeFunction<PinToPtr<F>> for CheckMake {
-    type Output = MakeRef;
+    for(F: Field) fn(self: CreateTag, _pin_to_ptr: PinToPtr<F>) -> MakePtr { MakePtr }
 
-    #[inline]
-    fn call(&mut self, _: PinToPtr<F>) -> Self::Output { MakeRef }
-}
+    for(T: Deref) fn(self: BuildOutput, MakePin: MakePin, value: T) -> Pin<T> { unsafe { Pin::new_unchecked(value) } }
 
-pub struct PinCombine;
-
-impl<T: Deref> TypeFunction<(MakePin, T)> for PinCombine {
-    type Output = Pin<T>;
-
-    #[inline]
-    fn call(&mut self, (MakePin, value): (MakePin, T)) -> Self::Output {
-        unsafe { Pin::new_unchecked(value) }
-    }
-}
-
-impl<T> TypeFunction<(MakeRef, T)> for PinCombine {
-    type Output = T;
-
-    #[inline]
-    fn call(&mut self, (MakeRef, value): (MakeRef, T)) -> Self::Output {
-        value
-    }
+    for(T) fn(self: BuildOutput, MakePtr: MakePtr, value: T) -> T { value }
 }
 
 impl<F: Copy + FieldSet, P: ProjectToSet<F> + Deref> ProjectToSet<F> for Pin<P>
 where
-    F: TupleMap<CheckMake>,
-    TMap<F, CheckMake>: TupleZip<P::Projection, PinCombine>
+    F: TupleMap<CreateTag>,
+    TMap<F, CreateTag>: TupleZip<P::Projection, BuildOutput>
 {
-    type Projection = TZip<TMap<F, CheckMake>, P::Projection, PinCombine>;
+    type Projection = TZip<TMap<F, CreateTag>, P::Projection, BuildOutput>;
 
     #[inline]
     fn project_set_to(self, field: F) -> Self::Projection {
-        let check_make = field.tup_map(CheckMake);
+        let tags = field.tup_map(CreateTag);
         unsafe {
-            let project = Pin::into_inner_unchecked(self)
+            let raw_output = Pin::into_inner_unchecked(self)
                 .project_set_to(field);
             
-            check_make.tup_zip(project, PinCombine)
+            tags.tup_zip(raw_output, BuildOutput)
         }
     }
 }
