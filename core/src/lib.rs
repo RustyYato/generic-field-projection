@@ -39,47 +39,68 @@ pub trait ProjectToSet<F: FieldSet> {
 
 /// Represents a field of some `Parent` type
 /// 
-/// e.x.
-/// 
-/// ```rust
-/// # use gfp_core::*;
-/// struct Foo {
-///     y: u8,
-///     x: u32,
-/// }
-/// 
-/// struct Foo_x;
-/// 
-/// unsafe impl Field for Foo_x {
-///     // Parent type of `Foo_x` is `Foo`, because field `x` is from type `Foo`
-///     type Parent = Foo;
-///     
-///     // Field `x` of type `Foo` has the type ` 
-///     type Type = u32;
-/// 
-///     type Name = std::iter::Once<&'static str>;
-///     
-///     fn name(&self) -> Self::Name {
-///         std::iter::once("x")
-///     }
-///     
-///     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
-///         &(*ptr).x
-///     }
-/// 
-///     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
-///         &mut (*ptr).x
-///     }
-/// }
-/// ```
-/// 
 /// # Safety
 /// 
 /// * `Parent` must represent the type where the field came from
 /// * `Type` must represent the type of the field itself
-/// * `field_descriptor` must return the correct descriptor for the given field
-///     * i.e. using `FieldDescriptor::project_raw_unchecked` on a valid `*const Field::Parent` should be sound
-/// * `into_dyn` must not have a different implementation from the default implementation
+/// * `project_raw` and `project_raw_mut` must only access the given field
+/// * `name` must return an iterator that yields all of the fields from `Parent` to the given field,
+/// 
+/// ex.
+/// 
+/// ```rust
+/// struct Foo {
+///     bar: Bar
+/// }
+/// 
+/// struct Bar {
+///     tap: Tap
+/// }
+/// 
+/// struct Tap {
+///     val: u32
+/// }
+/// ```
+/// 
+/// if want to get field `val` from `Foo`,
+/// 
+/// you must implement field like so,
+/// 
+/// ```rust
+/// # struct Foo {
+/// #     bar: Bar
+/// # }
+/// # 
+/// # struct Bar {
+/// #     tap: Tap
+/// # }
+/// # 
+/// # struct Tap {
+/// #     val: u32
+/// # }
+/// use gfp_core::Field;
+/// 
+/// struct FieldVal;
+/// 
+/// unsafe impl Field for FieldVal {
+///     type Parent = Foo;
+///     type Type = u32;
+///     type Name = std::iter::Copied<std::slice::Iter<'static, &'static str>>;
+///     
+///     fn name(&self) -> Self::Name {
+///         ["bar", "tap", "val"].iter().copied()
+///     }
+///     
+///     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+///         &(*ptr).bar.tap.val
+///     }
+///     
+///     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+///         &mut (*ptr).bar.tap.val
+///     }
+/// }
+/// ```
+/// 
 pub unsafe trait Field {
     /// The type that the field comes from
     type Parent: ?Sized;
