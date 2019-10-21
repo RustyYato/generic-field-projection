@@ -41,10 +41,7 @@ where
     #[inline]
     fn project_set_to(self, field: F) -> Self::Projection {
         unsafe {
-            if field.tup_any(FindOverlap {
-                counter: 0,
-                set: field,
-            }) {
+            if field.tup_any(FindOverlap::new(field)) {
                 panic!("Found overlapping fields")
             } else {
                 let type_set = field.project_raw_mut(self);

@@ -29,10 +29,9 @@ mod alloc {
 
 #[doc(hidden)]
 pub mod macros;
-mod pin;
-mod pin;
 pub mod project;
-mod project;
+pub mod chain;
+pub mod pin;
 mod set;
 
 pub use self::chain::*;
