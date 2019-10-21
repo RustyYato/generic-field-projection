@@ -6,7 +6,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        rust: [nightly]
+        rust: [stable]
         components: ['fmt']
 
     steps:
@@ -15,4 +15,4 @@ jobs:
         rust-version: ${{ matrix.rust }}
     - uses: actions/checkout@master
     - name: Run tests
-      run: cargo +nightly fmt --verbose
+      run: cargo fmt -- --check
