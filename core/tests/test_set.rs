@@ -30,9 +30,7 @@ fn simple() {
     let FooFields { x, y, .. } = Foo::fields();
     let BarFields { a, .. } = Bar::fields();
 
-    let (x, y_a) = foo_ref.project_set_to((
-        x, y.chain(a)
-    ));
+    let (x, y_a) = foo_ref.project_set_to((x, y.chain(a)));
 
     *x = 1;
     *y_a = 10;
@@ -43,8 +41,8 @@ fn simple() {
 
 #[test]
 fn pin() {
-    use std::pin::Pin;
     use gfp_core::{PinToPin, PinToPtr};
+    use std::pin::Pin;
 
     let FooFields { x, y, .. } = Foo::fields();
     let BarFields { a, .. } = Bar::fields();
@@ -54,7 +52,7 @@ fn pin() {
 
     let (mut x, y_a) = foo_ref.project_set_to((
         unsafe { PinToPin::new_unchecked(x) },
-        PinToPtr::new(y.chain(a))
+        PinToPtr::new(y.chain(a)),
     ));
 
     *x = 1;

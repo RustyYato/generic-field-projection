@@ -1,9 +1,9 @@
 use super::*;
 
 /// A marker trait that specifies pointer safely project inside of a pin
-/// 
+///
 /// # Safety
-/// 
+///
 /// TODO: add safety docs
 pub unsafe trait PinnablePointer: core::ops::Deref {}
 
@@ -15,7 +15,7 @@ pub struct PinToPtr<F: Field + ?Sized>(pub F);
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct PinToPin<F: Field + ?Sized> {
-    field: F
+    field: F,
 }
 
 unsafe impl<F: ?Sized + Field> Field for PinToPin<F> {
@@ -27,12 +27,12 @@ unsafe impl<F: ?Sized + Field> Field for PinToPin<F> {
     fn name(&self) -> Self::Name {
         F::name(&self.field)
     }
-    
+
     #[inline]
     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
         F::project_raw(&self.field, ptr)
     }
-    
+
     #[inline]
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
         F::project_raw_mut(&self.field, ptr)
@@ -48,12 +48,12 @@ unsafe impl<F: ?Sized + Field> Field for PinToPtr<F> {
     fn name(&self) -> Self::Name {
         F::name(&self.0)
     }
-    
+
     #[inline]
     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
         F::project_raw(&self.0, ptr)
     }
-    
+
     #[inline]
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
         F::project_raw_mut(&self.0, ptr)
@@ -64,19 +64,17 @@ impl<F: Field> PinToPin<F> {
     /// You must validate the safety notes of [`PinProjectable<F>`](trait.PinProjectable.html)
     #[inline]
     pub unsafe fn new_unchecked(field: F) -> Self {
-        Self {
-            field
-        }
+        Self { field }
     }
-    
+
     /// Convert to a dynamically dispatched field projection
     #[inline]
-    pub fn as_dyn_pin(&self) -> PinToPin<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>> {
-        PinToPin {
-            field: &self.field
-        }
+    pub fn as_dyn_pin(
+        &self,
+    ) -> PinToPin<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>> {
+        PinToPin { field: &self.field }
     }
-    
+
     #[inline]
     pub(crate) fn field(self) -> F {
         self.field
@@ -93,9 +91,7 @@ impl<F: Field + ?Sized> PinToPin<F> {
 
     #[inline]
     pub fn as_ref(&self) -> PinToPin<&F> {
-        unsafe {
-            PinToPin::new_unchecked(&self.field)
-        }
+        unsafe { PinToPin::new_unchecked(&self.field) }
     }
 }
 
@@ -105,10 +101,12 @@ impl<F: Field> PinToPtr<F> {
     pub fn new(field: F) -> Self {
         Self(field)
     }
-    
+
     /// Convert to a dynamically dispatched field projection
     #[inline]
-    pub fn as_dyn_pin(&self) -> PinToPtr<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>> {
+    pub fn as_dyn_pin(
+        &self,
+    ) -> PinToPtr<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>> {
         PinToPtr(&self.0)
     }
 }
