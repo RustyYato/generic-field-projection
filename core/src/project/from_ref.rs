@@ -1,15 +1,6 @@
 
 use super::*;
 
-pub struct PtrToRef<'a>(PhantomData<&'a ()>);
-
-type_function! {
-    for('a, T: 'a + ?Sized)
-    fn(self: PtrToRef<'a>, ptr: *const T) -> &'a T {
-        unsafe { &*ptr }
-    }
-}
-
 unsafe impl<F: ?Sized> PinnablePointer for &F {}
 impl<'a, F: Field> ProjectTo<F> for &'a F::Parent
 where F::Parent: 'a, F::Type: 'a {

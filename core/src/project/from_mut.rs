@@ -28,41 +28,6 @@ where F::Parent: 'a, F::Type: 'a {
     }
 }
 
-pub struct FindOverlap<S> {
-    counter: u64,
-    set: S
-}
-
-pub struct FindOverlapInner<I> {
-    id: u64,
-    counter: u64,
-    field: I
-}
-
-type_function! {
-    for(S: Copy + TupleAny<FindOverlapInner<I>>, I: Field)
-    fn(self: FindOverlap<S>, input: I) -> bool {
-        self.counter += 1;
-        self.set.tup_any(FindOverlapInner {
-            id: self.counter,
-            counter: 0,
-            field: input
-        })
-    }
-    
-    for(I: Field, J: Field)
-    fn(self: FindOverlapInner<I>, input: J) -> bool {
-        self.counter += 1;
-
-        if self.id <= self.counter {
-            return false
-        }
-
-        self.field.name().zip(input.name())
-            .all(|(i, j)| i == j)
-    }
-}
-
 impl<'a, F: FieldSet> ProjectToSet<F> for &'a mut F::Parent
 where F::Parent: 'a,
       F::TypeSetMut: TupleMap<PtrToRefMut<'a>>,
@@ -73,10 +38,7 @@ where F::Parent: 'a,
     #[inline]
     fn project_set_to(self, field: F) -> Self::Projection {
         unsafe {
-            if field.tup_any(FindOverlap {
-                    counter: 0,
-                    set: field
-                }) {
+            if field.tup_any(FindOverlap::new(field)) {
                 panic!("Found overlapping fields")
             } else {
                 let type_set = field.project_raw_mut(self);

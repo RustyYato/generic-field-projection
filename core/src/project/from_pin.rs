@@ -1,7 +1,7 @@
 use super::*;
 
 impl<'a, F: Field, P: PinnablePointer + ProjectTo<F>> ProjectTo<PinToPin<F>> for Pin<P>
-where P::Projection: core::ops::Deref<Target = F::Type> {
+where P::Projection: std::ops::Deref<Target = F::Type> {
     type Projection = Pin<P::Projection>;
 
     fn project_to(self, pin_field: PinToPin<F>) -> Self::Projection {
@@ -42,7 +42,7 @@ type_function! {
     for(T) fn(self: BuildOutput, MakePtr: MakePtr, value: T) -> T { value }
 }
 
-impl<F: Copy + FieldSet, P: ProjectToSet<F> + Deref> ProjectToSet<F> for Pin<P>
+impl<F: Copy + FieldSet, P: ProjectToSet<F> + PinnablePointer> ProjectToSet<F> for Pin<P>
 where
     F: TupleMap<CreateTag>,
     TMap<F, CreateTag>: TupleZip<P::Projection, BuildOutput>

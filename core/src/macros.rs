@@ -1,5 +1,5 @@
 
-pub use core::iter::{Once, once};
+pub use std::iter::{Once, once};
 
 /// Create a new field descriptor for the given type
 #[macro_export]

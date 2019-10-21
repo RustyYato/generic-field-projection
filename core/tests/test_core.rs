@@ -1,5 +1,8 @@
 #![allow(non_camel_case_types, clippy::blacklisted_name)]
 
+#[global_allocator]
+static ALLOC: static_alloc::Slab<[u8; 1 << 16]> = static_alloc::Slab::uninit();
+
 use gfp_core::*;
 
 #[derive(Default, Field)]

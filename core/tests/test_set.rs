@@ -1,5 +1,8 @@
 #![allow(non_camel_case_types, clippy::blacklisted_name)]
 
+#[global_allocator]
+static ALLOC: static_alloc::Slab<[u8; 1 << 16]> = static_alloc::Slab::uninit();
+
 use gfp_core::*;
 
 #[derive(Default, Field)]
@@ -62,4 +65,25 @@ fn pin() {
 
     assert_eq!(foo.x, 1);
     assert_eq!(foo.y.a, 10);
+}
+
+#[test]
+fn arc() {
+    let mut foo = Foo::default();
+
+    foo.x = 10;
+    foo.y.a = 13;
+
+    let arc = std::sync::Arc::new(foo);
+
+    let foo = Foo::fields();
+    let bar = Bar::fields();
+
+    let (foo_x, foo_y_a) = arc.clone().project_set_to((
+        foo.x,
+        foo.y.chain(bar.a)
+    )).split();
+
+    assert_eq!(*foo_x, 10);
+    assert_eq!(*foo_y_a, 13);
 }

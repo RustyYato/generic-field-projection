@@ -17,7 +17,7 @@ impl<A, B> Chain<A, B> {
 unsafe impl<A: Field, B: Field<Parent = A::Type>> Field for Chain<A, B> {
     type Parent = A::Parent;
     type Type = B::Type;
-    type Name = core::iter::Chain<A::Name, B::Name>;
+    type Name = std::iter::Chain<A::Name, B::Name>;
 
     #[inline]
     fn name(&self) -> Self::Name {
