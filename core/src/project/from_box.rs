@@ -1,8 +1,8 @@
 use super::*;
 
 use crate::alloc::Box;
-use std::ptr::NonNull;
 use std::ops::DerefMut;
+use std::ptr::NonNull;
 
 pub struct PtrToNonNull;
 
@@ -32,7 +32,9 @@ unsafe impl<#[may_dangle] T: ?Sized, #[may_dangle] F: ?Sized> DerefMut for BoxPr
 
 impl<T: ?Sized, F: ?Sized> Drop for BoxProjection<T, F> {
     fn drop(&mut self) {
-        unsafe { Box::from_raw(self.bx.as_ptr()); }
+        unsafe {
+            Box::from_raw(self.bx.as_ptr());
+        }
     }
 }
 
@@ -55,7 +57,7 @@ impl<F: Field> ProjectTo<F> for Box<F::Parent> {
 // impl<'a, F: FieldSet> ProjectToSet<F> for Box<F::Parent>
 // where F::Parent: 'a,
 //       F::TypeSetMut: TupleMap<PtrToNonNull>,
-      
+
 //       F: Copy + TupleAny<FindOverlap<F>> {
 //     type Projection = TMap<F::TypeSetMut, PtrToNonNull>;
 

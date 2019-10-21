@@ -1,11 +1,10 @@
-
 use super::*;
 
 use crate::alloc::Rc;
 
 pub struct ProjectedRc<P: ?Sized, T: ?Sized> {
     _own: Rc<P>,
-    field: *const T
+    field: *const T,
 }
 
 impl<P: ?Sized, T: ?Sized> Deref for ProjectedRc<P, T> {
@@ -23,16 +22,14 @@ impl<F: Field> ProjectTo<F> for Rc<F::Parent> {
     fn project_to(self, field: F) -> Self::Projection {
         unsafe {
             let field = field.project_raw(&self as &_);
-            ProjectedRc {
-                _own: self, field
-            }
+            ProjectedRc { _own: self, field }
         }
     }
 }
 
 pub struct ProjectedRcSet<P: ?Sized, T: ?Sized> {
     _own: Rc<P>,
-    field: T
+    field: T,
 }
 
 pub struct Split<P: ?Sized>(Rc<P>);
@@ -46,13 +43,15 @@ type_function! {
 
 impl<P: ?Sized, T> ProjectedRcSet<P, T> {
     pub fn get<'a>(&'a self) -> TMap<T, PtrToRef<'a>>
-        where T: Copy + TupleMap<PtrToRef<'a>>
+    where
+        T: Copy + TupleMap<PtrToRef<'a>>,
     {
         self.field.tup_map(PtrToRef(PhantomData))
     }
-    
+
     pub fn split(self) -> TMap<T, Split<P>>
-        where T: Copy + TupleMap<Split<P>>
+    where
+        T: Copy + TupleMap<Split<P>>,
     {
         self.field.tup_map(Split(self._own))
     }

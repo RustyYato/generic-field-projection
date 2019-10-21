@@ -27,11 +27,11 @@ mod alloc {
     pub use alloc_crate::sync::Arc;
 }
 
-pub mod project;
-mod pin;
 #[doc(hidden)]
 pub mod macros;
 mod pin;
+mod pin;
+pub mod project;
 mod project;
 mod set;
 
@@ -292,12 +292,12 @@ unsafe impl<F: ?Sized + Field> Field for alloc::Box<F> {
     fn name(&self) -> Self::Name {
         F::name(self)
     }
- 
-    #[inline]   
+
+    #[inline]
     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
         F::project_raw(self, ptr)
     }
-    
+
     #[inline]
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
         F::project_raw_mut(self, ptr)
@@ -314,12 +314,12 @@ unsafe impl<F: ?Sized + Field> Field for alloc::Rc<F> {
     fn name(&self) -> Self::Name {
         F::name(self)
     }
- 
-    #[inline]   
+
+    #[inline]
     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
         F::project_raw(self, ptr)
     }
-    
+
     #[inline]
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
         F::project_raw_mut(self, ptr)
@@ -336,12 +336,12 @@ unsafe impl<F: ?Sized + Field> Field for alloc::Arc<F> {
     fn name(&self) -> Self::Name {
         F::name(self)
     }
- 
-    #[inline]   
+
+    #[inline]
     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
         F::project_raw(self, ptr)
     }
-    
+
     #[inline]
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
         F::project_raw_mut(self, ptr)

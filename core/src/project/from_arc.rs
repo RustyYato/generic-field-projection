@@ -1,11 +1,10 @@
-
 use super::*;
 
 use crate::alloc::Arc;
 
 pub struct ProjectedArc<P: ?Sized, T: ?Sized> {
     _own: Arc<P>,
-    field: *const T
+    field: *const T,
 }
 
 unsafe impl<P: ?Sized, T: ?Sized> Send for ProjectedArc<P, T> where Arc<P>: Send {}
@@ -26,16 +25,14 @@ impl<F: Field> ProjectTo<F> for Arc<F::Parent> {
     fn project_to(self, field: F) -> Self::Projection {
         unsafe {
             let field = field.project_raw(&self as &_);
-            ProjectedArc {
-                _own: self, field
-            }
+            ProjectedArc { _own: self, field }
         }
     }
 }
 
 pub struct ProjectedArcSet<P: ?Sized, T: ?Sized> {
     _own: Arc<P>,
-    field: T
+    field: T,
 }
 
 unsafe impl<P: ?Sized, T: ?Sized> Send for ProjectedArcSet<P, T> where Arc<P>: Send {}
@@ -52,13 +49,15 @@ type_function! {
 
 impl<P: ?Sized, T> ProjectedArcSet<P, T> {
     pub fn get<'a>(&'a self) -> TMap<T, PtrToRef<'a>>
-        where T: Copy + TupleMap<PtrToRef<'a>>
+    where
+        T: Copy + TupleMap<PtrToRef<'a>>,
     {
         self.field.tup_map(PtrToRef(PhantomData))
     }
-    
+
     pub fn split(self) -> TMap<T, Split<P>>
-        where T: Copy + TupleMap<Split<P>>
+    where
+        T: Copy + TupleMap<Split<P>>,
     {
         self.field.tup_map(Split(self._own))
     }

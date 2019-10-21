@@ -77,10 +77,10 @@ fn arc() {
     let foo = Foo::fields();
     let bar = Bar::fields();
 
-    let (foo_x, foo_y_a) = arc.clone().project_set_to((
-        foo.x,
-        foo.y.chain(bar.a)
-    )).split();
+    let (foo_x, foo_y_a) = arc
+        .clone()
+        .project_set_to((foo.x, foo.y.chain(bar.a)))
+        .split();
 
     assert_eq!(*foo_x, 10);
     assert_eq!(*foo_y_a, 13);
