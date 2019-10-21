@@ -55,7 +55,7 @@ where
         unsafe {
             let raw_output = Pin::into_inner_unchecked(self)
                 .project_set_to(field);
-            
+
             tags.tup_zip(raw_output, BuildOutput)
         }
     }

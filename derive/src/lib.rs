@@ -86,7 +86,7 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
             #[allow(non_camel_case_types)]
             pub struct #ident<T>(::gfp_core::derive::Invariant<T>);
         ));
-        
+
         contents.push(item!(
             impl<T> #ident<T> {
                 pub const INIT: Self = Self(::gfp_core::derive::Invariant(::gfp_core::derive::PhantomData));
@@ -104,7 +104,7 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
         ));
 
         let ty = &field.ty;
-        
+
         contents.push(item!(
             unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
                 type Parent = super::#input_ident #generic;
@@ -144,14 +144,14 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
             colon_token: field.colon_token,
             ty
         };
-        
+
         fields_marker.push(item);
     }
 
     let field_type_name = input_ident.append("Fields");
 
     TokenStream::from(quote! {
-        
+
         #[allow(non_snake_case)]
         #module
 
@@ -163,7 +163,7 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
             const FIELDS: #field_type_name #generic = #field_type_name {
                 #fields_new
             };
-            
+
             fn fields() -> #field_type_name #generic {
                 #field_type_name {
                     #fields_new
@@ -206,7 +206,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
             #[allow(non_camel_case_types)]
             pub struct #ident<T>(::gfp_core::derive::Invariant<T>);
         ));
-        
+
         contents.push(item!(
             impl<T> #ident<T> {
                 pub const INIT: Self = Self(::gfp_core::derive::Invariant(::gfp_core::derive::PhantomData));
@@ -224,12 +224,12 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
         ));
 
         let ty = &field.ty;
-        
+
         let index = syn::Member::Unnamed(syn::Index {
             index: i as u32,
             span: proc_macro2::Span::call_site()
         });
-        
+
         contents.push(item!(
             unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
                 type Parent = super::#input_ident #generic;
@@ -269,14 +269,14 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
             colon_token: field.colon_token,
             ty
         };
-        
+
         fields_marker.push(item);
     }
 
     let field_type_name = input_ident.append("Fields");
 
     TokenStream::from(quote! {
-        
+
         #[allow(non_snake_case)]
         #module
 
@@ -284,7 +284,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
         impl#generic_header #input_ident #generic #where_clause {
             const FIELDS: #field_type_name #generic = #field_type_name(#fields_new);
-            
+
             fn fields() -> #field_type_name #generic {
                 #field_type_name(#fields_new)
             }

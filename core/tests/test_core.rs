@@ -71,7 +71,7 @@ pub fn generic_test() {
     let my_type_pin = Pin::new(&my_type);
 
     assert_eq!(*my_type_pin.project_to(z.pin()), 3);
-    
+
     let my_type = MyType {
         x: 0,
         y: 1,

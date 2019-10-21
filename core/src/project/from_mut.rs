@@ -49,7 +49,7 @@ type_function! {
             field: input
         })
     }
-    
+
     for(I: Field, J: Field)
     fn(self: FindOverlapInner<I>, input: J) -> bool {
         self.counter += 1;
@@ -66,7 +66,7 @@ type_function! {
 impl<'a, F: FieldSet> ProjectToSet<F> for &'a mut F::Parent
 where F::Parent: 'a,
       F::TypeSetMut: TupleMap<PtrToRefMut<'a>>,
-      
+
       F: Copy + TupleAny<FindOverlap<F>> {
     type Projection = TMap<F::TypeSetMut, PtrToRefMut<'a>>;
 

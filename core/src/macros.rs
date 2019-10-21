@@ -39,7 +39,7 @@ macro_rules! field {
             type Parent = $parent;
             type Type = $field_ty;
             type Name = $crate::macros::Once<&'static str>;
-    
+
             fn name(&self) -> Self::Name {
                 $crate::macros::once(stringify!($field))
             }
@@ -48,7 +48,7 @@ macro_rules! field {
             unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
                 &(*ptr).$field
             }
-            
+
             #[inline]
             unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
                 &mut (*ptr).$field
