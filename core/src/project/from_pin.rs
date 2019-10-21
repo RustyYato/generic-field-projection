@@ -1,7 +1,9 @@
 use super::*;
 
 impl<'a, F: Field, P: PinnablePointer + ProjectTo<F>> ProjectTo<PinToPin<F>> for Pin<P>
-where P::Projection: core::ops::Deref<Target = F::Type> {
+where
+    P::Projection: core::ops::Deref<Target = F::Type>,
+{
     type Projection = Pin<P::Projection>;
 
     fn project_to(self, pin_field: PinToPin<F>) -> Self::Projection {
@@ -45,7 +47,7 @@ type_function! {
 impl<F: Copy + FieldSet, P: ProjectToSet<F> + Deref> ProjectToSet<F> for Pin<P>
 where
     F: TupleMap<CreateTag>,
-    TMap<F, CreateTag>: TupleZip<P::Projection, BuildOutput>
+    TMap<F, CreateTag>: TupleZip<P::Projection, BuildOutput>,
 {
     type Projection = TZip<TMap<F, CreateTag>, P::Projection, BuildOutput>;
 
@@ -53,8 +55,7 @@ where
     fn project_set_to(self, field: F) -> Self::Projection {
         let tags = field.tup_map(CreateTag);
         unsafe {
-            let raw_output = Pin::into_inner_unchecked(self)
-                .project_set_to(field);
+            let raw_output = Pin::into_inner_unchecked(self).project_set_to(field);
 
             tags.tup_zip(raw_output, BuildOutput)
         }

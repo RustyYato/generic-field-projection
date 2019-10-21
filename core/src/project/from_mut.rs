@@ -18,25 +18,26 @@ type_function! {
 
 unsafe impl<F: ?Sized> PinnablePointer for &mut F {}
 impl<'a, F: Field> ProjectTo<F> for &'a mut F::Parent
-where F::Parent: 'a, F::Type: 'a {
+where
+    F::Parent: 'a,
+    F::Type: 'a,
+{
     type Projection = &'a mut F::Type;
 
     fn project_to(self, field: F) -> Self::Projection {
-        unsafe {
-            &mut *field.project_raw_mut(self)
-        }
+        unsafe { &mut *field.project_raw_mut(self) }
     }
 }
 
 pub struct FindOverlap<S> {
     counter: u64,
-    set: S
+    set: S,
 }
 
 pub struct FindOverlapInner<I> {
     id: u64,
     counter: u64,
-    field: I
+    field: I,
 }
 
 type_function! {
@@ -64,19 +65,21 @@ type_function! {
 }
 
 impl<'a, F: FieldSet> ProjectToSet<F> for &'a mut F::Parent
-where F::Parent: 'a,
-      F::TypeSetMut: TupleMap<PtrToRefMut<'a>>,
+where
+    F::Parent: 'a,
+    F::TypeSetMut: TupleMap<PtrToRefMut<'a>>,
 
-      F: Copy + TupleAny<FindOverlap<F>> {
+    F: Copy + TupleAny<FindOverlap<F>>,
+{
     type Projection = TMap<F::TypeSetMut, PtrToRefMut<'a>>;
 
     #[inline]
     fn project_set_to(self, field: F) -> Self::Projection {
         unsafe {
             if field.tup_any(FindOverlap {
-                    counter: 0,
-                    set: field
-                }) {
+                counter: 0,
+                set: field,
+            }) {
                 panic!("Found overlapping fields")
             } else {
                 let type_set = field.project_raw_mut(self);

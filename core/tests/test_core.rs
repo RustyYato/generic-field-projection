@@ -44,16 +44,14 @@ fn simple_test() {
 struct MyType<T> {
     x: u8,
     y: u8,
-    z: T
+    z: T,
 }
 
 #[test]
 pub fn generic_test() {
     impl<T> MyType_fields::z<MyType<T>> {
         pub fn pin(self) -> PinToPin<Self> {
-            unsafe {
-                PinToPin::new_unchecked(self)
-            }
+            unsafe { PinToPin::new_unchecked(self) }
         }
     }
 
@@ -62,11 +60,7 @@ pub fn generic_test() {
 
     use core::pin::Pin;
 
-    let my_type = MyType {
-        x: 0,
-        y: 1,
-        z: 3u8
-    };
+    let my_type = MyType { x: 0, y: 1, z: 3u8 };
 
     let my_type_pin = Pin::new(&my_type);
 
@@ -75,7 +69,7 @@ pub fn generic_test() {
     let my_type = MyType {
         x: 0,
         y: 1,
-        z: 3u32
+        z: 3u32,
     };
 
     let z = MyType::fields().z;
@@ -92,20 +86,14 @@ fn test_chain() {
         y: Bar {
             a: 1,
             b: 2,
-            c: Quaz {
-                q: (3, 4),
-                r: 5
-            }
+            c: Quaz { q: (3, 4), r: 5 },
         },
-        z: 6
+        z: 6,
     };
 
     let foo = Foo::fields();
     let bar = Bar::fields();
     let quaz = Quaz::fields();
 
-    assert_eq!(
-        *my_type.project_to(&foo.y.chain(bar.c).chain(quaz.r)),
-        5
-    );
+    assert_eq!(*my_type.project_to(&foo.y.chain(bar.c).chain(quaz.r)), 5);
 }

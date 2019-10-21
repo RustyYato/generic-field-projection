@@ -4,7 +4,7 @@ use super::*;
 #[derive(Clone, Copy)]
 pub struct Chain<A, B> {
     a: A,
-    b: B
+    b: B,
 }
 
 impl<A, B> Chain<A, B> {

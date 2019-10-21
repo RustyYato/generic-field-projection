@@ -7,15 +7,15 @@ This crate provides a generic interface to project to fields, think of it as an
 extended version of `Deref` that handles all pointer types equally.
 */
 
-mod project;
-mod pin;
+mod chain;
 #[doc(hidden)]
 pub mod macros;
-mod chain;
+mod pin;
+mod project;
 mod set;
 
-pub use self::pin::*;
 pub use self::chain::*;
+pub use self::pin::*;
 pub use self::set::FieldSet;
 pub use gfp_derive::Field;
 
@@ -23,15 +23,19 @@ pub(crate) use self::set::tuple::*;
 
 #[doc(hidden)]
 pub mod derive {
+    pub use core::iter::{once, Once};
     pub use core::marker::PhantomData;
-    pub use core::iter::{Once, once};
 
     pub struct Invariant<T: ?Sized>(pub PhantomData<*mut T>);
 
     unsafe impl<T: ?Sized> Send for Invariant<T> {}
     unsafe impl<T: ?Sized> Sync for Invariant<T> {}
 
-    impl<T: ?Sized> Clone for Invariant<T> { fn clone(&self) -> Self { *self } }
+    impl<T: ?Sized> Clone for Invariant<T> {
+        fn clone(&self) -> Self {
+            *self
+        }
+    }
     impl<T: ?Sized> Copy for Invariant<T> {}
 }
 
@@ -207,7 +211,10 @@ pub unsafe trait Field {
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type;
 
     /// Chains the projection of this field with another field `F`
-    fn chain<F: Field<Parent = Self::Type>>(self, f: F) -> Chain<Self, F> where Self: Sized {
+    fn chain<F: Field<Parent = Self::Type>>(self, f: F) -> Chain<Self, F>
+    where
+        Self: Sized,
+    {
         Chain::new(self, f)
     }
 }

@@ -1,4 +1,3 @@
-
 extern crate proc_macro;
 
 use proc_macro_roids::*;
@@ -43,22 +42,38 @@ macro_rules! expr {
 
 fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
     match ty.data {
-        syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Named(_), .. }) => derive_named(ty),
-        syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Unnamed(_), .. }) => derive_unnamed(ty),
-        syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Unit, .. }) => {
-            syn::Error::new(ty.ident.span(), "Unit structs are not supported")
-                .to_compile_error().into()
-        },
-        _ => unreachable!()
+        syn::Data::Struct(syn::DataStruct {
+            fields: syn::Fields::Named(_),
+            ..
+        }) => derive_named(ty),
+        syn::Data::Struct(syn::DataStruct {
+            fields: syn::Fields::Unnamed(_),
+            ..
+        }) => derive_unnamed(ty),
+        syn::Data::Struct(syn::DataStruct {
+            fields: syn::Fields::Unit,
+            ..
+        }) => syn::Error::new(ty.ident.span(), "Unit structs are not supported")
+            .to_compile_error()
+            .into(),
+        _ => unreachable!(),
     }
 }
 
 fn derive_named(ty: syn::DeriveInput) -> TokenStream {
     let syn::DeriveInput {
-        attrs: _, vis, ident: input_ident, generics, data
+        attrs: _,
+        vis,
+        ident: input_ident,
+        generics,
+        data,
     } = ty;
 
-    let fields = if let syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Named(fields), .. }) = data {
+    let fields = if let syn::Data::Struct(syn::DataStruct {
+        fields: syn::Fields::Named(fields),
+        ..
+    }) = data
+    {
         fields
     } else {
         unreachable!()
@@ -139,10 +154,12 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
         let item = syn::Field {
             attrs: Vec::new(),
-            vis: syn::Visibility::Public(syn::VisPublic { pub_token: syn::Token![pub](proc_macro2::Span::call_site()) }),
+            vis: syn::Visibility::Public(syn::VisPublic {
+                pub_token: syn::Token![pub](proc_macro2::Span::call_site()),
+            }),
             ident: Some(ident),
             colon_token: field.colon_token,
-            ty
+            ty,
         };
 
         fields_marker.push(item);
@@ -175,10 +192,18 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
 fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
     let syn::DeriveInput {
-        attrs: _, vis, ident: input_ident, generics, data
+        attrs: _,
+        vis,
+        ident: input_ident,
+        generics,
+        data,
     } = ty;
 
-    let fields = if let syn::Data::Struct(syn::DataStruct { fields: syn::Fields::Unnamed(fields), .. }) = data {
+    let fields = if let syn::Data::Struct(syn::DataStruct {
+        fields: syn::Fields::Unnamed(fields),
+        ..
+    }) = data
+    {
         fields
     } else {
         unreachable!()
@@ -227,7 +252,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
         let index = syn::Member::Unnamed(syn::Index {
             index: i as u32,
-            span: proc_macro2::Span::call_site()
+            span: proc_macro2::Span::call_site(),
         });
 
         contents.push(item!(
@@ -264,10 +289,12 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
         let item = syn::Field {
             attrs: Vec::new(),
-            vis: syn::Visibility::Public(syn::VisPublic { pub_token: syn::Token![pub](proc_macro2::Span::call_site()) }),
+            vis: syn::Visibility::Public(syn::VisPublic {
+                pub_token: syn::Token![pub](proc_macro2::Span::call_site()),
+            }),
             ident: field.ident.clone(),
             colon_token: field.colon_token,
-            ty
+            ty,
         };
 
         fields_marker.push(item);
@@ -305,10 +332,10 @@ fn new_module(ident: syn::Ident) -> syn::ItemMod {
         ident,
         content: Some((
             syn::token::Brace {
-                span: proc_macro2::Span::call_site()
+                span: proc_macro2::Span::call_site(),
             },
-            Vec::new()
+            Vec::new(),
         )),
-        semi: None
+        semi: None,
     }
 }

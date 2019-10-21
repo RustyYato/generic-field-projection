@@ -1,5 +1,4 @@
-
-pub use core::iter::{Once, once};
+pub use core::iter::{once, Once};
 
 /// Create a new field descriptor for the given type
 #[macro_export]
@@ -8,9 +7,7 @@ macro_rules! field_descriptor {
         let mut value = $value;
         let parent: *mut _ = &mut value;
         let field: *mut _ = &mut value.$field;
-        unsafe {
-            $crate::FieldDescriptor::from_pointers(parent, field)
-        }
+        unsafe { $crate::FieldDescriptor::from_pointers(parent, field) }
     }};
 }
 
