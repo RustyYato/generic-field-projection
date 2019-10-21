@@ -27,11 +27,11 @@ mod alloc {
     pub use alloc_crate::sync::Arc;
 }
 
+pub mod chain;
 #[doc(hidden)]
 pub mod macros;
-pub mod project;
-pub mod chain;
 pub mod pin;
+pub mod project;
 mod set;
 
 pub use self::chain::*;
