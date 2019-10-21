@@ -6,7 +6,7 @@ use gfp_derive::*;
 #[derive(Field)]
 struct Foo<T, U: Copy> {
     x: T,
-    y: U
+    y: U,
 }
 
 #[derive(Field)]
@@ -20,7 +20,7 @@ fn test() {
 
     let foo = Foo {
         x: Bar(0, 2.0),
-        y: 12
+        y: 12,
     };
 
     assert_eq!(*foo.project_to(field), 2.0);

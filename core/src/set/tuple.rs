@@ -1,4 +1,3 @@
-
 #[macro_export]
 macro_rules! type_function {
     (
@@ -55,7 +54,7 @@ macro_rules! impl_tuple {
 
             fn tup_map(self, _: Func) -> Self::Output {}
         }
-        
+
         impl<Func> TupleAny<Func> for () {
             fn tup_any(self, _: Func) -> bool {
                 false
@@ -64,7 +63,7 @@ macro_rules! impl_tuple {
     };
     ($($T:ident)+) => {
         impl_tuple! { @rem $($T)* }
-        
+
         #[allow(non_snake_case)]
         impl<$($T,)+> Tuple for ($($T,)+) {}
 
@@ -81,7 +80,7 @@ macro_rules! impl_tuple {
                 )+)
             }
         }
-        
+
         #[allow(non_snake_case)]
         impl<Func $(, $T)+> TupleAny<Func> for ($($T,)+)
         where $(Func: TypeFunction<$T, Output = bool>),+  {
@@ -93,7 +92,7 @@ macro_rules! impl_tuple {
                         return true;
                     }
                 )+
-                
+
                 false
             }
         }
@@ -113,7 +112,7 @@ macro_rules! impl_tuple_zip {
     };
     ($($T:ident $U:ident)+) => {
         impl_tuple_zip! { @rem $($T $U)* }
-        
+
         #[allow(non_snake_case)]
         impl<Func $(, $T, $U)*> TupleZip<($($U,)*), Func> for ($($T,)*)
             where $(Func: TypeFunction<($T, $U)>),+

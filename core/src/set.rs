@@ -15,17 +15,17 @@ pub unsafe trait FieldSet: Tuple {
     type TypeSetMut: Tuple;
 
     /// projects the raw pointer from the `Parent` type to the field `Type`
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// * `ptr` must point to a valid, initialized allocation of `Parent`
     /// * the projection is not safe to write to
     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> Self::TypeSet;
-    
+
     /// projects the raw pointer from the `Parent` type to the field `Type`
-    /// 
+    ///
     /// # Safety
-    /// 
+    ///
     /// * `ptr` must point to a valid, initialized allocation of `Parent`
     /// * the projection is not safe to write to
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> Self::TypeSetMut;
@@ -35,13 +35,13 @@ macro_rules! impl_tuple {
     () => {};
     ($first:ident $($T:ident)*) => {
         impl_tuple! { $($T)* }
-                
+
         unsafe impl<$first: Field, $($T: Field<Parent = $first::Parent>),*> FieldSet for ($first, $($T),*) {
             type Parent = $first::Parent;
-            
+
             type TypeSet = (*const $first::Type, $(*const $T::Type),*);
             type TypeSetMut = (*mut $first::Type, $(*mut $T::Type),*);
-            
+
             #[inline]
             #[allow(non_snake_case)]
             unsafe fn project_raw(&self, ptr: *const Self::Parent) -> Self::TypeSet {
@@ -51,7 +51,7 @@ macro_rules! impl_tuple {
                     $($T.project_raw(ptr)),*
                 )
             }
-            
+
             #[inline]
             #[allow(non_snake_case)]
             unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> Self::TypeSetMut {
