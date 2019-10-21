@@ -1,12 +1,13 @@
-name: Test
-on: [push]
+name: PR format
+on: [pull_request]
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-        rust: [nightly]
+        os: [ubuntu-latest]
+        rust: [stable]
+        components: ['fmt']
 
     steps:
     - uses: hecrj/setup-rust-action@v1
@@ -14,4 +15,4 @@ jobs:
         rust-version: ${{ matrix.rust }}
     - uses: actions/checkout@master
     - name: Run tests
-      run: cargo +nightly test --verbose
+      run: cargo fmt -- --check
