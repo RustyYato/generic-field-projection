@@ -1,4 +1,4 @@
-name: Test PR
+name: PR test
 on: [pull_request]
 jobs:
   test:
