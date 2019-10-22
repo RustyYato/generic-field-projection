@@ -90,7 +90,7 @@ impl<F: Field + ?Sized> PinToPin<F> {
         #[allow(clippy::transmute_ptr_to_ptr)]
         std::mem::transmute::<&F, &Self>(field)
     }
-    
+
     /// converts to a reference to the underlying field
     #[inline]
     pub fn as_ref(&self) -> PinToPin<&F> {

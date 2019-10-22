@@ -1,12 +1,12 @@
 /// This implements `$crate::tuple::TypeFunction` for the given type
-/// 
+///
 /// Example
-/// 
+///
 /// ```rust
 /// struct Foo {
 ///     called: u64
 /// }
-/// 
+///
 /// # use gfp_core::type_function;
 /// type_function! {
 ///     fn(self: Foo, get: u32) -> u32 {
@@ -20,7 +20,7 @@
 ///     }
 /// }
 /// ```
-/// 
+///
 #[macro_export]
 macro_rules! type_function {
     (
@@ -42,7 +42,7 @@ macro_rules! type_function {
 pub type FuncOut<F, I> = <F as TypeFunction<I>>::Output;
 
 /// Represents a function that can be overloaded
-/// 
+///
 /// This has the same function as `Fn*` traits, but
 /// I need access to the argument type directly, also
 /// it isn't possible to implement `Fn*` traits on stable
@@ -59,7 +59,7 @@ pub trait TypeFunction<Input> {
 pub type TMap<T, F> = <T as TupleMap<F>>::Output;
 
 /// Map a function over the given tuple
-/// 
+///
 /// The function `F` should be a `TypeFunction` that
 /// can be called on any of the types in the tuple
 pub trait TupleMap<F>: Sized {
@@ -74,7 +74,7 @@ pub trait TupleMap<F>: Sized {
 pub type TZip<T, U, F> = <T as TupleZip<U, F>>::Output;
 
 /// Zip two tuples together
-/// 
+///
 /// The two tuples should have the same length
 pub trait TupleZip<T, F>: Sized {
     /// The output of the zip
@@ -85,7 +85,7 @@ pub trait TupleZip<T, F>: Sized {
 }
 
 /// Check if any item in the tuple matches the given predicate
-/// 
+///
 /// The function `F` should be a `TypeFunction` that
 /// can be called on any of the types in the tuple
 /// and should return a `bool`
