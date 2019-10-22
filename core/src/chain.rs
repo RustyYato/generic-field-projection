@@ -1,6 +1,6 @@
 use super::*;
 
-/// Chains two projections together
+/// Chain two fields together
 #[derive(Clone, Copy)]
 pub struct Chain<A, B> {
     a: A,
@@ -9,6 +9,7 @@ pub struct Chain<A, B> {
 
 impl<A, B> Chain<A, B> {
     #[inline]
+    /// create a new `Chain`
     pub const fn new(a: A, b: B) -> Self {
         Self { a, b }
     }

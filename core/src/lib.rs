@@ -1,5 +1,5 @@
 #![feature(const_fn_union, const_fn, specialization, dropck_eyepatch)]
-// #![forbid(missing_docs)]
+#![forbid(missing_docs)]
 #![cfg_attr(feature = "no_std", no_std)]
 
 /*!
@@ -27,19 +27,19 @@ mod alloc {
     pub use alloc_crate::sync::Arc;
 }
 
-pub mod chain;
+mod chain;
 #[doc(hidden)]
 pub mod macros;
-pub mod pin;
-pub mod project;
-mod set;
+mod pin;
+mod project;
+
+#[doc(hidden)]
+pub mod set;
 
 pub use self::chain::*;
 pub use self::pin::*;
 pub use self::set::FieldSet;
 pub use gfp_derive::Field;
-
-pub(crate) use self::set::tuple::*;
 
 #[doc(hidden)]
 pub mod derive {
