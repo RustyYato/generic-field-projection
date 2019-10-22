@@ -24,13 +24,13 @@ impl<T: ?Sized, F: ?Sized> Deref for BoxProjection<T, F> {
     }
 }
 
-unsafe impl<#[may_dangle] T: ?Sized, #[may_dangle] F: ?Sized> DerefMut for BoxProjection<T, F> {
+impl<T: ?Sized, F: ?Sized> DerefMut for BoxProjection<T, F> {
     fn deref_mut(&mut self) -> &mut F {
         unsafe { self.field.as_mut() }
     }
 }
 
-impl<T: ?Sized, F: ?Sized> Drop for BoxProjection<T, F> {
+unsafe impl<#[may_dangle] T: ?Sized, #[may_dangle] F: ?Sized> Drop for BoxProjection<T, F> {
     fn drop(&mut self) {
         unsafe {
             Box::from_raw(self.bx.as_ptr());
