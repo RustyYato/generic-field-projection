@@ -18,6 +18,7 @@ where
 
 impl<'a, F: Field, P> ProjectTo<PinToPtr<F>> for Pin<P>
 where
+    // TODO: I don't know if `PinnablePointer` is strictly required here
     P: PinnablePointer + ProjectTo<F>,
 {
     type Projection = P::Projection;
@@ -58,7 +59,6 @@ type_function! {
 
 impl<F: Copy + FieldSet, P> ProjectToSet<F> for Pin<P>
 where
-    // TODO: I don't know if `PinnablePointer` is strictly required here
     P: PinnablePointer + ProjectToSet<F>,
     F: TupleMap<CreateTag>,
     TMap<F, CreateTag>: TupleZip<P::Projection, BuildOutput>,
