@@ -1,5 +1,5 @@
 #![feature(const_fn_union, const_fn, specialization, dropck_eyepatch)]
-// #![forbid(missing_docs)]
+#![forbid(missing_docs)]
 #![cfg_attr(feature = "no_std", no_std)]
 
 /*!
