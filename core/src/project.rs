@@ -1,5 +1,7 @@
 use super::*;
 
+use crate::set::tuple::*;
+
 #[cfg(any(not(feature = "no_std"), feature = "alloc"))]
 pub mod from_arc;
 #[cfg(any(not(feature = "no_std"), feature = "alloc"))]

@@ -27,7 +27,7 @@ macro_rules! type_function {
         $($(for($($g_params:tt)*))? fn($self:ident:$func:ty $(, $param:ident: $type:ty )* $(,)? ) -> $output:ty $block:block)*
     ) => {$(
         #[allow(unused_parens)]
-        impl $(<$($g_params)*>)? $crate::TypeFunction<($($type),*)> for $func {
+        impl $(<$($g_params)*>)? $crate::set::tuple::TypeFunction<($($type),*)> for $func {
             type Output = $output;
 
             #[inline]
