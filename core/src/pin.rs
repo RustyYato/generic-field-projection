@@ -7,6 +7,8 @@ use super::*;
 /// TODO: add safety docs
 pub unsafe trait PinnablePointer: std::ops::Deref {}
 
+/// Represents a field that can will be projected to a
+/// pointer when projected from a `Pin`
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct PinToPtr<F: Field + ?Sized>(pub F);
@@ -88,7 +90,8 @@ impl<F: Field + ?Sized> PinToPin<F> {
         #[allow(clippy::transmute_ptr_to_ptr)]
         std::mem::transmute::<&F, &Self>(field)
     }
-
+    
+    /// converts to a reference to the underlying field
     #[inline]
     pub fn as_ref(&self) -> PinToPin<&F> {
         unsafe { PinToPin::new_unchecked(&self.field) }
@@ -121,6 +124,7 @@ impl<F: Field + ?Sized> PinToPtr<F> {
         }
     }
 
+    /// converts to a reference to the underlying field
     #[inline]
     pub fn as_ref(&self) -> PinToPtr<&F> {
         PinToPtr(&self.0)
