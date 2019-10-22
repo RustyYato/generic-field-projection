@@ -51,6 +51,7 @@ pub trait TypeFunction<Input> {
     /// The output of the function call
     type Output;
 
+    /// Call the function with the given function
     fn call(&mut self, input: Input) -> Self::Output;
 }
 
@@ -65,6 +66,7 @@ pub trait TupleMap<F>: Sized {
     /// The output of the map
     type Output;
 
+    /// map the function over the given tuple
     fn tup_map(self, f: F) -> Self::Output;
 }
 
@@ -78,6 +80,7 @@ pub trait TupleZip<T, F>: Sized {
     /// The output of the zip
     type Output;
 
+    /// zip the two tuples together
     fn tup_zip(self, tuple: T, f: F) -> Self::Output;
 }
 
@@ -87,6 +90,7 @@ pub trait TupleZip<T, F>: Sized {
 /// can be called on any of the types in the tuple
 /// and should return a `bool`
 pub trait TupleAny<F>: Sized {
+    /// check the tuple
     fn tup_any(self, f: F) -> bool;
 }
 
