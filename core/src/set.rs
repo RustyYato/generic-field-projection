@@ -2,6 +2,7 @@ use super::*;
 
 pub mod tuple;
 
+/// Represents a set of fields
 pub unsafe trait FieldSet {
     /// The type that the field comes from
     type Parent: ?Sized;
