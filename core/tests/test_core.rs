@@ -95,5 +95,5 @@ fn test_chain() {
     let bar = Bar::fields();
     let quaz = Quaz::fields();
 
-    assert_eq!(*my_type.project_to(&foo.y.chain(bar.c).chain(quaz.r)), 5);
+    assert_eq!(*my_type.project_to(foo.y.chain(bar.c).chain(quaz.r)), 5);
 }
