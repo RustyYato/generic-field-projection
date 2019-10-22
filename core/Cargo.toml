@@ -11,8 +11,5 @@ edition = "2018"
 no_std = []
 alloc = []
 
-[dev-dependencies]
-static-alloc = '*'
-
 [dependencies]
 gfp-derive = { path = '../derive' }
