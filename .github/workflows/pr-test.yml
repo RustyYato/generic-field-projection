@@ -15,6 +15,3 @@ jobs:
     - uses: actions/checkout@master
     - name: Run tests
       run: cargo +nightly test --verbose
-      run_nostd: cargo +nightly test --verbose --features "nostd"
-      run_nostd_alloc: cargo +nightly test --verbose --features "nostd,alloc"
-      run_alloc: cargo +nightly test --verbose --features "alloc"
