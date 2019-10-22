@@ -1,7 +1,7 @@
 name: PR format
 on: [pull_request]
 jobs:
-  test:
+  fmt:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
