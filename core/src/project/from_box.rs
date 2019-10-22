@@ -54,6 +54,7 @@ impl<F: Field> ProjectTo<F> for Box<F::Parent> {
     }
 }
 
+// TODO: figure out how to implement `ProjectToSet<F>` for `Box<F::Parent>`
 // impl<'a, F: FieldSet> ProjectToSet<F> for Box<F::Parent>
 // where F::Parent: 'a,
 //       F::TypeSetMut: TupleMap<PtrToNonNull>,
