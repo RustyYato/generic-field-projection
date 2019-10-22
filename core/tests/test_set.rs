@@ -27,19 +27,19 @@ struct Quaz {
 
 #[test]
 fn simple() {
-    let mut foo = Foo::default();
-    let foo_ref = &mut foo;
+    let mut value = Foo::default();
+    let foo_ref = &mut value;
 
-    let FooFields { x, y, .. } = Foo::fields();
-    let BarFields { a, .. } = Bar::fields();
+    let foo = Foo::fields();
+    let bar = Bar::fields();
 
-    let (x, y_a) = foo_ref.project_set_to((x, y.chain(a)));
+    let (x, y_a) = foo_ref.project_set_to((foo.x, foo.y.chain(bar.a)));
 
     *x = 1;
     *y_a = 10;
 
-    assert_eq!(foo.x, 1);
-    assert_eq!(foo.y.a, 10);
+    assert_eq!(value.x, 1);
+    assert_eq!(value.y.a, 10);
 }
 
 #[test]
@@ -47,22 +47,22 @@ fn pin() {
     use gfp_core::{PinToPin, PinToPtr};
     use std::pin::Pin;
 
-    let FooFields { x, y, .. } = Foo::fields();
-    let BarFields { a, .. } = Bar::fields();
+    let foo = Foo::fields();
+    let bar = Bar::fields();
 
-    let mut foo = Foo::default();
-    let foo_ref = Pin::new(&mut foo);
+    let mut value = Foo::default();
+    let value_ref = Pin::new(&mut value);
 
-    let (mut x, y_a) = foo_ref.project_set_to((
-        unsafe { PinToPin::new_unchecked(x) },
-        PinToPtr::new(y.chain(a)),
+    let (mut x, y_a) = value_ref.project_set_to((
+        unsafe { PinToPin::new_unchecked(foo.x) },
+        PinToPtr::new(foo.y.chain(bar.a)),
     ));
 
     *x = 1;
     *y_a = 10;
 
-    assert_eq!(foo.x, 1);
-    assert_eq!(foo.y.a, 10);
+    assert_eq!(value.x, 1);
+    assert_eq!(value.y.a, 10);
 }
 
 #[test]
