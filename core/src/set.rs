@@ -2,17 +2,15 @@ use super::*;
 
 pub mod tuple;
 
-use tuple::Tuple;
-
-pub unsafe trait FieldSet: Tuple {
+pub unsafe trait FieldSet {
     /// The type that the field comes from
     type Parent: ?Sized;
 
     /// The type of the field itself
-    type TypeSet: Tuple;
+    type TypeSet;
 
     /// The type of the field itself
-    type TypeSetMut: Tuple;
+    type TypeSetMut;
 
     /// projects the raw pointer from the `Parent` type to the field `Type`
     ///

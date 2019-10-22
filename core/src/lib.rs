@@ -39,7 +39,7 @@ pub use self::pin::*;
 pub use self::set::FieldSet;
 pub use gfp_derive::Field;
 
-pub(crate) use self::set::tuple::*;
+pub use self::set::tuple::*;
 
 #[doc(hidden)]
 pub mod derive {
