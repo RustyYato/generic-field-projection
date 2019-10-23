@@ -3,13 +3,11 @@ use gfp_core::*;
 #[derive(Field)]
 union Union {
     foo: u32,
-    bar: [u8; 4]
+    bar: [u8; 4],
 }
 
 pub fn union() {
-    let a = Union {
-        bar: [0, 1, 2, 3]
-    };
+    let a = Union { bar: [0, 1, 2, 3] };
 
     let union = unsafe { Union::fields() };
 
