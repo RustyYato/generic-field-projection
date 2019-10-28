@@ -1,10 +1,33 @@
+/// This implements `$crate::tuple::TypeFunction` for the given type
+///
+/// Example
+///
+/// ```rust
+/// struct Foo {
+///     called: u64
+/// }
+///
+/// # use gfp_core::type_function;
+/// type_function! {
+///     fn(self: Foo, get: u32) -> u32 {
+///         self.called += 1;
+///         get + 1
+///     }
+///     
+///     for(T) fn(self: Foo, get: &T) -> usize {
+///         self.called += 1;
+///         get as *const T as usize
+///     }
+/// }
+/// ```
+///
 #[macro_export]
 macro_rules! type_function {
     (
         $($(for($($g_params:tt)*))? fn($self:ident:$func:ty $(, $param:ident: $type:ty )* $(,)? ) -> $output:ty $block:block)*
     ) => {$(
         #[allow(unused_parens)]
-        impl $(<$($g_params)*>)? $crate::TypeFunction<($($type),*)> for $func {
+        impl $(<$($g_params)*>)? $crate::set::tuple::TypeFunction<($($type),*)> for $func {
             type Output = $output;
 
             #[inline]
@@ -15,40 +38,64 @@ macro_rules! type_function {
     )*};
 }
 
+/// The output of a type function for the given argument type
 pub type FuncOut<F, I> = <F as TypeFunction<I>>::Output;
 
+/// Represents a function that can be overloaded
+///
+/// This has the same function as `Fn*` traits, but
+/// I need access to the argument type directly, also
+/// it isn't possible to implement `Fn*` traits on stable
+/// so this work around is necessary
 pub trait TypeFunction<Input> {
+    /// The output of the function call
     type Output;
 
+    /// Call the function with the given function
     fn call(&mut self, input: Input) -> Self::Output;
 }
 
-pub trait Tuple {}
-
+/// The output of `TupleMap`
 pub type TMap<T, F> = <T as TupleMap<F>>::Output;
 
-pub trait TupleMap<F>: Tuple + Sized {
+/// Map a function over the given tuple
+///
+/// The function `F` should be a `TypeFunction` that
+/// can be called on any of the types in the tuple
+pub trait TupleMap<F>: Sized {
+    /// The output of the map
     type Output;
 
+    /// map the function over the given tuple
     fn tup_map(self, f: F) -> Self::Output;
 }
 
+/// The output of `TupleZip`
 pub type TZip<T, U, F> = <T as TupleZip<U, F>>::Output;
 
-pub trait TupleZip<T, F>: Tuple + Sized {
+/// Zip two tuples together
+///
+/// The two tuples should have the same length
+pub trait TupleZip<T, F>: Sized {
+    /// The output of the zip
     type Output;
 
+    /// zip the two tuples together
     fn tup_zip(self, tuple: T, f: F) -> Self::Output;
 }
 
-pub trait TupleAny<F>: Tuple + Sized {
+/// Check if any item in the tuple matches the given predicate
+///
+/// The function `F` should be a `TypeFunction` that
+/// can be called on any of the types in the tuple
+/// and should return a `bool`
+pub trait TupleAny<F>: Sized {
+    /// check the tuple
     fn tup_any(self, f: F) -> bool;
 }
 
 macro_rules! impl_tuple {
     () => {
-        impl Tuple for () {}
-
         impl<Func> TupleMap<Func> for () {
             type Output = ();
 
@@ -63,9 +110,6 @@ macro_rules! impl_tuple {
     };
     ($($T:ident)+) => {
         impl_tuple! { @rem $($T)* }
-
-        #[allow(non_snake_case)]
-        impl<$($T,)+> Tuple for ($($T,)+) {}
 
         #[allow(non_snake_case)]
         impl<Func $(, $T)+> TupleMap<Func> for ($($T,)+)

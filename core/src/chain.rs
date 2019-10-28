@@ -1,6 +1,6 @@
 use super::*;
 
-/// Chains two projections together
+/// Chain two fields together
 #[derive(Clone, Copy)]
 pub struct Chain<A, B> {
     a: A,
@@ -9,6 +9,7 @@ pub struct Chain<A, B> {
 
 impl<A, B> Chain<A, B> {
     #[inline]
+    /// create a new `Chain`
     pub const fn new(a: A, b: B) -> Self {
         Self { a, b }
     }
@@ -17,7 +18,7 @@ impl<A, B> Chain<A, B> {
 unsafe impl<A: Field, B: Field<Parent = A::Type>> Field for Chain<A, B> {
     type Parent = A::Parent;
     type Type = B::Type;
-    type Name = core::iter::Chain<A::Name, B::Name>;
+    type Name = std::iter::Chain<A::Name, B::Name>;
 
     #[inline]
     fn name(&self) -> Self::Name {
