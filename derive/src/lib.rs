@@ -62,11 +62,11 @@ fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
 
 fn derive_named(ty: syn::DeriveInput) -> TokenStream {
     let syn::DeriveInput {
-        attrs: _,
         vis,
         ident: input_ident,
         generics,
         data,
+        ..
     } = ty;
 
     let fields = if let syn::Data::Struct(syn::DataStruct {
@@ -192,11 +192,11 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
 fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
     let syn::DeriveInput {
-        attrs: _,
         vis,
         ident: input_ident,
         generics,
         data,
+        ..
     } = ty;
 
     let fields = if let syn::Data::Struct(syn::DataStruct {
@@ -321,11 +321,11 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
 fn derive_union(ty: syn::DeriveInput) -> TokenStream {
     let syn::DeriveInput {
-        attrs: _,
         vis,
         ident: input_ident,
         generics,
         data,
+        ..
     } = ty;
 
     let fields = if let syn::Data::Union(syn::DataUnion { fields, .. }) = data {

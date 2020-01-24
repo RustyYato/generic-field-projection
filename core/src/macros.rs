@@ -1,6 +1,23 @@
 pub use core::iter::{once, Once};
 
 /// Create a new compile-time field type for the given field
+/// 
+/// This macro can be used like so,
+/// 
+/// ```
+/// // given
+/// 
+/// struct Foo {
+///     x: i32,
+/// }
+/// 
+/// field!(Foo_x (Foo => i32), x)
+/// ```
+/// 
+/// # Deprecated
+/// 
+/// Please use the `#[derive(Field)]` macro instead
+#[deprecated]
 #[macro_export]
 macro_rules! field {
     ($field_ty_name:ident ($parent:ty => $field_ty:ty), $field:ident, $value:expr) => {
@@ -19,12 +36,14 @@ macro_rules! field {
 
             #[inline]
             unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
-                &(*ptr).$field
+                let Self { $field, .. };
+                &raw const (*ptr).$field
             }
 
             #[inline]
             unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
-                &mut (*ptr).$field
+                let Self { $field, .. };
+                &raw mut (*ptr).$field
             }
         }
 
