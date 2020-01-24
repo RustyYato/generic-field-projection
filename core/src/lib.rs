@@ -42,6 +42,14 @@ pub use self::set::FieldSet;
 pub use gfp_derive::Field;
 
 #[doc(hidden)]
+#[macro_export]
+macro_rules! ptr_project {
+    ($mut:ident $ptr:ident $field:ident) => {
+        &raw $mut (*$ptr).$field
+    }
+}
+
+#[doc(hidden)]
 pub mod derive {
     pub use core::iter::{once, Once};
     pub use core::marker::PhantomData;
@@ -81,6 +89,7 @@ pub trait ProjectToSet<F: FieldSet> {
 /// You can derive this trait for all fields of `Parent` by using
 ///
 /// ```rust
+/// #![feature(raw_ref_op)]
 /// # mod __ {
 /// use gfp_core::Field;
 ///
@@ -121,6 +130,7 @@ pub trait ProjectToSet<F: FieldSet> {
 /// you must implement field like so,
 ///
 /// ```rust
+/// #![feature(raw_ref_op)]
 /// # struct Foo {
 /// #     bar: Bar
 /// # }
@@ -146,11 +156,11 @@ pub trait ProjectToSet<F: FieldSet> {
 ///     }
 ///
 ///     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
-///         &(*ptr).bar.tap.val
+///         &raw const (*ptr).bar.tap.val
 ///     }
 ///
 ///     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
-///         &mut (*ptr).bar.tap.val
+///         &raw mut (*ptr).bar.tap.val
 ///     }
 /// }
 /// ```
@@ -160,6 +170,7 @@ pub trait ProjectToSet<F: FieldSet> {
 /// to the fields of fields
 ///
 /// ```rust
+/// #![feature(raw_ref_op)]
 /// # mod main {
 /// use gfp_core::Field;
 ///
