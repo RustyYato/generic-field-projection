@@ -328,7 +328,11 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
         data,
     } = ty;
 
-    let fields = if let syn::Data::Union(syn::DataUnion { fields, .. }) = data {
+    let fields = if let syn::Data::Union(syn::DataUnion {
+        fields,
+        ..
+    }) = data
+    {
         fields
     } else {
         unreachable!()
@@ -390,12 +394,12 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
 
                 #[inline]
                 unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
-                    &(*ptr).#ident
+                    ::gfp_core::ptr_project!(const ptr #ident)
                 }
 
                 #[inline]
                 unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
-                    &mut (*ptr).#ident
+                    ::gfp_core::ptr_project!(mut ptr #ident)
                 }
             }
         ));

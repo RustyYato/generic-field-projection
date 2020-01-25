@@ -1,3 +1,5 @@
+#![feature(raw_ref_op)]
+
 #![allow(unused)]
 
 use gfp_core::*;
