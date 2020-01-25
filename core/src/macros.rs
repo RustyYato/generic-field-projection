@@ -15,7 +15,7 @@ pub use core::iter::{once, Once};
 /// // you can do
 ///
 /// # #[allow(deprecated)] gfp_core::
-/// field!(Foo_x (Foo => i32), x)
+/// field! { Foo_x (Foo => i32), x }
 /// ```
 ///
 /// # Deprecated
@@ -24,12 +24,12 @@ pub use core::iter::{once, Once};
 #[deprecated]
 #[macro_export]
 macro_rules! field {
-    ($field_ty_name:ident ($parent:ty => $field_ty:ty), $field:ident, $value:expr) => {
+    ($field_ty_name:ident ($parent:ty => $field_ty:ty), $field:ident) => {
         #[derive(Clone, Copy)]
         struct $field_ty_name;
 
         #[deny(safe_packed_borrows)]
-        unsafe impl Field for $field_ty_name {
+        unsafe impl $crate::Field for $field_ty_name {
             type Parent = $parent;
             type Type = $field_ty;
             type Name = $crate::macros::Once<&'static str>;
@@ -40,13 +40,13 @@ macro_rules! field {
 
             #[inline]
             unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
-                let Self { $field, .. };
+                let Self::Parent { $field, .. };
                 &raw const (*ptr).$field
             }
 
             #[inline]
             unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
-                let Self { $field, .. };
+                let Self::Parent { $field, .. };
                 &raw mut (*ptr).$field
             }
         }
