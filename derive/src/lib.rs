@@ -328,11 +328,7 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
         data,
     } = ty;
 
-    let fields = if let syn::Data::Union(syn::DataUnion {
-        fields,
-        ..
-    }) = data
-    {
+    let fields = if let syn::Data::Union(syn::DataUnion { fields, .. }) = data {
         fields
     } else {
         unreachable!()
