@@ -15,4 +15,4 @@ jobs:
         rust-version: ${{ matrix.rust }}
     - uses: actions/checkout@master
     - name: Run tests
-      run: cd core && cargo +nightly test --verbose --features ${{ matrix.features }}
+      run: cd core;cargo +nightly test --verbose --features ${{ matrix.features }}
