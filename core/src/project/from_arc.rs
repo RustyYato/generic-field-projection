@@ -1,9 +1,16 @@
+//! Projects through an `Arc`
+//! 
+//! This clones the `Arc` and keeps it around to clean up the data, and also
+//! holds on to a pointer to the field from the `Arc`'s allocation.
+
 use super::*;
 
 use crate::alloc::Arc;
 
 pub struct ProjectedArc<P: ?Sized, T: ?Sized> {
+    // to clean up the allocation once all projections are dropped
     _own: Arc<P>,
+    // The field being projected onto
     field: *const T,
 }
 
@@ -31,7 +38,9 @@ impl<F: Field> ProjectTo<F> for Arc<F::Parent> {
 }
 
 pub struct ProjectedArcSet<P: ?Sized, T: ?Sized> {
+    // to clean up the allocation once all projections are dropped
     _own: Arc<P>,
+    // The fields being projected onto
     field: T,
 }
 

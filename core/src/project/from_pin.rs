@@ -1,3 +1,5 @@
+//! Experimental support for pinnable pointers
+
 use super::*;
 
 impl<'a, F: Field, P> ProjectTo<PinToPin<F>> for Pin<P>

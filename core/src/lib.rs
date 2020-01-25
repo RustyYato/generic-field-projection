@@ -1,4 +1,5 @@
 #![feature(const_fn_union, const_fn, specialization, dropck_eyepatch)]
+#![allow(clippy::needless_doctest_main)]
 #![forbid(missing_docs)]
 #![cfg_attr(feature = "no_std", no_std)]
 
@@ -53,8 +54,9 @@ macro_rules! ptr_project {
 pub mod derive {
     pub use core::iter::{once, Once};
     pub use core::marker::PhantomData;
+    use std::cell::UnsafeCell;
 
-    pub struct Invariant<T: ?Sized>(pub PhantomData<*mut T>);
+    pub struct Invariant<T: ?Sized>(pub PhantomData<UnsafeCell<T>>);
 
     unsafe impl<T: ?Sized> Send for Invariant<T> {}
     unsafe impl<T: ?Sized> Sync for Invariant<T> {}
@@ -188,7 +190,7 @@ pub trait ProjectToSet<F: FieldSet> {
 /// struct Tap {
 ///     val: u32
 /// }
-///
+/// 
 /// fn main() {
 ///     let foo_to_val = Foo::fields().bar.chain(
 ///         Bar::fields().tap

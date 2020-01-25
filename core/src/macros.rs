@@ -5,12 +5,16 @@ pub use core::iter::{once, Once};
 /// This macro can be used like so,
 /// 
 /// ```
+/// # #![feature(raw_ref_op)]
 /// // given
 /// 
 /// struct Foo {
 ///     x: i32,
 /// }
 /// 
+/// // you can do
+/// 
+/// # #[allow(deprecated)] gfp_core::
 /// field!(Foo_x (Foo => i32), x)
 /// ```
 /// 

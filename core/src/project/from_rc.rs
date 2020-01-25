@@ -1,9 +1,16 @@
+//! Projects through an `Rc`
+//! 
+//! This clones the `Rc` and keeps it around to clean up the data, and also
+//! holds on to a pointer to the field from the `Rc`'s allocation.
+
 use super::*;
 
 use crate::alloc::Rc;
 
 pub struct ProjectedRc<P: ?Sized, T: ?Sized> {
+    // to clean up the allocation once all projections are dropped
     _own: Rc<P>,
+    // The field being projected onto
     field: *const T,
 }
 
@@ -28,7 +35,9 @@ impl<F: Field> ProjectTo<F> for Rc<F::Parent> {
 }
 
 pub struct ProjectedRcSet<P: ?Sized, T: ?Sized> {
+    // to clean up the allocation once all projections are dropped
     _own: Rc<P>,
+    // The fields being projected onto
     field: T,
 }
 

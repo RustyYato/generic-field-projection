@@ -1,3 +1,4 @@
+#![feature(raw_ref_op)]
 use gfp_core::*;
 
 #[derive(Field)]
