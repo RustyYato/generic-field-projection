@@ -7,7 +7,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
         rust: [nightly]
-        features: ["\"\"", "\"no_std\"", "\"no_std,alloc\"", "\"alloc\""] 
+        features: ["\"\"", "--features \"no_std\"", "--features \"no_std,alloc\"", "--features \"alloc\""] 
 
     steps:
     - uses: hecrj/setup-rust-action@v1
@@ -15,4 +15,4 @@ jobs:
         rust-version: ${{ matrix.rust }}
     - uses: actions/checkout@master
     - name: Run tests
-      run: cd core;cargo +nightly test --verbose --features ${{ matrix.features }}
+      run: cd core;cargo +nightly test --verbose ${{ matrix.features }}
