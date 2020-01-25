@@ -1,5 +1,5 @@
 //! Projects through an `Arc`
-//! 
+//!
 //! This clones the `Arc` and keeps it around to clean up the data, and also
 //! holds on to a pointer to the field from the `Arc`'s allocation.
 

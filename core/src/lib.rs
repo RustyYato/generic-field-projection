@@ -190,7 +190,7 @@ pub trait ProjectToSet<F: FieldSet> {
 /// struct Tap {
 ///     val: u32
 /// }
-/// 
+///
 /// fn main() {
 ///     let foo_to_val = Foo::fields().bar.chain(
 ///         Bar::fields().tap

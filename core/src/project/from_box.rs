@@ -1,5 +1,5 @@
 //! Projects through an `Box`
-//! 
+//!
 //! This turns the `Box` into a pointer and keeps that around to clean up the data, and also
 //! holds on to a pointer to the field from the `Box`'s allocation.
 
@@ -19,7 +19,7 @@ type_function! {
 pub struct BoxProjection<T: ?Sized, F: ?Sized> {
     /// Owns the allocation
     bx: NonNull<T>,
-    
+
     /// Points to the field in the allocation
     field: NonNull<F>,
 }
