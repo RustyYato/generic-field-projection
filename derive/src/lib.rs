@@ -33,13 +33,6 @@ macro_rules! expr {
     }}
 }
 
-// macro_rules! attr {
-//     ($($tokens:tt)*) => {{
-//         let quote = TokenStream::from(quote!($($tokens)*));
-//         syn::parse_macro_input!(quote as syn::Attribute)
-//     }}
-// }
-
 fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
     match ty.data {
         syn::Data::Struct(syn::DataStruct {
@@ -154,9 +147,7 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
         let item = syn::Field {
             attrs: Vec::new(),
-            vis: syn::Visibility::Public(syn::VisPublic {
-                pub_token: syn::Token![pub](proc_macro2::Span::call_site()),
-            }),
+            vis: field.vis,
             ident: Some(ident),
             colon_token: field.colon_token,
             ty,
@@ -168,10 +159,6 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
     let field_type_name = input_ident.append("Fields");
 
     TokenStream::from(quote! {
-
-        #[allow(non_snake_case)]
-        #module
-
         struct #field_type_name #generic_header #where_clause {
             #fields_marker
         }
@@ -187,6 +174,9 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
                 }
             }
         }
+
+        #[allow(non_snake_case)]
+        #module
     })
 }
 
@@ -224,7 +214,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
     ));
 
     let (generic_header, generic, where_clause) = generics.split_for_impl();
-    for (i, field) in fields.unnamed.iter().enumerate() {
+    for (i, field) in fields.unnamed.into_iter().enumerate() {
         let ident = syn::Ident::new(&format!("_{}", i), proc_macro2::Span::call_site());
 
         contents.push(item!(
@@ -289,12 +279,8 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
         let item = syn::Field {
             attrs: Vec::new(),
-            vis: syn::Visibility::Public(syn::VisPublic {
-                pub_token: syn::Token![pub](proc_macro2::Span::call_site()),
-            }),
-            ident: field.ident.clone(),
-            colon_token: field.colon_token,
             ty,
+            ..field
         };
 
         fields_marker.push(item);
@@ -303,10 +289,6 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
     let field_type_name = input_ident.append("Fields");
 
     TokenStream::from(quote! {
-
-        #[allow(non_snake_case)]
-        #module
-
         struct #field_type_name #generic_header(#fields_marker) #where_clause;
 
         impl#generic_header #input_ident #generic #where_clause {
@@ -316,6 +298,9 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
                 #field_type_name(#fields_new)
             }
         }
+        
+        #[allow(non_snake_case)]
+        #module
     })
 }
 
@@ -411,9 +396,7 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
 
         let item = syn::Field {
             attrs: Vec::new(),
-            vis: syn::Visibility::Public(syn::VisPublic {
-                pub_token: syn::Token![pub](proc_macro2::Span::call_site()),
-            }),
+            vis: field.vis,
             ident: Some(ident),
             colon_token: field.colon_token,
             ty,
@@ -425,10 +408,6 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
     let field_type_name = input_ident.append("Fields");
 
     TokenStream::from(quote! {
-
-        #[allow(non_snake_case)]
-        #module
-
         struct #field_type_name #generic_header #where_clause {
             #fields_marker
         }
@@ -440,6 +419,9 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
                 }
             }
         }
+        
+        #[allow(non_snake_case)]
+        #module
     })
 }
 
