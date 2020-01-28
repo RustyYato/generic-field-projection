@@ -11,18 +11,18 @@ use syn;
 /// This macro generates a number of field types and automatically derives
 /// `gfp_core::Field` for them. It will also generate a type to make accessing
 /// these field types easier.
-/// 
+///
 /// The field types will be generated in a module named `{$type}_fields` and
 /// the type that holds all of the field types will be called `{$type}::Fields`.
-/// 
+///
 /// For `unions`, getting the field types is `unsafe` because you can cause aliasing
 /// of unique references and because accessing union fields is inherently `unsafe`.
-/// 
+///
 /// For `struct`, getting the field types is safe because there is no way to cause UB.
 ///  * note: unit structs don't generate any extra code (i.e. `struct Foo;`)
-/// 
+///
 /// `enums` are not supported.
-/// 
+///
 /// For example for a struct,
 /// ```
 /// # #![feature(raw_ref_op)]
@@ -58,13 +58,13 @@ use syn;
 ///         age: Person_fields::age::INIT,
 ///         children: Person_fields::children::INIT,
 ///     };
-/// 
+///
 ///     /// get an instance of `PersonFields` easily by calling
 ///     /// `Person::fields()`, then you can use this to access the
-///     /// 
+///     ///
 ///     /// ```rust
 ///     /// let fields = Person::fields();
-///     /// 
+///     ///
 ///     /// person.project_to(fields.age);
 ///     /// person.project_to(fields.name);
 ///     /// ```
@@ -215,7 +215,7 @@ fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
         syn::Data::Struct(syn::DataStruct {
             fields: syn::Fields::Unit,
             ..
-        }) => TokenStream::from(quote!{}),
+        }) => TokenStream::from(quote! {}),
         _ => unreachable!(),
     }
 }
