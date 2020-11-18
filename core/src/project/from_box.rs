@@ -1,8 +1,7 @@
 use super::*;
 
 use crate::alloc::Box;
-use std::ops::DerefMut;
-use std::ptr::NonNull;
+use std::{ops::DerefMut, ptr::NonNull};
 
 pub struct PtrToNonNull;
 
@@ -12,7 +11,7 @@ type_function! {
 }
 
 pub struct BoxProjection<T: ?Sized, F: ?Sized> {
-    bx: NonNull<T>,
+    bx:    NonNull<T>,
     field: NonNull<F>,
 }
 
@@ -30,7 +29,9 @@ impl<T: ?Sized, F: ?Sized> DerefMut for BoxProjection<T, F> {
     }
 }
 
-unsafe impl<#[may_dangle] T: ?Sized, #[may_dangle] F: ?Sized> Drop for BoxProjection<T, F> {
+unsafe impl<#[may_dangle] T: ?Sized, #[may_dangle] F: ?Sized> Drop
+    for BoxProjection<T, F>
+{
     fn drop(&mut self) {
         unsafe {
             Box::from_raw(self.bx.as_ptr());
@@ -38,7 +39,8 @@ unsafe impl<#[may_dangle] T: ?Sized, #[may_dangle] F: ?Sized> Drop for BoxProjec
     }
 }
 
-unsafe impl<F: ?Sized> PinnablePointer for Box<F> {}
+unsafe impl<F: ?Sized> PinnablePointer for Box<F> {
+}
 impl<F: Field> ProjectTo<F> for Box<F::Parent> {
     type Projection = BoxProjection<F::Parent, F::Type>;
 
@@ -49,7 +51,10 @@ impl<F: Field> ProjectTo<F> for Box<F::Parent> {
             let bx = NonNull::new_unchecked(bx);
             let field = NonNull::new_unchecked(field);
 
-            BoxProjection { bx, field }
+            BoxProjection {
+                bx,
+                field,
+            }
         }
     }
 }

@@ -27,7 +27,10 @@ pub unsafe trait FieldSet {
     ///
     /// * `ptr` must point to a valid, initialized allocation of `Parent`
     /// * the projection is not safe to write to
-    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> Self::TypeSetMut;
+    unsafe fn project_raw_mut(
+        &self,
+        ptr: *mut Self::Parent,
+    ) -> Self::TypeSetMut;
 }
 
 macro_rules! impl_tuple {

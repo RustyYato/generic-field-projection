@@ -2,8 +2,7 @@
 #![allow(unused)]
 
 use gfp_core::*;
-use gfp_derive::*;
-use gfp_derive::Field;
+use gfp_derive::{Field, *};
 
 #[derive(Field)]
 struct Foo<T, U: Copy> {

@@ -10,7 +10,9 @@ union Union {
 
 #[test]
 fn union() {
-    let a = Union { bar: [0, 1, 2, 3] };
+    let a = Union {
+        bar: [0, 1, 2, 3]
+    };
 
     let union = unsafe { Union::fields() };
 

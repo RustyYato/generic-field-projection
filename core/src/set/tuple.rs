@@ -13,14 +13,13 @@
 ///         self.called += 1;
 ///         get + 1
 ///     }
-///     
+///
 ///     for(T) fn(self: Foo, get: &T) -> usize {
 ///         self.called += 1;
 ///         get as *const T as usize
 ///     }
 /// }
 /// ```
-///
 #[macro_export]
 macro_rules! type_function {
     (
