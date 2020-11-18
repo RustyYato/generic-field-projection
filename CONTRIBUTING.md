@@ -23,6 +23,11 @@ think in those terms.  That is:
 - For bugs:
     - Does it test functionality of this crate?
     - Do you have a minimal crate that causes the issue that we can use and test?
+- For feature requests:
+    - Is the request within the scope of this crate?
+    - Is the request *clearly* explained such that anyone who reads it can
+      *unambiguously* determine what you want done?  **THIS IS IMPORTANT, AND IS
+      THE REASON WHY MANY FEATURE REQUESTS ON MANY PROJECTS ARE IGNORED!**
 
 ## Licensing and other property rights.
 
