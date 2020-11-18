@@ -1,3 +1,4 @@
+#![feature(raw_ref_op)]
 #![allow(non_camel_case_types, clippy::blacklisted_name)]
 
 use gfp_core::*;
