@@ -64,7 +64,7 @@ fn pin() {
 }
 
 #[test]
-#[cfg(any(not(feature = "no_std"), feature = "alloc"))]
+#[cfg(feature = "alloc")]
 fn arc() {
     let mut foo = Foo::default();
 

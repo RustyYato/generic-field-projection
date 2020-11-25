@@ -2,17 +2,17 @@ use super::*;
 
 use crate::set::tuple::*;
 
-#[cfg(any(not(feature = "no_std"), feature = "alloc"))]
+#[cfg(feature = "alloc")]
 pub mod from_arc;
-#[cfg(any(not(feature = "no_std"), feature = "alloc"))]
+#[cfg(feature = "alloc")]
 pub mod from_box;
 pub mod from_mut;
 pub mod from_pin;
-#[cfg(any(not(feature = "no_std"), feature = "alloc"))]
+#[cfg(feature = "alloc")]
 pub mod from_rc;
 pub mod from_ref;
 
-use std::{marker::PhantomData, ops::Deref, pin::Pin};
+use core::{marker::PhantomData, ops::Deref, pin::Pin};
 
 use crate::pin::*;
 
