@@ -5,7 +5,7 @@ use super::*;
 /// # Safety
 ///
 /// TODO: add safety docs
-pub unsafe trait PinnablePointer: std::ops::Deref {}
+pub unsafe trait PinnablePointer: core::ops::Deref {}
 
 /// Represents a field that can will be projected to a
 /// pointer when projected from a `Pin`
@@ -117,7 +117,7 @@ impl<F: Field + ?Sized> PinToPin<F> {
     #[inline]
     pub unsafe fn from_ref_unchecked(field: &F) -> &Self {
         #[allow(clippy::transmute_ptr_to_ptr)]
-        std::mem::transmute::<&F, &Self>(field)
+        core::mem::transmute::<&F, &Self>(field)
     }
 
     /// converts to a reference to the underlying field
@@ -152,7 +152,7 @@ impl<F: Field + ?Sized> PinToPtr<F> {
     pub fn from_ref(field: &F) -> &Self {
         unsafe {
             #[allow(clippy::transmute_ptr_to_ptr)]
-            std::mem::transmute::<&F, &Self>(field)
+            core::mem::transmute::<&F, &Self>(field)
         }
     }
 

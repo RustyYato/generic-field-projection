@@ -7,7 +7,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         rust: [nightly]
-        components: ['fmt']
+        components: ['rustfmt']
 
     steps:
     - uses: hecrj/setup-rust-action@v1
@@ -15,4 +15,4 @@ jobs:
         rust-version: ${{ matrix.rust }}
     - uses: actions/checkout@master
     - name: Run tests
-      run: cargo fmt -- --check
+      run: rustup component add rustfmt; cargo fmt -- --check
