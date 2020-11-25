@@ -1,6 +1,6 @@
 use super::*;
 
-use crate::alloc::Arc;
+use std::sync::Arc;
 
 pub struct ProjectedArc<P: ?Sized, T: ?Sized> {
     _own:  Arc<P>,

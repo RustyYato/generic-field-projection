@@ -1,25 +1,12 @@
-#![feature(const_fn_union, const_fn, specialization, dropck_eyepatch)]
+#![feature(dropck_eyepatch)]
 #![forbid(missing_docs)]
-#![cfg_attr(feature = "no_std", no_std)]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 //! This crate provides a generic interface to project to fields, think of it as
 //! an extended version of `Deref` that handles all pointer types equally.
 
-#[cfg(feature = "no_std")]
-extern crate core as std;
-
-#[cfg(all(feature = "no_std", feature = "alloc"))]
-extern crate alloc as alloc_crate;
-
-#[cfg(not(feature = "no_std"))]
-mod alloc {
-    pub use std::{boxed::Box, rc::Rc, sync::Arc};
-}
-
-#[cfg(all(feature = "no_std", feature = "alloc"))]
-mod alloc {
-    pub use alloc_crate::{boxed::Box, rc::Rc, sync::Arc};
-}
+#[cfg(all(not(feature = "std"), feature = "alloc"))]
+extern crate alloc as std;
 
 mod chain;
 #[doc(hidden)]
@@ -67,7 +54,7 @@ pub mod derive {
 /// Projects a type to the given field
 pub trait ProjectTo<F: Field> {
     /// The projection of the type, can be used to directly access the field
-    type Projection: std::ops::Deref<Target = F::Type>;
+    type Projection: core::ops::Deref<Target = F::Type>;
 
     /// projects to the given field
     fn project_to(self, field: F) -> Self::Projection;
@@ -302,8 +289,8 @@ unsafe impl<F: ?Sized + Field> Field for &mut F {
     }
 }
 
-#[cfg(any(not(feature = "no_std"), feature = "alloc"))]
-unsafe impl<F: ?Sized + Field> Field for alloc::Box<F> {
+#[cfg(feature = "alloc")]
+unsafe impl<F: ?Sized + Field> Field for std::boxed::Box<F> {
     type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
@@ -330,8 +317,8 @@ unsafe impl<F: ?Sized + Field> Field for alloc::Box<F> {
     }
 }
 
-#[cfg(any(not(feature = "no_std"), feature = "alloc"))]
-unsafe impl<F: ?Sized + Field> Field for alloc::Rc<F> {
+#[cfg(feature = "alloc")]
+unsafe impl<F: ?Sized + Field> Field for std::rc::Rc<F> {
     type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
@@ -358,8 +345,8 @@ unsafe impl<F: ?Sized + Field> Field for alloc::Rc<F> {
     }
 }
 
-#[cfg(any(not(feature = "no_std"), feature = "alloc"))]
-unsafe impl<F: ?Sized + Field> Field for alloc::Arc<F> {
+#[cfg(feature = "alloc")]
+unsafe impl<F: ?Sized + Field> Field for std::sync::Arc<F> {
     type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;

@@ -1,0 +1,43 @@
+[tasks.no_std_test]
+command = "cargo"
+args = ["test", "--no-default-features"]
+dependencies = []
+
+[tasks.std_test]
+command = "cargo"
+args = ["test", "--no-default-features", "--features", "alloc"]
+dependencies = []
+
+[tasks.alloc_test]
+command = "cargo"
+args = ["test", "--no-default-features", "--features", "std"]
+dependencies = []
+
+[tasks.test-all]
+dependencies = [
+    'no_std_test',
+    'alloc_test',
+    'std_test',
+]
+
+[tasks.no_std_check]
+command = "cargo"
+args = ["check", "--no-default-features"]
+dependencies = []
+
+[tasks.std_check]
+command = "cargo"
+args = ["check", "--no-default-features", "--features", "alloc"]
+dependencies = []
+
+[tasks.alloc_check]
+command = "cargo"
+args = ["check", "--no-default-features", "--features", "std"]
+dependencies = []
+
+[tasks.check-all]
+dependencies = [
+    'no_std_check',
+    'alloc_check',
+    'std_check',
+]

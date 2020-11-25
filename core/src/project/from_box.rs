@@ -1,7 +1,7 @@
 use super::*;
 
-use crate::alloc::Box;
-use std::{ops::DerefMut, ptr::NonNull};
+use core::{ops::DerefMut, ptr::NonNull};
+use std::boxed::Box;
 
 pub struct PtrToNonNull;
 
