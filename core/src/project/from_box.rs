@@ -1,3 +1,8 @@
+//! Projects through an `Box`
+//!
+//! This turns the `Box` into a pointer and keeps that around to clean up the data, and also
+//! holds on to a pointer to the field from the `Box`'s allocation.
+
 use super::*;
 
 use core::{ops::DerefMut, ptr::NonNull};

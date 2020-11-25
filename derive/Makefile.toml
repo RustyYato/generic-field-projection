@@ -1,6 +1,11 @@
-[tasks.test-all]
+[tasks.lib-test]
 command = "cargo"
-args = ["test"]
+args = ["test", "--lib", "--tests"]
+dependencies = []
+
+[tasks.doc-test]
+command = "cargo"
+args = ["test", "--doc"]
 dependencies = []
 
 [tasks.check-all]

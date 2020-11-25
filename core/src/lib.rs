@@ -1,4 +1,5 @@
 #![feature(dropck_eyepatch)]
+#![allow(clippy::needless_doctest_main)]
 #![forbid(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
@@ -30,12 +31,13 @@ macro_rules! ptr_project {
 
 #[doc(hidden)]
 pub mod derive {
+    use core::cell::UnsafeCell;
     pub use core::{
         iter::{once, Once},
         marker::PhantomData,
     };
 
-    pub struct Invariant<T: ?Sized>(pub PhantomData<*mut T>);
+    pub struct Invariant<T: ?Sized>(pub PhantomData<UnsafeCell<T>>);
 
     unsafe impl<T: ?Sized> Send for Invariant<T> {
     }
