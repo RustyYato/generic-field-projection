@@ -12,9 +12,7 @@ pub mod from_pin;
 pub mod from_rc;
 pub mod from_ref;
 
-use std::marker::PhantomData;
-use std::ops::Deref;
-use std::pin::Pin;
+use std::{marker::PhantomData, ops::Deref, pin::Pin};
 
 use crate::pin::*;
 
@@ -29,19 +27,22 @@ type_function! {
 
 pub struct FindOverlap<S> {
     counter: u64,
-    set: S,
+    set:     S,
 }
 
 impl<S> FindOverlap<S> {
     fn new(set: S) -> Self {
-        FindOverlap { set, counter: 0 }
+        FindOverlap {
+            set,
+            counter: 0,
+        }
     }
 }
 
 pub struct FindOverlapInner<I> {
-    id: u64,
+    id:      u64,
     counter: u64,
-    field: I,
+    field:   I,
 }
 
 type_function! {

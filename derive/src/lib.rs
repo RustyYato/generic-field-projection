@@ -182,9 +182,11 @@ pub fn derive_field(ty: TokenStream) -> TokenStream {
     match ty.data {
         syn::Data::Struct(_) => derive_struct(ty),
         syn::Data::Union(_) => derive_union(ty),
-        syn::Data::Enum(_) => syn::Error::new(ty.ident.span(), "enums are not supported")
-            .to_compile_error()
-            .into(),
+        syn::Data::Enum(_) => {
+            syn::Error::new(ty.ident.span(), "enums are not supported")
+                .to_compile_error()
+                .into()
+        },
     }
 }
 
@@ -215,7 +217,11 @@ fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
         syn::Data::Struct(syn::DataStruct {
             fields: syn::Fields::Unit,
             ..
-        }) => TokenStream::from(quote! {}),
+        }) => {
+            syn::Error::new(ty.ident.span(), "Unit structs are not supported")
+                .to_compile_error()
+                .into()
+        },
         _ => unreachable!(),
     }
 }
@@ -246,8 +252,10 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
     let contents = &mut module.content.as_mut().unwrap().1;
 
-    let mut fields_marker = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
-    let mut fields_new = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
+    let mut fields_marker =
+        syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
+    let mut fields_new =
+        syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
 
     contents.push(item!(
         use super::*;
@@ -373,16 +381,20 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
     let contents = &mut module.content.as_mut().unwrap().1;
 
-    let mut fields_marker = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
-    let mut fields_new = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
+    let mut fields_marker =
+        syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
+    let mut fields_new =
+        syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
 
     contents.push(item!(
         use super::*;
     ));
 
     let (generic_header, generic, where_clause) = generics.split_for_impl();
-    for (i, field) in fields.unnamed.into_iter().enumerate() {
-        let ident = syn::Ident::new(&format!("_{}", i), proc_macro2::Span::call_site());
+    for (i, field) in fields.unnamed.iter().enumerate() {
+        // TODO: use syn::format_ident
+        let ident =
+            syn::Ident::new(&format!("_{}", i), proc_macro2::Span::call_site());
 
         contents.push(item!(
             #[allow(non_camel_case_types)]
@@ -409,7 +421,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
         let index = syn::Member::Unnamed(syn::Index {
             index: i as u32,
-            span: proc_macro2::Span::call_site(),
+            span:  proc_macro2::Span::call_site(),
         });
 
         contents.push(item!(
@@ -447,7 +459,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
         let item = syn::Field {
             attrs: Vec::new(),
             ty,
-            ..field
+            ..field.clone()
         };
 
         fields_marker.push(item);
@@ -480,7 +492,10 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
         ..
     } = ty;
 
-    let fields = if let syn::Data::Union(syn::DataUnion { fields, .. }) = data {
+    let fields = if let syn::Data::Union(syn::DataUnion {
+        fields, ..
+    }) = data
+    {
         fields
     } else {
         unreachable!()
@@ -493,8 +508,10 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
 
     let contents = &mut module.content.as_mut().unwrap().1;
 
-    let mut fields_marker = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
-    let mut fields_new = syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
+    let mut fields_marker =
+        syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
+    let mut fields_new =
+        syn::punctuated::Punctuated::<_, syn::Token![,]>::new();
 
     contents.push(item!(
         use super::*;

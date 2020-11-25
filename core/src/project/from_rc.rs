@@ -8,9 +8,7 @@ use super::*;
 use crate::alloc::Rc;
 
 pub struct ProjectedRc<P: ?Sized, T: ?Sized> {
-    // to clean up the allocation once all projections are dropped
-    _own: Rc<P>,
-    // The field being projected onto
+    _own:  Rc<P>,
     field: *const T,
 }
 
@@ -22,22 +20,24 @@ impl<P: ?Sized, T: ?Sized> Deref for ProjectedRc<P, T> {
     }
 }
 
-unsafe impl<F: ?Sized> PinnablePointer for Rc<F> {}
+unsafe impl<F: ?Sized> PinnablePointer for Rc<F> {
+}
 impl<F: Field> ProjectTo<F> for Rc<F::Parent> {
     type Projection = ProjectedRc<F::Parent, F::Type>;
 
     fn project_to(self, field: F) -> Self::Projection {
         unsafe {
             let field = field.project_raw(&self as &_);
-            ProjectedRc { _own: self, field }
+            ProjectedRc {
+                _own: self,
+                field,
+            }
         }
     }
 }
 
 pub struct ProjectedRcSet<P: ?Sized, T: ?Sized> {
-    // to clean up the allocation once all projections are dropped
-    _own: Rc<P>,
-    // The fields being projected onto
+    _own:  Rc<P>,
     field: T,
 }
 
@@ -74,7 +74,7 @@ impl<'a, F: FieldSet> ProjectToSet<F> for Rc<F::Parent> {
         unsafe {
             ProjectedRcSet {
                 field: field.project_raw(&self as &_),
-                _own: self,
+                _own:  self,
             }
         }
     }

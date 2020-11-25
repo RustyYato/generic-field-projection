@@ -13,14 +13,13 @@
 ///         self.called += 1;
 ///         get + 1
 ///     }
-///     
+///
 ///     for(T) fn(self: Foo, get: &T) -> usize {
 ///         self.called += 1;
 ///         get as *const T as usize
 ///     }
 /// }
 /// ```
-///
 #[macro_export]
 macro_rules! type_function {
     (
@@ -43,10 +42,9 @@ pub type FuncOut<F, I> = <F as TypeFunction<I>>::Output;
 
 /// Represents a function that can be overloaded
 ///
-/// This has the same function as `Fn*` traits, but
-/// I need access to the argument type directly, also
-/// it isn't possible to implement `Fn*` traits on stable
-/// so this work around is necessary
+/// This has the same function as `Fn*` traits, but I need access to the
+/// argument type directly, also it isn't possible to implement `Fn*` traits on
+/// stable so this work around is necessary
 pub trait TypeFunction<Input> {
     /// The output of the function call
     type Output;
@@ -60,8 +58,8 @@ pub type TMap<T, F> = <T as TupleMap<F>>::Output;
 
 /// Map a function over the given tuple
 ///
-/// The function `F` should be a `TypeFunction` that
-/// can be called on any of the types in the tuple
+/// The function `F` should be a `TypeFunction` that can be called on any of the
+/// types in the tuple
 pub trait TupleMap<F>: Sized {
     /// The output of the map
     type Output;
@@ -86,9 +84,8 @@ pub trait TupleZip<T, F>: Sized {
 
 /// Check if any item in the tuple matches the given predicate
 ///
-/// The function `F` should be a `TypeFunction` that
-/// can be called on any of the types in the tuple
-/// and should return a `bool`
+/// The function `F` should be a `TypeFunction` that can be called on any of the
+/// types in the tuple and should return a `bool`
 pub trait TupleAny<F>: Sized {
     /// check the tuple
     fn tup_any(self, f: F) -> bool;

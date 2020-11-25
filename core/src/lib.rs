@@ -3,10 +3,8 @@
 #![forbid(missing_docs)]
 #![cfg_attr(feature = "no_std", no_std)]
 
-/*!
-This crate provides a generic interface to project to fields, think of it as an
-extended version of `Deref` that handles all pointer types equally.
-*/
+//! This crate provides a generic interface to project to fields, think of it as
+//! an extended version of `Deref` that handles all pointer types equally.
 
 #[cfg(feature = "no_std")]
 extern crate core as std;
@@ -16,16 +14,12 @@ extern crate alloc as alloc_crate;
 
 #[cfg(not(feature = "no_std"))]
 mod alloc {
-    pub use std::boxed::Box;
-    pub use std::rc::Rc;
-    pub use std::sync::Arc;
+    pub use std::{boxed::Box, rc::Rc, sync::Arc};
 }
 
 #[cfg(all(feature = "no_std", feature = "alloc"))]
 mod alloc {
-    pub use alloc_crate::boxed::Box;
-    pub use alloc_crate::rc::Rc;
-    pub use alloc_crate::sync::Arc;
+    pub use alloc_crate::{boxed::Box, rc::Rc, sync::Arc};
 }
 
 mod chain;
@@ -37,9 +31,7 @@ mod project;
 #[doc(hidden)]
 pub mod set;
 
-pub use self::chain::*;
-pub use self::pin::*;
-pub use self::set::FieldSet;
+pub use self::{chain::*, pin::*, set::FieldSet};
 pub use gfp_derive::Field;
 
 #[doc(hidden)]
@@ -52,21 +44,26 @@ macro_rules! ptr_project {
 
 #[doc(hidden)]
 pub mod derive {
-    pub use core::iter::{once, Once};
-    pub use core::marker::PhantomData;
+    pub use core::{
+        iter::{once, Once},
+        marker::PhantomData,
+    };
     use std::cell::UnsafeCell;
 
     pub struct Invariant<T: ?Sized>(pub PhantomData<UnsafeCell<T>>);
 
-    unsafe impl<T: ?Sized> Send for Invariant<T> {}
-    unsafe impl<T: ?Sized> Sync for Invariant<T> {}
+    unsafe impl<T: ?Sized> Send for Invariant<T> {
+    }
+    unsafe impl<T: ?Sized> Sync for Invariant<T> {
+    }
 
     impl<T: ?Sized> Clone for Invariant<T> {
         fn clone(&self) -> Self {
             *self
         }
     }
-    impl<T: ?Sized> Copy for Invariant<T> {}
+    impl<T: ?Sized> Copy for Invariant<T> {
+    }
 }
 
 /// Projects a type to the given field
@@ -212,7 +209,6 @@ pub trait ProjectToSet<F: FieldSet> {
 /// }
 /// # }
 /// ```
-///
 pub unsafe trait Field {
     /// The type that the field comes from
     type Parent: ?Sized;
@@ -234,14 +230,16 @@ pub unsafe trait Field {
     ///
     /// * `ptr` must point to a valid, initialized allocation of `Parent`
     /// * the projection is not safe to write to
-    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type;
+    unsafe fn project_raw(&self, ptr: *const Self::Parent)
+    -> *const Self::Type;
 
     /// projects the raw pointer from the `Parent` type to the field `Type`
     ///
     /// # Safety
     ///
     /// `ptr` must point to a valid, initialized allocation of `Parent`
-    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type;
+    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent)
+    -> *mut Self::Type;
 
     /// Chains the projection of this field with another field `F`
     fn chain<F: Field<Parent = Self::Type>>(self, f: F) -> Chain<Self, F>
@@ -253,9 +251,9 @@ pub unsafe trait Field {
 }
 
 unsafe impl<F: ?Sized + Field> Field for &F {
+    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-    type Name = F::Name;
 
     #[inline]
     fn name(&self) -> Self::Name {
@@ -263,20 +261,26 @@ unsafe impl<F: ?Sized + Field> Field for &F {
     }
 
     #[inline]
-    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+    unsafe fn project_raw(
+        &self,
+        ptr: *const Self::Parent,
+    ) -> *const Self::Type {
         F::project_raw(self, ptr)
     }
 
     #[inline]
-    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+    unsafe fn project_raw_mut(
+        &self,
+        ptr: *mut Self::Parent,
+    ) -> *mut Self::Type {
         F::project_raw_mut(self, ptr)
     }
 }
 
 unsafe impl<F: ?Sized + Field> Field for &mut F {
+    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-    type Name = F::Name;
 
     #[inline]
     fn name(&self) -> Self::Name {
@@ -284,21 +288,27 @@ unsafe impl<F: ?Sized + Field> Field for &mut F {
     }
 
     #[inline]
-    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+    unsafe fn project_raw(
+        &self,
+        ptr: *const Self::Parent,
+    ) -> *const Self::Type {
         F::project_raw(self, ptr)
     }
 
     #[inline]
-    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+    unsafe fn project_raw_mut(
+        &self,
+        ptr: *mut Self::Parent,
+    ) -> *mut Self::Type {
         F::project_raw_mut(self, ptr)
     }
 }
 
 #[cfg(any(not(feature = "no_std"), feature = "alloc"))]
 unsafe impl<F: ?Sized + Field> Field for alloc::Box<F> {
+    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-    type Name = F::Name;
 
     #[inline]
     fn name(&self) -> Self::Name {
@@ -306,21 +316,27 @@ unsafe impl<F: ?Sized + Field> Field for alloc::Box<F> {
     }
 
     #[inline]
-    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+    unsafe fn project_raw(
+        &self,
+        ptr: *const Self::Parent,
+    ) -> *const Self::Type {
         F::project_raw(self, ptr)
     }
 
     #[inline]
-    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+    unsafe fn project_raw_mut(
+        &self,
+        ptr: *mut Self::Parent,
+    ) -> *mut Self::Type {
         F::project_raw_mut(self, ptr)
     }
 }
 
 #[cfg(any(not(feature = "no_std"), feature = "alloc"))]
 unsafe impl<F: ?Sized + Field> Field for alloc::Rc<F> {
+    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-    type Name = F::Name;
 
     #[inline]
     fn name(&self) -> Self::Name {
@@ -328,21 +344,27 @@ unsafe impl<F: ?Sized + Field> Field for alloc::Rc<F> {
     }
 
     #[inline]
-    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+    unsafe fn project_raw(
+        &self,
+        ptr: *const Self::Parent,
+    ) -> *const Self::Type {
         F::project_raw(self, ptr)
     }
 
     #[inline]
-    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+    unsafe fn project_raw_mut(
+        &self,
+        ptr: *mut Self::Parent,
+    ) -> *mut Self::Type {
         F::project_raw_mut(self, ptr)
     }
 }
 
 #[cfg(any(not(feature = "no_std"), feature = "alloc"))]
 unsafe impl<F: ?Sized + Field> Field for alloc::Arc<F> {
+    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-    type Name = F::Name;
 
     #[inline]
     fn name(&self) -> Self::Name {
@@ -350,12 +372,18 @@ unsafe impl<F: ?Sized + Field> Field for alloc::Arc<F> {
     }
 
     #[inline]
-    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+    unsafe fn project_raw(
+        &self,
+        ptr: *const Self::Parent,
+    ) -> *const Self::Type {
         F::project_raw(self, ptr)
     }
 
     #[inline]
-    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+    unsafe fn project_raw_mut(
+        &self,
+        ptr: *mut Self::Parent,
+    ) -> *mut Self::Type {
         F::project_raw_mut(self, ptr)
     }
 }

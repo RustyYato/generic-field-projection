@@ -16,7 +16,8 @@ type_function! {
     }
 }
 
-unsafe impl<F: ?Sized> PinnablePointer for &mut F {}
+unsafe impl<F: ?Sized> PinnablePointer for &mut F {
+}
 impl<'a, F: Field> ProjectTo<F> for &'a mut F::Parent
 where
     F::Parent: 'a,

@@ -11,14 +11,17 @@ impl<A, B> Chain<A, B> {
     #[inline]
     /// create a new `Chain`
     pub const fn new(a: A, b: B) -> Self {
-        Self { a, b }
+        Self {
+            a,
+            b,
+        }
     }
 }
 
 unsafe impl<A: Field, B: Field<Parent = A::Type>> Field for Chain<A, B> {
+    type Name = std::iter::Chain<A::Name, B::Name>;
     type Parent = A::Parent;
     type Type = B::Type;
-    type Name = std::iter::Chain<A::Name, B::Name>;
 
     #[inline]
     fn name(&self) -> Self::Name {
@@ -26,13 +29,19 @@ unsafe impl<A: Field, B: Field<Parent = A::Type>> Field for Chain<A, B> {
     }
 
     #[inline]
-    unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+    unsafe fn project_raw(
+        &self,
+        ptr: *const Self::Parent,
+    ) -> *const Self::Type {
         let ptr = self.a.project_raw(ptr);
         self.b.project_raw(ptr)
     }
 
     #[inline]
-    unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+    unsafe fn project_raw_mut(
+        &self,
+        ptr: *mut Self::Parent,
+    ) -> *mut Self::Type {
         let ptr = self.a.project_raw_mut(ptr);
         self.b.project_raw_mut(ptr)
     }
