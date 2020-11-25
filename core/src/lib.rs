@@ -2,8 +2,8 @@
 #![forbid(missing_docs)]
 #![cfg_attr(feature = "no_std", no_std)]
 
-//! This crate provides a generic interface to project to fields, think of it as an
-//! extended version of `Deref` that handles all pointer types equally.
+//! This crate provides a generic interface to project to fields, think of it as
+//! an extended version of `Deref` that handles all pointer types equally.
 
 #[cfg(feature = "no_std")]
 extern crate core as std;
