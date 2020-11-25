@@ -1,6 +1,6 @@
 use super::*;
 
-use crate::alloc::Rc;
+use std::rc::Rc;
 
 pub struct ProjectedRc<P: ?Sized, T: ?Sized> {
     _own:  Rc<P>,

@@ -1,0 +1,9 @@
+[tasks.test-all]
+command = "cargo"
+args = ["test"]
+dependencies = []
+
+[tasks.check-all]
+command = "cargo"
+args = ["check"]
+dependencies = []
