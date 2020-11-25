@@ -1,23 +1,44 @@
-[tasks.no_std_test]
+[tasks.no_std-test]
 command = "cargo"
-args = ["test", "--no-default-features"]
+args = ["test", "--lib", "--tests", "--no-default-features"]
 dependencies = []
 
-[tasks.std_test]
+[tasks.std-test]
 command = "cargo"
-args = ["test", "--no-default-features", "--features", "alloc"]
+args = ["test", "--lib", "--tests", "--no-default-features", "--features", "alloc"]
 dependencies = []
 
-[tasks.alloc_test]
+[tasks.alloc-test]
 command = "cargo"
-args = ["test", "--no-default-features", "--features", "std"]
+args = ["test", "--lib", "--tests", "--no-default-features", "--features", "std"]
 dependencies = []
 
-[tasks.test-all]
+[tasks.lib-test]
 dependencies = [
-    'no_std_test',
-    'alloc_test',
-    'std_test',
+    'no_std-test',
+    'alloc-test',
+    'std-test',
+]
+[tasks.no_std-doc-test]
+command = "cargo"
+args = ["test", "--doc", "--no-default-features"]
+dependencies = []
+
+[tasks.std-doc-test]
+command = "cargo"
+args = ["test", "--doc", "--no-default-features", "--features", "alloc"]
+dependencies = []
+
+[tasks.alloc-doc-test]
+command = "cargo"
+args = ["test", "--doc", "--no-default-features", "--features", "std"]
+dependencies = []
+
+[tasks.doc-test]
+dependencies = [
+    'no_std-doc-test',
+    'alloc-doc-test',
+    'std-doc-test',
 ]
 
 [tasks.no_std_check]

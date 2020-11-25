@@ -31,11 +31,11 @@ macro_rules! ptr_project {
 
 #[doc(hidden)]
 pub mod derive {
+    use core::cell::UnsafeCell;
     pub use core::{
         iter::{once, Once},
         marker::PhantomData,
     };
-    use std::cell::UnsafeCell;
 
     pub struct Invariant<T: ?Sized>(pub PhantomData<UnsafeCell<T>>);
 
