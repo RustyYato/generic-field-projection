@@ -7,10 +7,10 @@ pub unsafe trait FieldSet {
     /// The type that the field comes from
     type Parent: ?Sized;
 
-    /// The type of the field itself
+    /// The type of the field itself, as a list of const pointers
     type TypeSet;
 
-    /// The type of the field itself
+    /// The type of the field itself, as a list of mut pointers
     type TypeSetMut;
 
     /// projects the raw pointer from the `Parent` type to the field `Type`
