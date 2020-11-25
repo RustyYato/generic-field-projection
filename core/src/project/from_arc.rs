@@ -3,12 +3,16 @@ use super::*;
 use crate::alloc::Arc;
 
 pub struct ProjectedArc<P: ?Sized, T: ?Sized> {
-    _own: Arc<P>,
+    _own:  Arc<P>,
     field: *const T,
 }
 
-unsafe impl<P: ?Sized, T: ?Sized> Send for ProjectedArc<P, T> where Arc<P>: Send {}
-unsafe impl<P: ?Sized, T: ?Sized> Sync for ProjectedArc<P, T> where Arc<P>: Sync {}
+unsafe impl<P: ?Sized, T: ?Sized> Send for ProjectedArc<P, T> where Arc<P>: Send
+{
+}
+unsafe impl<P: ?Sized, T: ?Sized> Sync for ProjectedArc<P, T> where Arc<P>: Sync
+{
+}
 
 impl<P: ?Sized, T: ?Sized> Deref for ProjectedArc<P, T> {
     type Target = T;
@@ -18,25 +22,35 @@ impl<P: ?Sized, T: ?Sized> Deref for ProjectedArc<P, T> {
     }
 }
 
-unsafe impl<F: ?Sized> PinnablePointer for Arc<F> {}
+unsafe impl<F: ?Sized> PinnablePointer for Arc<F> {
+}
 impl<F: Field> ProjectTo<F> for Arc<F::Parent> {
     type Projection = ProjectedArc<F::Parent, F::Type>;
 
     fn project_to(self, field: F) -> Self::Projection {
         unsafe {
             let field = field.project_raw(&self as &_);
-            ProjectedArc { _own: self, field }
+            ProjectedArc {
+                _own: self,
+                field,
+            }
         }
     }
 }
 
 pub struct ProjectedArcSet<P: ?Sized, T: ?Sized> {
-    _own: Arc<P>,
+    _own:  Arc<P>,
     field: T,
 }
 
-unsafe impl<P: ?Sized, T: ?Sized> Send for ProjectedArcSet<P, T> where Arc<P>: Send {}
-unsafe impl<P: ?Sized, T: ?Sized> Sync for ProjectedArcSet<P, T> where Arc<P>: Sync {}
+unsafe impl<P: ?Sized, T: ?Sized> Send for ProjectedArcSet<P, T> where
+    Arc<P>: Send
+{
+}
+unsafe impl<P: ?Sized, T: ?Sized> Sync for ProjectedArcSet<P, T> where
+    Arc<P>: Sync
+{
+}
 
 pub struct Split<P: ?Sized>(Arc<P>);
 
@@ -71,7 +85,7 @@ impl<'a, F: FieldSet> ProjectToSet<F> for Arc<F::Parent> {
         unsafe {
             ProjectedArcSet {
                 field: field.project_raw(&self as &_),
-                _own: self,
+                _own:  self,
             }
         }
     }

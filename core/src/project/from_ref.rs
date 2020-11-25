@@ -1,6 +1,7 @@
 use super::*;
 
-unsafe impl<F: ?Sized> PinnablePointer for &F {}
+unsafe impl<F: ?Sized> PinnablePointer for &F {
+}
 impl<'a, F: Field> ProjectTo<F> for &'a F::Parent
 where
     F::Parent: 'a,

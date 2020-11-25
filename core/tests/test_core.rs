@@ -61,7 +61,9 @@ pub fn generic_test() {
 
     use core::pin::Pin;
 
-    let my_type = MyType { x: 0, y: 1, z: 3u8 };
+    let my_type = MyType {
+        x: 0, y: 1, z: 3u8
+    };
 
     let my_type_pin = Pin::new(&my_type);
 
@@ -87,7 +89,9 @@ fn test_chain() {
         y: Bar {
             a: 1,
             b: 2,
-            c: Quaz { q: (3, 4), r: 5 },
+            c: Quaz {
+                q: (3, 4), r: 5
+            },
         },
         z: 6,
     };
