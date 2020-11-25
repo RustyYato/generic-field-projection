@@ -8,6 +8,173 @@ use quote::quote;
 use proc_macro2;
 use syn;
 
+/// This macro generates a number of field types and automatically derives
+/// `gfp_core::Field` for them. It will also generate a type to make accessing
+/// these field types easier.
+///
+/// The field types will be generated in a module named `{$type}_fields` and
+/// the type that holds all of the field types will be called `{$type}::Fields`.
+///
+/// For `unions`, getting the field types is `unsafe` because you can cause aliasing
+/// of unique references and because accessing union fields is inherently `unsafe`.
+///
+/// For `struct`, getting the field types is safe because there is no way to cause UB.
+///  * note: unit structs don't generate any extra code (i.e. `struct Foo;`)
+///
+/// `enums` are not supported.
+///
+/// For example for a struct,
+/// ```
+/// # #![feature(raw_ref_op)]
+/// # mod test {
+/// # use gfp_core::Field;
+/// #[derive(Field)]
+/// struct Person {
+///     name: String,
+///     age: u16,
+///     children: Vec<Person>,
+/// }
+/// # }
+/// ```
+/// will generate (exclusing comments), note the use of `&raw `, this is to allow safe
+/// projection through raw pointers.
+/// ```
+/// # #![feature(raw_ref_op)]
+/// # mod test {
+/// struct Person {
+///     name: String,
+///     age: u16,
+///     children: Vec<Person>,
+/// }
+/// // This struct holds all of the field types for easy access
+/// struct PersonFields {
+///     name: Person_fields::name<Person>,
+///     age: Person_fields::age<Person>,
+///     children: Person_fields::children<Person>,
+/// }
+/// impl Person {
+///     const FIELDS: PersonFields = PersonFields {
+///         name: Person_fields::name::INIT,
+///         age: Person_fields::age::INIT,
+///         children: Person_fields::children::INIT,
+///     };
+///
+///     /// get an instance of `PersonFields` easily by calling
+///     /// `Person::fields()`, then you can use this to access the
+///     ///
+///     /// ```rust
+///     /// let fields = Person::fields();
+///     ///
+///     /// person.project_to(fields.age);
+///     /// person.project_to(fields.name);
+///     /// ```
+///     fn fields() -> PersonFields {
+///         PersonFields {
+///             name: Person_fields::name::INIT,
+///             age: Person_fields::age::INIT,
+///             children: Person_fields::children::INIT,
+///         }
+///     }
+/// }
+/// #[allow(non_snake_case)]
+/// mod Person_fields {
+///     use super::*;
+///     // represents the `name` field of `Person`
+///     #[allow(non_camel_case_types)]
+///     pub struct name<T>(::gfp_core::derive::Invariant<T>);
+///     impl<T> name<T> {
+///         pub const INIT: Self = Self(::gfp_core::derive::Invariant(
+///             ::gfp_core::derive::PhantomData,
+///         ));
+///     }
+///     impl<T> Clone for name<T> {
+///         fn clone(&self) -> Self {
+///             *self
+///         }
+///     }
+///     impl<T> Copy for name<T> {}
+///     unsafe impl ::gfp_core::Field for name<super::Person> {
+///         type Parent = super::Person;
+///         type Type = String;
+///         type Name = ::gfp_core::derive::Once<&'static str>;
+///         #[inline]
+///         fn name(&self) -> Self::Name {
+///             ::gfp_core::derive::once("name")
+///         }
+///         #[inline]
+///         unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+///             &raw const (*ptr).name
+///         }
+///         #[inline]
+///         unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+///             &raw mut (*ptr).name
+///         }
+///     }
+///     // represents the `age` field of `Person`
+///     #[allow(non_camel_case_types)]
+///     pub struct age<T>(::gfp_core::derive::Invariant<T>);
+///     impl<T> age<T> {
+///         pub const INIT: Self = Self(::gfp_core::derive::Invariant(
+///             ::gfp_core::derive::PhantomData,
+///         ));
+///     }
+///     impl<T> Clone for age<T> {
+///         fn clone(&self) -> Self {
+///             *self
+///         }
+///     }
+///     impl<T> Copy for age<T> {}
+///     unsafe impl ::gfp_core::Field for age<super::Person> {
+///         type Parent = super::Person;
+///         type Type = u16;
+///         type Name = ::gfp_core::derive::Once<&'static str>;
+///         #[inline]
+///         fn name(&self) -> Self::Name {
+///             ::gfp_core::derive::once("age")
+///         }
+///         #[inline]
+///         unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+///             &raw const (*ptr).age
+///         }
+///         #[inline]
+///         unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+///             &raw mut (*ptr).age
+///         }
+///     }
+///     // represents the `children` field of `Person`
+///     #[allow(non_camel_case_types)]
+///     pub struct children<T>(::gfp_core::derive::Invariant<T>);
+///     impl<T> children<T> {
+///         pub const INIT: Self = Self(::gfp_core::derive::Invariant(
+///             ::gfp_core::derive::PhantomData,
+///         ));
+///     }
+///     impl<T> Clone for children<T> {
+///         fn clone(&self) -> Self {
+///             *self
+///         }
+///     }
+///     impl<T> Copy for children<T> {}
+///     unsafe impl ::gfp_core::Field for children<super::Person> {
+///         type Parent = super::Person;
+///         type Type = Vec<Person>;
+///         type Name = ::gfp_core::derive::Once<&'static str>;
+///         #[inline]
+///         fn name(&self) -> Self::Name {
+///             ::gfp_core::derive::once("children")
+///         }
+///         #[inline]
+///         unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+///             &raw const (*ptr).children
+///         }
+///         #[inline]
+///         unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+///             &raw mut (*ptr).children
+///         }
+///     }
+/// }
+/// # }
+/// ```
 #[proc_macro_derive(Field)]
 pub fn derive_field(ty: TokenStream) -> TokenStream {
     let ty = syn::parse_macro_input!(ty as syn::DeriveInput);
@@ -15,7 +182,11 @@ pub fn derive_field(ty: TokenStream) -> TokenStream {
     match ty.data {
         syn::Data::Struct(_) => derive_struct(ty),
         syn::Data::Union(_) => derive_union(ty),
-        syn::Data::Enum(_) => panic!(),
+        syn::Data::Enum(_) => {
+            syn::Error::new(ty.ident.span(), "enums are not supported")
+                .to_compile_error()
+                .into()
+        },
     }
 }
 
@@ -32,13 +203,6 @@ macro_rules! expr {
         syn::parse_macro_input!(quote as syn::Expr)
     }}
 }
-
-// macro_rules! attr {
-//     ($($tokens:tt)*) => {{
-//         let quote = TokenStream::from(quote!($($tokens)*));
-//         syn::parse_macro_input!(quote as syn::Attribute)
-//     }}
-// }
 
 fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
     match ty.data {
@@ -64,11 +228,11 @@ fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
 
 fn derive_named(ty: syn::DeriveInput) -> TokenStream {
     let syn::DeriveInput {
-        attrs: _,
         vis,
         ident: input_ident,
         generics,
         data,
+        ..
     } = ty;
 
     let fields = if let syn::Data::Struct(syn::DataStruct {
@@ -158,9 +322,7 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
         let item = syn::Field {
             attrs: Vec::new(),
-            vis: syn::Visibility::Public(syn::VisPublic {
-                pub_token: syn::Token![pub](proc_macro2::Span::call_site()),
-            }),
+            vis: field.vis,
             ident: Some(ident),
             colon_token: field.colon_token,
             ty,
@@ -172,10 +334,6 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
     let field_type_name = input_ident.append("Fields");
 
     TokenStream::from(quote! {
-
-        #[allow(non_snake_case)]
-        #module
-
         struct #field_type_name #generic_header #where_clause {
             #fields_marker
         }
@@ -191,16 +349,19 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
                 }
             }
         }
+
+        #[allow(non_snake_case)]
+        #module
     })
 }
 
 fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
     let syn::DeriveInput {
-        attrs: _,
         vis,
         ident: input_ident,
         generics,
         data,
+        ..
     } = ty;
 
     let fields = if let syn::Data::Struct(syn::DataStruct {
@@ -231,6 +392,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
     let (generic_header, generic, where_clause) = generics.split_for_impl();
     for (i, field) in fields.unnamed.iter().enumerate() {
+        // TODO: use syn::format_ident
         let ident =
             syn::Ident::new(&format!("_{}", i), proc_macro2::Span::call_site());
 
@@ -296,12 +458,8 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
         let item = syn::Field {
             attrs: Vec::new(),
-            vis: syn::Visibility::Public(syn::VisPublic {
-                pub_token: syn::Token![pub](proc_macro2::Span::call_site()),
-            }),
-            ident: field.ident.clone(),
-            colon_token: field.colon_token,
             ty,
+            ..field.clone()
         };
 
         fields_marker.push(item);
@@ -310,10 +468,6 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
     let field_type_name = input_ident.append("Fields");
 
     TokenStream::from(quote! {
-
-        #[allow(non_snake_case)]
-        #module
-
         struct #field_type_name #generic_header(#fields_marker) #where_clause;
 
         impl#generic_header #input_ident #generic #where_clause {
@@ -323,16 +477,19 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
                 #field_type_name(#fields_new)
             }
         }
+
+        #[allow(non_snake_case)]
+        #module
     })
 }
 
 fn derive_union(ty: syn::DeriveInput) -> TokenStream {
     let syn::DeriveInput {
-        attrs: _,
         vis,
         ident: input_ident,
         generics,
         data,
+        ..
     } = ty;
 
     let fields = if let syn::Data::Union(syn::DataUnion {
@@ -423,9 +580,7 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
 
         let item = syn::Field {
             attrs: Vec::new(),
-            vis: syn::Visibility::Public(syn::VisPublic {
-                pub_token: syn::Token![pub](proc_macro2::Span::call_site()),
-            }),
+            vis: field.vis,
             ident: Some(ident),
             colon_token: field.colon_token,
             ty,
@@ -437,10 +592,6 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
     let field_type_name = input_ident.append("Fields");
 
     TokenStream::from(quote! {
-
-        #[allow(non_snake_case)]
-        #module
-
         struct #field_type_name #generic_header #where_clause {
             #fields_marker
         }
@@ -452,6 +603,9 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
                 }
             }
         }
+
+        #[allow(non_snake_case)]
+        #module
     })
 }
 

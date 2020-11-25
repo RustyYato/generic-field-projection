@@ -7,10 +7,10 @@ pub unsafe trait FieldSet {
     /// The type that the field comes from
     type Parent: ?Sized;
 
-    /// The type of the field itself
+    /// The type of the field itself, as a list of const pointers
     type TypeSet;
 
-    /// The type of the field itself
+    /// The type of the field itself, as a list of mut pointers
     type TypeSetMut;
 
     /// projects the raw pointer from the `Parent` type to the field `Type`
@@ -33,6 +33,13 @@ pub unsafe trait FieldSet {
     ) -> Self::TypeSetMut;
 }
 
+/// This munches through each identifier in the list,
+/// and creates a tuple using all of the identifiers in the list
+///
+/// This just makes it easier to implement `FieldSet` for a large number of tuples
+///
+/// Just provide `impl_tuple` with the required number of identifiers, and it will automatically
+/// generate all of the required impls for all tuples up to the given size
 macro_rules! impl_tuple {
     () => {};
     ($first:ident $($T:ident)*) => {

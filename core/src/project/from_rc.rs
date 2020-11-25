@@ -1,3 +1,8 @@
+//! Projects through an `Rc`
+//!
+//! This clones the `Rc` and keeps it around to clean up the data, and also
+//! holds on to a pointer to the field from the `Rc`'s allocation.
+
 use super::*;
 
 use std::rc::Rc;
