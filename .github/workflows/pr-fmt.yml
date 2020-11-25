@@ -7,7 +7,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         rust: [nightly]
-        components: ['fmt']
+        components: ['rustfmt']
 
     steps:
     - uses: hecrj/setup-rust-action@v1
