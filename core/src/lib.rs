@@ -258,7 +258,7 @@ pub unsafe trait Field {
     where
         Self::Parent: Sized,
     {
-        ptr.cast::<u8>().add(self.field_offset()).cast()
+        ptr.cast::<u8>().sub(self.field_offset()).cast()
     }
 
     /// projects the raw pointer from the field `Type` to the `Parent` type
@@ -274,7 +274,7 @@ pub unsafe trait Field {
     where
         Self::Parent: Sized,
     {
-        ptr.cast::<u8>().add(self.field_offset()).cast()
+        ptr.cast::<u8>().sub(self.field_offset()).cast()
     }
 
     /// Chains the projection of this field with another field `F`
