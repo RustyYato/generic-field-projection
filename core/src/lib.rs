@@ -1,4 +1,4 @@
-#![feature(dropck_eyepatch)]
+#![feature(dropck_eyepatch, raw_ref_op)]
 #![allow(clippy::needless_doctest_main)]
 #![forbid(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -215,7 +215,7 @@ pub unsafe trait Field {
     ///
     /// # Safety
     ///
-    /// * `ptr` must point to a valid, initialized allocation of `Parent`
+    /// * `ptr` must point to a valid allocation of `Parent`
     /// * the projection is not safe to write to
     unsafe fn project_raw(&self, ptr: *const Self::Parent)
     -> *const Self::Type;
@@ -224,9 +224,58 @@ pub unsafe trait Field {
     ///
     /// # Safety
     ///
-    /// `ptr` must point to a valid, initialized allocation of `Parent`
+    /// `ptr` must point to a valid allocation of `Parent`
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent)
     -> *mut Self::Type;
+
+    /// gets the offset of the field from the base pointer of `Parent`
+    fn field_offset(&self) -> usize
+    where
+        Self::Parent: Sized,
+    {
+        use core::mem::MaybeUninit;
+
+        unsafe {
+            let parent = MaybeUninit::<Self::Parent>::uninit();
+            let parent_ptr = parent.as_ptr();
+            let field_ptr = self.project_raw(parent_ptr);
+            let offset =
+                field_ptr.cast::<u8>().offset_from(parent_ptr.cast::<u8>());
+            offset as usize
+        }
+    }
+
+    /// projects the raw pointer from the field `Type` to the `Parent` type
+    ///
+    /// # Safety
+    ///
+    /// * `ptr` must point into a valid allocation of `Type`
+    /// * `ptr` must point to a field of `Parent` with the type `Type`
+    unsafe fn inverse_project_raw(
+        &self,
+        ptr: *const Self::Type,
+    ) -> *const Self::Parent
+    where
+        Self::Parent: Sized,
+    {
+        ptr.cast::<u8>().add(self.field_offset()).cast()
+    }
+
+    /// projects the raw pointer from the field `Type` to the `Parent` type
+    ///
+    /// # Safety
+    ///
+    /// * `ptr` must point into a valid allocation of `Type`
+    /// * `ptr` must point to a field of `Parent` with the type `Type`
+    unsafe fn inverse_project_raw_mut(
+        &self,
+        ptr: *mut Self::Type,
+    ) -> *mut Self::Parent
+    where
+        Self::Parent: Sized,
+    {
+        ptr.cast::<u8>().add(self.field_offset()).cast()
+    }
 
     /// Chains the projection of this field with another field `F`
     fn chain<F: Field<Parent = Self::Type>>(self, f: F) -> Chain<Self, F>
