@@ -297,6 +297,50 @@ pub unsafe trait Field {
         ptr.cast::<u8>().sub(self.field_offset()).cast()
     }
 
+    /// projects the raw pointer from the field `Type` to the `Parent` type
+    fn wrapping_project_raw(
+        &self,
+        ptr: *const Self::Type,
+    ) -> *const Self::Parent
+    where
+        Self::Parent: Sized,
+    {
+        ptr.cast::<u8>().wrapping_add(self.field_offset()).cast()
+    }
+
+    /// projects the raw pointer from the field `Type` to the `Parent` type
+    fn wrapping_project_raw_mut(
+        &self,
+        ptr: *mut Self::Type,
+    ) -> *mut Self::Parent
+    where
+        Self::Parent: Sized,
+    {
+        ptr.cast::<u8>().wrapping_add(self.field_offset()).cast()
+    }
+
+    /// projects the raw pointer from the field `Type` to the `Parent` type
+    fn wrapping_inverse_project_raw(
+        &self,
+        ptr: *const Self::Type,
+    ) -> *const Self::Parent
+    where
+        Self::Parent: Sized,
+    {
+        ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
+    }
+
+    /// projects the raw pointer from the field `Type` to the `Parent` type
+    fn wrapping_inverse_project_raw_mut(
+        &self,
+        ptr: *mut Self::Type,
+    ) -> *mut Self::Parent
+    where
+        Self::Parent: Sized,
+    {
+        ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
+    }
+
     /// Chains the projection of this field with another field `F`
     fn chain<F: Field<Parent = Self::Type>>(self, f: F) -> Chain<Self, F>
     where
