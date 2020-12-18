@@ -69,10 +69,9 @@ impl<F: Field> ProjectTo<F> for Box<F::Parent> {
 // impl<'a, F: FieldSet> ProjectToSet<F> for Box<F::Parent>
 // where F::Parent: 'a,
 //       F::TypeSetMut: TupleMap<PtrToNonNull>,
-
 //       F: Copy + TupleAny<FindOverlap<F>> {
 //     type Projection = TMap<F::TypeSetMut, PtrToNonNull>;
-
+//
 //     #[inline]
 //     fn project_set_to(self, field: F) -> Self::Projection {
 //         unsafe {

@@ -39,8 +39,8 @@ use syn;
 /// }
 /// # }
 /// ```
-/// will generate (exclusing comments), note the use of `&raw `, this is to
-/// allow safe projection through raw pointers.
+/// will generate (excluding comments) the following. Note the use of `&raw `,
+/// this is to allow safe projection through raw pointers.
 /// ```
 /// # #![feature(raw_ref_op)]
 /// # mod test {
