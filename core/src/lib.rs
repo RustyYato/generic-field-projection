@@ -94,7 +94,8 @@ pub trait ProjectToSet<F: FieldSet> {
 /// * `project_raw` and `project_raw_mut` must only access the given field
 /// * `name` must return an iterator that yields all of the fields from `Parent`
 ///   to the given field,
-///
+/// * You must not override `field_offset`, `inverse_project_raw`,
+///   or `inverse_project_raw_mut`
 /// ex.
 ///
 /// ```rust
@@ -238,9 +239,22 @@ pub unsafe trait Field {
         unsafe {
             let parent = MaybeUninit::<Self::Parent>::uninit();
             let parent_ptr = parent.as_ptr();
+
+            // Safety
+            // * `parent_ptr` does point to a valid allocation of `Parent`
+            //      * it just happens to be uninitialized
+            // * the projection is not safe to write to
+            //      * we never write to `field_ptr`
             let field_ptr = self.project_raw(parent_ptr);
+
+            // Safety
+            // * `parent_ptr` and `field_ptr` are guaranteed to be in the same
+            //      allocation because of the safety requirements on `Field`
             let offset =
                 field_ptr.cast::<u8>().offset_from(parent_ptr.cast::<u8>());
+
+            // The offset will always be positive, because fields must
+            // come after their parents
             offset as usize
         }
     }
@@ -258,6 +272,9 @@ pub unsafe trait Field {
     where
         Self::Parent: Sized,
     {
+        // Safety
+        // * `ptr` is guaranteed to be a pointer to a field of `Parent`
+        // * `field_offset` is guarateed to give the correct offset of the field
         ptr.cast::<u8>().sub(self.field_offset()).cast()
     }
 
@@ -274,6 +291,9 @@ pub unsafe trait Field {
     where
         Self::Parent: Sized,
     {
+        // Safety
+        // * `ptr` is guaranteed to be a pointer to a field of `Parent`
+        // * `field_offset` is guarateed to give the correct offset of the field
         ptr.cast::<u8>().sub(self.field_offset()).cast()
     }
 
