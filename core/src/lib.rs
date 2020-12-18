@@ -71,8 +71,9 @@ pub trait ProjectToSet<F: FieldSet> {
     fn project_set_to(self, field: F) -> Self::Projection;
 }
 
-/// Represents a field of some `Parent` type
-/// You can derive this trait for all fields of `Parent` by using
+/// Represents a field of some `Parent` type.
+///
+/// You can derive this trait for all fields of `Parent` by using:
 ///
 /// ```rust
 /// #![feature(raw_ref_op)]
@@ -112,9 +113,7 @@ pub trait ProjectToSet<F: FieldSet> {
 /// }
 /// ```
 ///
-/// if want to get field `val` from `Foo`,
-///
-/// you must implement field like so,
+/// if want to get field `val` from `Foo`, you must implement field like so,
 ///
 /// ```rust
 /// #![feature(raw_ref_op)]
