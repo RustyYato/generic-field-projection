@@ -1,4 +1,9 @@
 use super::*;
+use type_list::{
+    any::ListAny,
+    call,
+    map::{ListMap, Mapped},
+};
 
 pub struct PtrToRefMut<'a>(PhantomData<&'a ()>);
 
@@ -12,6 +17,12 @@ impl<'a> PtrToRefMut<'a> {
 type_function! {
     for('a, T: 'a + ?Sized)
     fn(self: PtrToRefMut<'a>, ptr: *mut T) -> &'a mut T {
+        unsafe { &mut *ptr }
+    }
+}
+
+call! {
+    fn['a, T: 'a + ?Sized](&mut self: PtrToRefMut<'a>, ptr: *mut T) -> &'a mut T {
         unsafe { &mut *ptr }
     }
 }
@@ -49,5 +60,26 @@ where
                 type_set.tup_map(PtrToRefMut::new())
             }
         }
+    }
+}
+
+impl<'a, F, Parent> ProjectListTo<F> for &'a mut Parent
+where
+    Parent: ?Sized,
+    F: FieldList<Parent>,
+    F::TypeMut: ListMap<PtrToRefMut<'a>>,
+    F: Copy + ListAny<FindOverlap<F>>,
+{
+    /// The projection of the type, can be used to directly access the field
+    type Projection = Mapped<F::TypeMut, PtrToRefMut<'a>>;
+
+    /// projects to the given field
+    fn project_list_to(self, field: F) -> Self::Projection {
+        assert!(
+            !field.list_any(FindOverlap::new(field)),
+            "Found overlapping fields"
+        );
+
+        unsafe { field.project_raw_mut(self).list_map(PtrToRefMut::new()) }
     }
 }

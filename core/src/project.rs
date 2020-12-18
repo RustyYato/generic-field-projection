@@ -1,3 +1,5 @@
+use type_list::any::ListAny;
+
 use super::*;
 
 use crate::set::tuple::*;
@@ -43,6 +45,31 @@ pub struct FindOverlapInner<I> {
     id:      u64,
     counter: u64,
     field:   I,
+}
+
+call! {
+    fn[S, F](&mut self: FindOverlap<S>, input: F) -> bool
+    where
+        S: (Copy + ListAny<FindOverlapInner<F>>),
+        F: (Field),
+    {
+        self.counter += 1;
+
+        self.set.list_any(FindOverlapInner {
+            id: self.counter,
+            counter: 0,
+            field: input
+        })
+    }
+}
+
+call! {
+    fn[A: Field, B: Field](&mut self: FindOverlapInner<A>, input: B) -> bool {
+        self.counter += 1;
+
+        self.id > self.counter && self.field.name().zip(input.name())
+            .all(|(i, j)| i == j)
+    }
 }
 
 type_function! {

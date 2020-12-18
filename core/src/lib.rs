@@ -18,7 +18,10 @@ mod project;
 #[doc(hidden)]
 pub mod set;
 
-pub use self::{chain::*, pin::*, set::FieldSet};
+#[doc(hidden)]
+pub mod type_list;
+
+pub use self::{chain::*, pin::*, set::FieldSet, type_list::FieldList};
 pub use gfp_derive::Field;
 
 #[doc(hidden)]
@@ -69,6 +72,15 @@ pub trait ProjectToSet<F: FieldSet> {
 
     /// projects to the given field
     fn project_set_to(self, field: F) -> Self::Projection;
+}
+
+/// Projects a type to the given field list
+pub trait ProjectListTo<F> {
+    /// The projection of the type, can be used to directly access the field
+    type Projection;
+
+    /// projects to the given field
+    fn project_list_to(self, field: F) -> Self::Projection;
 }
 
 /// Represents a field of some `Parent` type
