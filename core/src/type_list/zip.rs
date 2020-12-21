@@ -1,5 +1,7 @@
 use super::{Cons, Nil};
 
+include!(concat!(env!("OUT_DIR"), "/zip.rs"));
+
 pub type Zipped<A, B> = <A as ListZip<B>>::Output;
 
 pub trait ListZip<L> {

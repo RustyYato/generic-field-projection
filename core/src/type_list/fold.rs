@@ -1,5 +1,7 @@
 use super::*;
 
+include!(concat!(env!("OUT_DIR"), "/fold.rs"));
+
 pub trait ListFold<A, F> {
     type Output;
 

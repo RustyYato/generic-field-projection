@@ -8,6 +8,8 @@ pub(crate) mod zip;
 
 use call::{CallMut, CallOnce};
 
+include!(concat!(env!("OUT_DIR"), "/type_list.rs"));
+
 #[derive(Clone, Copy)]
 pub struct Cons<T, R>(pub T, pub R);
 #[derive(Clone, Copy)]
@@ -68,7 +70,7 @@ impl<F: Field, R: FieldList<F::Parent>> FieldList<F::Parent> for Cons<F, R> {
 #[macro_export]
 macro_rules! List {
     () => { $crate::type_list::Nil };
-    ($t:ty $(, $rest:ty)* $(,)?) => { $crate::type_list::Cons<$t, $crate::list!($($rest),*)> };
+    ($t:ty $(, $rest:ty)* $(,)?) => { $crate::type_list::Cons<$t, $crate::List!($($rest),*)> };
 }
 
 /// Creates a type-level cons list

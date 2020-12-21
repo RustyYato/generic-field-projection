@@ -1,5 +1,7 @@
 use super::*;
 
+include!(concat!(env!("OUT_DIR"), "/map.rs"));
+
 pub type Mapped<L, F> = <L as ListMap<F>>::Output;
 pub trait ListMap<F> {
     type Output;
