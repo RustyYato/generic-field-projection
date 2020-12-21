@@ -13,13 +13,6 @@ impl<'a> PtrToRefMut<'a> {
     }
 }
 
-type_function! {
-    for('a, T: 'a + ?Sized)
-    fn(self: PtrToRefMut<'a>, ptr: *mut T) -> &'a mut T {
-        unsafe { &mut *ptr }
-    }
-}
-
 call! {
     fn['a, T: 'a + ?Sized](&mut self: PtrToRefMut<'a>, ptr: *mut T) -> &'a mut T {
         unsafe { &mut *ptr }
@@ -37,28 +30,6 @@ where
 
     fn project_to(self, field: F) -> Self::Projection {
         unsafe { &mut *field.project_raw_mut(self) }
-    }
-}
-
-impl<'a, F: FieldSet> ProjectToSet<F> for &'a mut F::Parent
-where
-    F::Parent: 'a,
-    F::TypeSetMut: TupleMap<PtrToRefMut<'a>>,
-
-    F: Copy + TupleAny<FindOverlap<F>>,
-{
-    type Projection = TMap<F::TypeSetMut, PtrToRefMut<'a>>;
-
-    #[inline]
-    fn project_set_to(self, field: F) -> Self::Projection {
-        unsafe {
-            if field.tup_any(FindOverlap::new(field)) {
-                panic!("Found overlapping fields")
-            } else {
-                let type_set = field.project_raw_mut(self);
-                type_set.tup_map(PtrToRefMut::new())
-            }
-        }
     }
 }
 

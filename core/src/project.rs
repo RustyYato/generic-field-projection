@@ -2,8 +2,6 @@ use type_list::any::ListAny;
 
 use super::*;
 
-use crate::set::tuple::*;
-
 #[cfg(feature = "alloc")]
 pub mod from_arc;
 #[cfg(feature = "alloc")]
@@ -22,13 +20,6 @@ pub struct PtrToRef<'a>(PhantomData<&'a ()>);
 
 call! {
     fn['a, T: 'a + Sized](&mut self: PtrToRef<'a>, ptr: *const T) -> &'a T {
-        unsafe { &*ptr }
-    }
-}
-
-type_function! {
-    for('a, T: 'a + ?Sized)
-    fn(self: PtrToRef<'a>, ptr: *const T) -> &'a T {
         unsafe { &*ptr }
     }
 }
@@ -74,31 +65,6 @@ call! {
         self.counter += 1;
 
         self.id > self.counter && self.field.name().zip(input.name())
-            .all(|(i, j)| i == j)
-    }
-}
-
-type_function! {
-    for(S: Copy + TupleAny<FindOverlapInner<I>>, I: Field)
-    fn(self: FindOverlap<S>, input: I) -> bool {
-        self.counter += 1;
-
-        self.set.tup_any(FindOverlapInner {
-            id: self.counter,
-            counter: 0,
-            field: input
-        })
-    }
-
-    for(I: Field, J: Field)
-    fn(self: FindOverlapInner<I>, input: J) -> bool {
-        self.counter += 1;
-
-        if self.id <= self.counter {
-            return false
-        }
-
-        self.field.name().zip(input.name())
             .all(|(i, j)| i == j)
     }
 }

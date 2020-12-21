@@ -51,13 +51,6 @@ call! {
     }
 }
 
-type_function! {
-    for(P: ?Sized, T: ?Sized)
-    fn(self: Split<P>, field: *const T) -> ProjectedRc<P, T> {
-        ProjectedRc { _own: self.0.clone(), field }
-    }
-}
-
 impl<P: ?Sized, T> ProjectedRcSet<P, T> {
     pub fn get<'a>(&'a self) -> Mapped<T, PtrToRef<'a>>
     where
@@ -81,20 +74,6 @@ impl<'a, Parent: ?Sized, F: FieldList<Parent>> ProjectAll<Parent, F>
 
     #[inline]
     fn project_all(self, field: F) -> Self::Projection {
-        unsafe {
-            ProjectedRcSet {
-                field: field.project_raw(&self as &_),
-                _own:  self,
-            }
-        }
-    }
-}
-
-impl<'a, F: FieldSet> ProjectToSet<F> for Rc<F::Parent> {
-    type Projection = ProjectedRcSet<F::Parent, F::TypeSet>;
-
-    #[inline]
-    fn project_set_to(self, field: F) -> Self::Projection {
         unsafe {
             ProjectedRcSet {
                 field: field.project_raw(&self as &_),

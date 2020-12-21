@@ -30,5 +30,5 @@ fn try_aliasing() {
 
     let union = unsafe { Union::fields() };
 
-    (&mut a).project_set_to((union.foo, union.bar));
+    (&mut a).project_all(gfp_core::list!(union.foo, union.bar));
 }

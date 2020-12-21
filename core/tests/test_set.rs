@@ -31,7 +31,8 @@ fn simple() {
     let foo = Foo::fields();
     let bar = Bar::fields();
 
-    let (x, y_a) = foo_ref.project_set_to((foo.x, foo.y.chain(bar.a)));
+    let gfp_core::list_pat!(x, y_a) =
+        foo_ref.project_all(gfp_core::list!(foo.x, foo.y.chain(bar.a)));
 
     *x = 1;
     *y_a = 10;

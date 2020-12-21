@@ -8,12 +8,12 @@ use super::*;
 use core::{ops::DerefMut, ptr::NonNull};
 use std::boxed::Box;
 
-pub struct PtrToNonNull;
+// pub struct PtrToNonNull;
 
-type_function! {
-    for(T: ?Sized)
-    fn(self: PtrToNonNull, ptr: *mut T) -> NonNull<T> { unsafe { NonNull::new_unchecked(ptr) } }
-}
+// type_function! {
+//     for(T: ?Sized)
+//     fn(self: PtrToNonNull, ptr: *mut T) -> NonNull<T> { unsafe { NonNull::new_unchecked(ptr) } }
+// }
 
 pub struct BoxProjection<T: ?Sized, F: ?Sized> {
     bx:    NonNull<T>,

@@ -70,24 +70,6 @@ call! {
     }
 }
 
-type_function! {
-    for(F: Field) fn(self: CreateTag, _pin_to_pin: PinToPin<F>) -> MakePin {
-        MakePin
-    }
-
-    for(F: Field) fn(self: CreateTag, _pin_to_ptr: PinToPtr<F>) -> MakePtr {
-        MakePtr
-    }
-
-    for(T: Deref) fn(self: BuildOutput, MakePin: MakePin, value: T) -> Pin<T> {
-        unsafe { Pin::new_unchecked(value) }
-    }
-
-    for(T) fn(self: BuildOutput, MakePtr: MakePtr, value: T) -> T {
-        value
-    }
-}
-
 impl<Parent: ?Sized, F: Copy + FieldList<Parent>, P> ProjectAll<Parent, F>
     for Pin<P>
 where
@@ -107,27 +89,6 @@ where
             let raw_output = Pin::into_inner_unchecked(self).project_all(field);
 
             tags.zip(raw_output).list_map(BuildOutput)
-        }
-    }
-}
-
-impl<F: Copy + FieldSet, P> ProjectToSet<F> for Pin<P>
-where
-    P: PinnablePointer + ProjectToSet<F>,
-    F: TupleMap<CreateTag>,
-    TMap<F, CreateTag>: TupleZip<P::Projection, BuildOutput>,
-{
-    type Projection = TZip<TMap<F, CreateTag>, P::Projection, BuildOutput>;
-
-    #[inline]
-    fn project_set_to(self, field: F) -> Self::Projection {
-        unsafe {
-            let tags = field.tup_map(CreateTag);
-
-            let raw_output =
-                Pin::into_inner_unchecked(self).project_set_to(field);
-
-            tags.tup_zip(raw_output, BuildOutput)
         }
     }
 }
