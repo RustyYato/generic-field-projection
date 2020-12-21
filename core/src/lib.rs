@@ -204,12 +204,42 @@ pub unsafe trait Field {
     /// The type of the field itself
     type Type: ?Sized;
 
-    /// An iterator that returns the fuully qualified name of the field
+    /// An iterator that returns the fully qualified name of the field
     type Name: Iterator<Item = &'static str> + Clone;
 
     /// An iterator that returns the fully qualified name of the field
     ///
-    /// This must be unique for each field of the given `Parent` type
+    /// # Safety:
+    ///
+    /// * The results of the iterator must be unique for each field
+    ///   of the given `Parent` type
+    /// * `Self::name` never returns an empty iterator.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// struct Foo {
+    ///     x: u32,
+    ///     bar: Bar,
+    /// }
+    ///
+    /// struct Bar {
+    ///     y: u32,
+    ///     yak: Yak,
+    /// }
+    ///
+    /// struct Yak {
+    ///     z: u32,
+    ///     // other fields
+    /// }
+    /// ```
+    ///
+    /// The field `foo.bar.yak.z` has the name `["bar", "yak", "z"]`.
+    ///
+    /// The name determines overlaps, in the following way:
+    ///
+    /// * Given two field types `a: A` and `b: B`, and `A::Parent == B::Parent`
+    /// * `overlap(a, b) => a.name().zip(b.name()).all(|(a_name, b_name)| a_name == b_name)`
     fn name(&self) -> Self::Name;
 
     /// projects the raw pointer from the `Parent` type to the field `Type`
