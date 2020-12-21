@@ -1,7 +1,8 @@
 //! Projects through an `Box`
 //!
-//! This turns the `Box` into a pointer and keeps that around to clean up the data, and also
-//! holds on to a pointer to the field from the `Box`'s allocation.
+//! This turns the `Box` into a pointer and keeps that around to clean up the
+//! data, and also holds on to a pointer to the field from the `Box`'s
+//! allocation.
 
 use super::*;
 
@@ -68,10 +69,9 @@ impl<F: Field> ProjectTo<F> for Box<F::Parent> {
 // impl<'a, F: FieldSet> ProjectToSet<F> for Box<F::Parent>
 // where F::Parent: 'a,
 //       F::TypeSetMut: TupleMap<PtrToNonNull>,
-
 //       F: Copy + TupleAny<FindOverlap<F>> {
 //     type Projection = TMap<F::TypeSetMut, PtrToNonNull>;
-
+//
 //     #[inline]
 //     fn project_set_to(self, field: F) -> Self::Projection {
 //         unsafe {

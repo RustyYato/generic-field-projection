@@ -12,13 +12,16 @@ use syn;
 /// `gfp_core::Field` for them. It will also generate a type to make accessing
 /// these field types easier.
 ///
-/// The field types will be generated in a module named `{$type}_fields` and
-/// the type that holds all of the field types will be called `{$type}::Fields`.
+/// The field types will be generated in a module named `{$type}_fields` and the
+/// type that holds all of the field types will be called `{$type}::Fields`.
 ///
-/// For `unions`, getting the field types is `unsafe` because you can cause aliasing
-/// of unique references and because accessing union fields is inherently `unsafe`.
+/// For `unions`, getting the field types is `unsafe` because you can cause
+/// aliasing of unique references and because accessing union fields is
+/// inherently `unsafe`.
 ///
-/// For `struct`, getting the field types is safe because there is no way to cause UB.
+/// For `struct`, getting the field types is safe because there is no way to
+/// cause UB.
+///
 ///  * note: unit structs don't generate any extra code (i.e. `struct Foo;`)
 ///
 /// `enums` are not supported.
@@ -36,8 +39,8 @@ use syn;
 /// }
 /// # }
 /// ```
-/// will generate (exclusing comments), note the use of `&raw `, this is to allow safe
-/// projection through raw pointers.
+/// will generate (excluding comments) the following. Note the use of `&raw `,
+/// this is to allow safe projection through raw pointers.
 /// ```
 /// # #![feature(raw_ref_op)]
 /// # mod test {

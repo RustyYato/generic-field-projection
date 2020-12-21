@@ -7,8 +7,8 @@ use super::*;
 /// TODO: add safety docs
 pub unsafe trait PinnablePointer: core::ops::Deref {}
 
-/// Represents a field that can will be projected to a
-/// pointer when projected from a `Pin`
+/// Represents a field that can will be projected to a pointer when projected
+/// from a `Pin`
 #[repr(transparent)]
 #[derive(Copy, Clone)]
 pub struct PinToPtr<F: Field + ?Sized>(pub F);
