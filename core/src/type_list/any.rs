@@ -2,7 +2,7 @@ use super::*;
 use fold::ListFold;
 
 pub trait ListAny<F> {
-    fn list_any(self, f: F) -> bool;
+    fn any(self, f: F) -> bool;
 }
 
 pub struct AnyFolder<F>(F);
@@ -11,8 +11,8 @@ impl<F, L> ListAny<F> for L
 where
     Self: ListFold<bool, AnyFolder<F>, Output = bool>,
 {
-    fn list_any(self, f: F) -> bool {
-        self.list_fold(false, AnyFolder(f))
+    fn any(self, f: F) -> bool {
+        self.fold(false, AnyFolder(f))
     }
 }
 

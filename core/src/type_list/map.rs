@@ -4,13 +4,13 @@ pub type Mapped<L, F> = <L as ListMap<F>>::Output;
 pub trait ListMap<F> {
     type Output;
 
-    fn list_map(self, f: F) -> Self::Output;
+    fn map(self, f: F) -> Self::Output;
 }
 
 impl<F> ListMap<F> for Nil {
     type Output = Nil;
 
-    fn list_map(self, _: F) -> Self::Output {
+    fn map(self, _: F) -> Self::Output {
         Nil
     }
 }
@@ -21,7 +21,7 @@ where
 {
     type Output = Cons<F::Output, Nil>;
 
-    fn list_map(self, f: F) -> Self::Output {
+    fn map(self, f: F) -> Self::Output {
         Cons(f.call_once((self.0,)), Nil)
     }
 }
@@ -33,7 +33,7 @@ where
 {
     type Output = Cons<F::Output, <Cons<U, R> as ListMap<F>>::Output>;
 
-    fn list_map(self, mut f: F) -> Self::Output {
-        Cons(f.call_mut((self.0,)), self.1.list_map(f))
+    fn map(self, mut f: F) -> Self::Output {
+        Cons(f.call_mut((self.0,)), self.1.map(f))
     }
 }

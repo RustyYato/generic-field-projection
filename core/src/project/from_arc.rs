@@ -72,14 +72,14 @@ impl<P: ?Sized, T> ProjectedArcSet<P, T> {
     where
         T: Copy + ListMap<PtrToRef<'a>>,
     {
-        self.field.list_map(PtrToRef(PhantomData))
+        self.field.map(PtrToRef(PhantomData))
     }
 
     pub fn split(self) -> Mapped<T, Split<P>>
     where
         T: Copy + ListMap<Split<P>>,
     {
-        self.field.list_map(Split(self._own))
+        self.field.map(Split(self._own))
     }
 }
 

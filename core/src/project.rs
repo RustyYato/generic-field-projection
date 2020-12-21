@@ -52,7 +52,7 @@ call! {
     {
         self.counter += 1;
 
-        self.set.list_any(FindOverlapInner {
+        self.set.any(FindOverlapInner {
             id: self.counter,
             counter: 0,
             field: input

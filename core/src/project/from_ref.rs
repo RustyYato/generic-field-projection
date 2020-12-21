@@ -28,7 +28,7 @@ where
     fn project_all(self, field: F) -> Self::Projection {
         unsafe {
             let type_set = field.project_raw(self);
-            type_set.list_map(PtrToRef(PhantomData))
+            type_set.map(PtrToRef(PhantomData))
         }
     }
 }

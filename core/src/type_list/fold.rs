@@ -3,13 +3,13 @@ use super::*;
 pub trait ListFold<A, F> {
     type Output;
 
-    fn list_fold(self, acc: A, f: F) -> Self::Output;
+    fn fold(self, acc: A, f: F) -> Self::Output;
 }
 
 impl<A, F> ListFold<A, F> for Nil {
     type Output = A;
 
-    fn list_fold(self, acc: A, _: F) -> Self::Output {
+    fn fold(self, acc: A, _: F) -> Self::Output {
         acc
     }
 }
@@ -20,7 +20,7 @@ where
 {
     type Output = F::Output;
 
-    fn list_fold(self, acc: A, f: F) -> Self::Output {
+    fn fold(self, acc: A, f: F) -> Self::Output {
         f.call_once((acc, self.0))
     }
 }
@@ -32,8 +32,8 @@ where
 {
     type Output = <Cons<U, R> as ListFold<F::Output, F>>::Output;
 
-    fn list_fold(self, acc: A, mut f: F) -> Self::Output {
+    fn fold(self, acc: A, mut f: F) -> Self::Output {
         let f_out = f.call_mut((acc, self.0));
-        self.1.list_fold(f_out, f)
+        self.1.fold(f_out, f)
     }
 }

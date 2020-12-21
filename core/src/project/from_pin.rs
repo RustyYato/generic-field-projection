@@ -2,7 +2,7 @@
 
 use type_list::{
     map::{ListMap, Mapped},
-    zip::{Zip, Zipped},
+    zip::{ListZip, Zipped},
 };
 
 use super::*;
@@ -75,7 +75,7 @@ impl<Parent: ?Sized, F: Copy + FieldList<Parent>, P> ProjectAll<Parent, F>
 where
     P: PinnablePointer + ProjectAll<Parent, F>,
     F: ListMap<CreateTag>,
-    Mapped<F, CreateTag>: Zip<P::Projection>,
+    Mapped<F, CreateTag>: ListZip<P::Projection>,
     Zipped<Mapped<F, CreateTag>, P::Projection>: ListMap<BuildOutput>,
 {
     type Projection =
@@ -84,11 +84,11 @@ where
     #[inline]
     fn project_all(self, field: F) -> Self::Projection {
         unsafe {
-            let tags = field.list_map(CreateTag);
+            let tags = field.map(CreateTag);
 
             let raw_output = Pin::into_inner_unchecked(self).project_all(field);
 
-            tags.zip(raw_output).list_map(BuildOutput)
+            tags.zip(raw_output).map(BuildOutput)
         }
     }
 }

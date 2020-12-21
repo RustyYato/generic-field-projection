@@ -46,10 +46,10 @@ where
     /// projects to the given field
     fn project_all(self, field: F) -> Self::Projection {
         assert!(
-            !field.list_any(FindOverlap::new(field)),
+            !field.any(FindOverlap::new(field)),
             "Found overlapping fields"
         );
 
-        unsafe { field.project_raw_mut(self).list_map(PtrToRefMut::new()) }
+        unsafe { field.project_raw_mut(self).map(PtrToRefMut::new()) }
     }
 }

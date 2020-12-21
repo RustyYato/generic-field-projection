@@ -1,13 +1,13 @@
 use super::{Cons, Nil};
 
-pub type Zipped<A, B> = <A as Zip<B>>::Output;
+pub type Zipped<A, B> = <A as ListZip<B>>::Output;
 
-pub trait Zip<L> {
+pub trait ListZip<L> {
     type Output;
     fn zip(self, other: L) -> Self::Output;
 }
 
-impl Zip<Nil> for Nil {
+impl ListZip<Nil> for Nil {
     type Output = Nil;
 
     fn zip(self, Nil: Self) -> Self::Output {
@@ -15,7 +15,7 @@ impl Zip<Nil> for Nil {
     }
 }
 
-impl<A, B, Ra: Zip<Rb>, Rb> Zip<Cons<B, Rb>> for Cons<A, Ra> {
+impl<A, B, Ra: ListZip<Rb>, Rb> ListZip<Cons<B, Rb>> for Cons<A, Ra> {
     type Output = Cons<(A, B), Zipped<Ra, Rb>>;
 
     fn zip(self, other: Cons<B, Rb>) -> Self::Output {
