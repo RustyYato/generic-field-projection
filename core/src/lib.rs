@@ -10,6 +10,7 @@
 extern crate alloc as std;
 
 mod chain;
+mod dynamic;
 #[doc(hidden)]
 pub mod macros;
 mod pin;
@@ -18,7 +19,7 @@ mod project;
 #[doc(hidden)]
 pub mod set;
 
-pub use self::{chain::*, pin::*, set::FieldSet};
+pub use self::{chain::*, dynamic::Dynamic, pin::*, set::FieldSet};
 pub use gfp_derive::Field;
 
 #[doc(hidden)]
@@ -204,7 +205,7 @@ pub unsafe trait Field {
     type Type: ?Sized;
 
     /// An iterator that returns the fuully qualified name of the field
-    type Name: Iterator<Item = &'static str>;
+    type Name: Iterator<Item = &'static str> + Clone;
 
     /// An iterator that returns the fully qualified name of the field
     ///
@@ -227,6 +228,15 @@ pub unsafe trait Field {
     /// `ptr` must point to a valid allocation of `Parent`
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent)
     -> *mut Self::Type;
+
+    /// Create an equivilent runtime offset-based field
+    fn dynamic(&self) -> Dynamic<Self::Parent, Self::Type, Self::Name>
+    where
+        Self::Parent: Sized,
+        Self::Type: Sized,
+    {
+        unsafe { Dynamic::from_raw_parts(self.field_offset(), self.name()) }
+    }
 
     /// gets the offset of the field from the base pointer of `Parent`
     fn field_offset(&self) -> usize
