@@ -1,5 +1,10 @@
 //! Experimental support for pinnable pointers
 
+use type_list::{
+    map::{ListMap, Mapped},
+    zip::{Zip, Zipped},
+};
+
 use super::*;
 
 impl<'a, F: Field, P> ProjectTo<PinToPin<F>> for Pin<P>
@@ -41,6 +46,30 @@ pub struct CreateTag;
 
 pub struct BuildOutput;
 
+call! {
+    fn[F: Field](&mut self: CreateTag, _pin_to_pin: PinToPin<F>) -> MakePin {
+        MakePin
+    }
+}
+call! {
+    fn[F: Field](&mut self: CreateTag, _pin_to_ptr: PinToPtr<F>) -> MakePtr {
+        MakePtr
+    }
+}
+call! {
+    fn[T: Deref](&mut self: BuildOutput, arg: (MakePin, T)) -> Pin<T> {
+        let (MakePin,  value) = arg;
+        unsafe { Pin::new_unchecked(value) }
+    }
+}
+
+call! {
+    fn[T](&mut self: BuildOutput, arg: (MakePtr, T)) -> T {
+        let (MakePtr, value) = arg;
+        value
+    }
+}
+
 type_function! {
     for(F: Field) fn(self: CreateTag, _pin_to_pin: PinToPin<F>) -> MakePin {
         MakePin
@@ -56,6 +85,29 @@ type_function! {
 
     for(T) fn(self: BuildOutput, MakePtr: MakePtr, value: T) -> T {
         value
+    }
+}
+
+impl<Parent: ?Sized, F: Copy + FieldList<Parent>, P> ProjectAll<Parent, F>
+    for Pin<P>
+where
+    P: PinnablePointer + ProjectAll<Parent, F>,
+    F: ListMap<CreateTag>,
+    Mapped<F, CreateTag>: Zip<P::Projection>,
+    Zipped<Mapped<F, CreateTag>, P::Projection>: ListMap<BuildOutput>,
+{
+    type Projection =
+        Mapped<Zipped<Mapped<F, CreateTag>, P::Projection>, BuildOutput>;
+
+    #[inline]
+    fn project_all(self, field: F) -> Self::Projection {
+        unsafe {
+            let tags = field.list_map(CreateTag);
+
+            let raw_output = Pin::into_inner_unchecked(self).project_all(field);
+
+            tags.zip(raw_output).list_map(BuildOutput)
+        }
     }
 }
 

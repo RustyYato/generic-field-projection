@@ -1,7 +1,6 @@
 use super::*;
 use type_list::{
     any::ListAny,
-    call,
     map::{ListMap, Mapped},
 };
 
@@ -63,7 +62,7 @@ where
     }
 }
 
-impl<'a, F, Parent> ProjectListTo<F> for &'a mut Parent
+impl<'a, F, Parent> ProjectAll<Parent, F> for &'a mut Parent
 where
     Parent: ?Sized,
     F: FieldList<Parent>,
@@ -74,7 +73,7 @@ where
     type Projection = Mapped<F::TypeMut, PtrToRefMut<'a>>;
 
     /// projects to the given field
-    fn project_list_to(self, field: F) -> Self::Projection {
+    fn project_all(self, field: F) -> Self::Projection {
         assert!(
             !field.list_any(FindOverlap::new(field)),
             "Found overlapping fields"

@@ -3,6 +3,8 @@
 //! This clones the `Arc` and keeps it around to clean up the data, and also
 //! holds on to a pointer to the field from the `Arc`'s allocation.
 
+use type_list::map::{ListMap, Mapped};
+
 use super::*;
 
 use std::sync::Arc;
@@ -59,6 +61,12 @@ unsafe impl<P: ?Sized, T: ?Sized> Sync for ProjectedArcSet<P, T> where
 
 pub struct Split<P: ?Sized>(Arc<P>);
 
+call! {
+    fn[P: ?Sized, T: ?Sized](&mut self: Split<P>, field: *const T) -> ProjectedArc<P, T> {
+        ProjectedArc { _own: self.0.clone(), field }
+    }
+}
+
 type_function! {
     for(P: ?Sized, T: ?Sized)
     fn(self: Split<P>, field: *const T) -> ProjectedArc<P, T> {
@@ -67,18 +75,34 @@ type_function! {
 }
 
 impl<P: ?Sized, T> ProjectedArcSet<P, T> {
-    pub fn get<'a>(&'a self) -> TMap<T, PtrToRef<'a>>
+    pub fn get<'a>(&'a self) -> Mapped<T, PtrToRef<'a>>
     where
-        T: Copy + TupleMap<PtrToRef<'a>>,
+        T: Copy + ListMap<PtrToRef<'a>>,
     {
-        self.field.tup_map(PtrToRef(PhantomData))
+        self.field.list_map(PtrToRef(PhantomData))
     }
 
-    pub fn split(self) -> TMap<T, Split<P>>
+    pub fn split(self) -> Mapped<T, Split<P>>
     where
-        T: Copy + TupleMap<Split<P>>,
+        T: Copy + ListMap<Split<P>>,
     {
-        self.field.tup_map(Split(self._own))
+        self.field.list_map(Split(self._own))
+    }
+}
+
+impl<'a, Parent: ?Sized, F: FieldList<Parent>> ProjectAll<Parent, F>
+    for Arc<Parent>
+{
+    type Projection = ProjectedArcSet<Parent, F::Type>;
+
+    #[inline]
+    fn project_all(self, field: F) -> Self::Projection {
+        unsafe {
+            ProjectedArcSet {
+                field: field.project_raw(&self as &_),
+                _own:  self,
+            }
+        }
     }
 }
 

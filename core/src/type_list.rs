@@ -4,8 +4,8 @@ pub(crate) mod any;
 pub(crate) mod call;
 pub(crate) mod fold;
 pub(crate) mod map;
+pub(crate) mod zip;
 
-use crate::call;
 use call::{CallMut, CallOnce};
 
 #[derive(Clone, Copy)]

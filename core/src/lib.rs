@@ -75,12 +75,12 @@ pub trait ProjectToSet<F: FieldSet> {
 }
 
 /// Projects a type to the given field list
-pub trait ProjectListTo<F> {
+pub trait ProjectAll<Parent: ?Sized, F> {
     /// The projection of the type, can be used to directly access the field
     type Projection;
 
-    /// projects to the given field
-    fn project_list_to(self, field: F) -> Self::Projection;
+    /// projects to the given field list
+    fn project_all(self, field_list: F) -> Self::Projection;
 }
 
 /// Represents a field of some `Parent` type

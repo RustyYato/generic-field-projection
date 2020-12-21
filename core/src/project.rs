@@ -20,6 +20,12 @@ use crate::pin::*;
 
 pub struct PtrToRef<'a>(PhantomData<&'a ()>);
 
+call! {
+    fn['a, T: 'a + Sized](&mut self: PtrToRef<'a>, ptr: *const T) -> &'a T {
+        unsafe { &*ptr }
+    }
+}
+
 type_function! {
     for('a, T: 'a + ?Sized)
     fn(self: PtrToRef<'a>, ptr: *const T) -> &'a T {

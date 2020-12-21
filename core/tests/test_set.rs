@@ -51,10 +51,11 @@ fn pin() {
     let mut value = Foo::default();
     let value_ref = Pin::new(&mut value);
 
-    let (mut x, y_a) = value_ref.project_set_to((
-        unsafe { PinToPin::new_unchecked(foo.x) },
-        PinToPtr::new(foo.y.chain(bar.a)),
-    ));
+    let gfp_core::list_pat!(mut x, y_a) =
+        value_ref.project_all(gfp_core::list!(
+            unsafe { PinToPin::new_unchecked(foo.x) },
+            PinToPtr::new(foo.y.chain(bar.a)),
+        ));
 
     *x = 1;
     *y_a = 10;
@@ -76,9 +77,9 @@ fn arc() {
     let foo = Foo::fields();
     let bar = Bar::fields();
 
-    let (foo_x, foo_y_a) = arc
+    let gfp_core::list_pat!(foo_x, foo_y_a) = arc
         .clone()
-        .project_set_to((foo.x, foo.y.chain(bar.a)))
+        .project_all(gfp_core::list!(foo.x, foo.y.chain(bar.a)))
         .split();
 
     assert_eq!(*foo_x, 10);
