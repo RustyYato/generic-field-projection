@@ -4,10 +4,7 @@
 //! holds on to a pointer to the field from the `Rc`'s allocation.
 
 use type_list::{FieldList, ProjectRaw, Projected};
-use typsy::{
-    call::Simple,
-    map::{Map, Mapped},
-};
+use typsy::map::{Map, Mapped};
 
 use super::*;
 
@@ -56,18 +53,18 @@ typsy::call! {
 }
 
 impl<P: ?Sized, T> ProjectedRcSet<P, T> {
-    pub fn get<'a>(&'a self) -> Mapped<T, Simple<PtrToRef<'a>>>
+    pub fn get<'a>(&'a self) -> Mapped<T, PtrToRef<'a>>
     where
-        T: Copy + Map<Simple<PtrToRef<'a>>>,
+        T: Copy + Map<PtrToRef<'a>>,
     {
-        self.field.map(Simple(PtrToRef(PhantomData)))
+        self.field.map(PtrToRef(PhantomData))
     }
 
-    pub fn split(self) -> Mapped<T, Simple<Split<P>>>
+    pub fn split(self) -> Mapped<T, Split<P>>
     where
-        T: Copy + Map<Simple<Split<P>>>,
+        T: Copy + Map<Split<P>>,
     {
-        self.field.map(Simple(Split(self._own)))
+        self.field.map(Split(self._own))
     }
 }
 
@@ -80,7 +77,7 @@ impl<'a, Parent: ?Sized, F: FieldList<Parent>> ProjectAll<Parent, F>
     fn project_all(self, field: F) -> Self::Projection {
         unsafe {
             ProjectedRcSet {
-                field: field.map(Simple(ProjectRaw::new(&self as &_))),
+                field: field.map(ProjectRaw::new(&self as &_)),
                 _own:  self,
             }
         }

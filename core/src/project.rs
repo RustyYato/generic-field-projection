@@ -1,4 +1,4 @@
-use typsy::{call::Simple, cmp::Any};
+use typsy::cmp::Any;
 
 use super::*;
 
@@ -47,16 +47,16 @@ pub struct FindOverlapInner<I> {
 typsy::call! {
     fn[S, F](&mut self: FindOverlap<S>, field: F) -> bool
     where(
-        S: Copy + for<'b> Any<'b, Simple<FindOverlapInner<F>>>,
+        S: Copy + for<'b> Any<'b, FindOverlapInner<F>>,
         F: Field,
     ){
         self.counter += 1;
 
-        self.set.any(Simple(FindOverlapInner {
+        self.set.any(FindOverlapInner {
             id: self.counter,
             counter: 0,
             field
-        }))
+        })
     }
 
     fn[A: Field, B: Field](&mut self: FindOverlapInner<A>, input: B) -> bool {

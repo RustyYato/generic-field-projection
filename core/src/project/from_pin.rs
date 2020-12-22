@@ -71,24 +71,21 @@ impl<Parent: ?Sized, F: Copy + FieldList<Parent>, P> ProjectAll<Parent, F>
     for Pin<P>
 where
     P: PinnablePointer + ProjectAll<Parent, F>,
-    F: Map<Simple<CreateTag>>,
-    Mapped<F, Simple<CreateTag>>: Zip<P::Projection>,
-    Zipped<Mapped<F, Simple<CreateTag>>, P::Projection>:
-        Map<Simple<BuildOutput>>,
+    F: Map<CreateTag>,
+    Mapped<F, CreateTag>: Zip<P::Projection>,
+    Zipped<Mapped<F, CreateTag>, P::Projection>: Map<BuildOutput>,
 {
-    type Projection = Mapped<
-        Zipped<Mapped<F, Simple<CreateTag>>, P::Projection>,
-        Simple<BuildOutput>,
-    >;
+    type Projection =
+        Mapped<Zipped<Mapped<F, CreateTag>, P::Projection>, BuildOutput>;
 
     #[inline]
     fn project_all(self, field: F) -> Self::Projection {
         unsafe {
-            let tags = field.map(Simple(CreateTag));
+            let tags = field.map(CreateTag);
 
             let raw_output = Pin::into_inner_unchecked(self).project_all(field);
 
-            tags.zip(raw_output).map(Simple(BuildOutput))
+            tags.zip(raw_output).map(BuildOutput)
         }
     }
 }

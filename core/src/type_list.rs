@@ -1,13 +1,12 @@
 use crate::Field;
 
 use typsy::{
-    call::Simple,
     hlist::{Cons, Nil},
     map::{Map, Mapped},
 };
 
-pub type Projected<Parent, F> = Mapped<F, Simple<ProjectRaw<Parent>>>;
-pub type ProjectedMut<Parent, F> = Mapped<F, Simple<ProjectRawMut<Parent>>>;
+pub type Projected<Parent, F> = Mapped<F, ProjectRaw<Parent>>;
+pub type ProjectedMut<Parent, F> = Mapped<F, ProjectRawMut<Parent>>;
 pub struct ProjectRaw<Parent: ?Sized>(*const Parent);
 pub struct ProjectRawMut<Parent: ?Sized>(*mut Parent);
 
@@ -46,7 +45,7 @@ typsy::call! {
 
 /// Represents a list of fields
 pub trait FieldList<Parent: ?Sized>:
-    Map<Simple<ProjectRaw<Parent>>> + Map<Simple<ProjectRawMut<Parent>>>
+    Map<ProjectRaw<Parent>> + Map<ProjectRawMut<Parent>>
 {
 }
 
@@ -54,7 +53,6 @@ impl<Parent: ?Sized> FieldList<Parent> for Nil {
 }
 
 impl<F: Field, R> FieldList<F::Parent> for Cons<F, R> where
-    Self: Map<Simple<ProjectRaw<F::Parent>>>
-        + Map<Simple<ProjectRawMut<F::Parent>>>
+    Self: Map<ProjectRaw<F::Parent>> + Map<ProjectRawMut<F::Parent>>
 {
 }

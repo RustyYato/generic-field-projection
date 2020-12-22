@@ -1,10 +1,7 @@
 use super::*;
 
 use type_list::{FieldList, ProjectRaw, Projected};
-use typsy::{
-    call::Simple,
-    map::{Map, Mapped},
-};
+use typsy::map::{Map, Mapped};
 
 unsafe impl<F: ?Sized> PinnablePointer for &F {
 }
@@ -24,16 +21,12 @@ impl<'a, Parent: ?Sized, F: FieldList<Parent>> ProjectAll<Parent, F>
     for &'a Parent
 where
     Parent: 'a,
-    Projected<Parent, F>: Map<Simple<PtrToRef<'a>>>,
+    Projected<Parent, F>: Map<PtrToRef<'a>>,
 {
-    type Projection = Mapped<Projected<Parent, F>, Simple<PtrToRef<'a>>>;
+    type Projection = Mapped<Projected<Parent, F>, PtrToRef<'a>>;
 
     #[inline]
     fn project_all(self, field: F) -> Self::Projection {
-        unsafe {
-            field
-                .map(Simple(ProjectRaw::new(self)))
-                .map(Simple(PtrToRef(PhantomData)))
-        }
+        unsafe { field.map(ProjectRaw::new(self)).map(PtrToRef(PhantomData)) }
     }
 }

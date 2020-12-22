@@ -1,7 +1,6 @@
 use super::*;
 use type_list::{FieldList, ProjectRawMut, ProjectedMut};
 use typsy::{
-    call::Simple,
     cmp::Any,
     map::{Map, Mapped},
 };
@@ -32,23 +31,23 @@ impl<'a, F, Parent> ProjectAll<Parent, F> for &'a mut Parent
 where
     Parent: ?Sized,
     F: FieldList<Parent>,
-    ProjectedMut<Parent, F>: Map<Simple<PtrToRefMut<'a>>>,
-    F: Copy + for<'b> Any<'b, Simple<FindOverlap<F>>>,
+    ProjectedMut<Parent, F>: Map<PtrToRefMut<'a>>,
+    F: Copy + for<'b> Any<'b, FindOverlap<F>>,
 {
     /// The projection of the type, can be used to directly access the field
-    type Projection = Mapped<ProjectedMut<Parent, F>, Simple<PtrToRefMut<'a>>>;
+    type Projection = Mapped<ProjectedMut<Parent, F>, PtrToRefMut<'a>>;
 
     /// projects to the given field
     fn project_all(self, field: F) -> Self::Projection {
         assert!(
-            !field.any(Simple(FindOverlap::new(field))),
+            !field.any(FindOverlap::new(field)),
             "Found overlapping fields"
         );
 
         unsafe {
             field
-                .map(Simple(ProjectRawMut::new(self)))
-                .map(Simple(PtrToRefMut(PhantomData)))
+                .map(ProjectRawMut::new(self))
+                .map(PtrToRefMut(PhantomData))
         }
     }
 }
