@@ -1,4 +1,4 @@
-use type_list::any::ListAny;
+use typsy::{call::Simple, cmp::Any};
 
 use super::*;
 
@@ -18,7 +18,7 @@ use crate::pin::*;
 
 pub struct PtrToRef<'a>(PhantomData<&'a ()>);
 
-call! {
+typsy::call! {
     fn['a, T: 'a + Sized](&mut self: PtrToRef<'a>, ptr: *const T) -> &'a T {
         unsafe { &*ptr }
     }
@@ -44,23 +44,21 @@ pub struct FindOverlapInner<I> {
     field:   I,
 }
 
-call! {
-    fn[S, F](&mut self: FindOverlap<S>, input: F) -> bool
-    where
-        S: (Copy + ListAny<FindOverlapInner<F>>),
-        F: (Field),
-    {
+typsy::call! {
+    fn[S, F](&mut self: FindOverlap<S>, field: F) -> bool
+    where(
+        S: Copy + for<'b> Any<'b, Simple<FindOverlapInner<F>>>,
+        F: Field,
+    ){
         self.counter += 1;
 
-        self.set.any(FindOverlapInner {
+        self.set.any(Simple(FindOverlapInner {
             id: self.counter,
             counter: 0,
-            field: input
-        })
+            field
+        }))
     }
-}
 
-call! {
     fn[A: Field, B: Field](&mut self: FindOverlapInner<A>, input: B) -> bool {
         self.counter += 1;
 

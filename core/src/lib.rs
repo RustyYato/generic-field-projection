@@ -18,7 +18,7 @@ mod project;
 #[doc(hidden)]
 pub mod type_list;
 
-pub use self::{chain::*, pin::*, type_list::FieldList};
+pub use self::{chain::*, pin::*};
 pub use gfp_derive::Field;
 
 #[doc(hidden)]

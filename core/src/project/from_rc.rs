@@ -3,7 +3,11 @@
 //! This clones the `Rc` and keeps it around to clean up the data, and also
 //! holds on to a pointer to the field from the `Rc`'s allocation.
 
-use type_list::map::{ListMap, Mapped};
+use type_list::{FieldList, ProjectRaw, Projected};
+use typsy::{
+    call::Simple,
+    map::{Map, Mapped},
+};
 
 use super::*;
 
@@ -45,38 +49,38 @@ pub struct ProjectedRcSet<P: ?Sized, T: ?Sized> {
 
 pub struct Split<P: ?Sized>(Rc<P>);
 
-call! {
+typsy::call! {
     fn[P: ?Sized, T: ?Sized](&mut self: Split<P>, field: *const T) -> ProjectedRc<P, T> {
         ProjectedRc { _own: self.0.clone(), field }
     }
 }
 
 impl<P: ?Sized, T> ProjectedRcSet<P, T> {
-    pub fn get<'a>(&'a self) -> Mapped<T, PtrToRef<'a>>
+    pub fn get<'a>(&'a self) -> Mapped<T, Simple<PtrToRef<'a>>>
     where
-        T: Copy + ListMap<PtrToRef<'a>>,
+        T: Copy + Map<Simple<PtrToRef<'a>>>,
     {
-        self.field.map(PtrToRef(PhantomData))
+        self.field.map(Simple(PtrToRef(PhantomData)))
     }
 
-    pub fn split(self) -> Mapped<T, Split<P>>
+    pub fn split(self) -> Mapped<T, Simple<Split<P>>>
     where
-        T: Copy + ListMap<Split<P>>,
+        T: Copy + Map<Simple<Split<P>>>,
     {
-        self.field.map(Split(self._own))
+        self.field.map(Simple(Split(self._own)))
     }
 }
 
 impl<'a, Parent: ?Sized, F: FieldList<Parent>> ProjectAll<Parent, F>
     for Rc<Parent>
 {
-    type Projection = ProjectedRcSet<Parent, F::Type>;
+    type Projection = ProjectedRcSet<Parent, Projected<Parent, F>>;
 
     #[inline]
     fn project_all(self, field: F) -> Self::Projection {
         unsafe {
             ProjectedRcSet {
-                field: field.project_raw(&self as &_),
+                field: field.map(Simple(ProjectRaw::new(&self as &_))),
                 _own:  self,
             }
         }
