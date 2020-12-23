@@ -1,11 +1,13 @@
 # Introduction
 
 This crate contains examples that may be of use in learning not only how to use
-the [`generic-field-projection`](FIXME) create, but also make it clear as to why
-that crate (and intrusive collections in general are useful).  The code in this
-crate is not optimized; the main criteria for the implementations was for use as
-teaching tools.  As a result, their performance is low.  We leave to others
-(maybe you!) to improve the performance of this code.
+the
+[`generic-field-projection`](https://github.com/RustyYato/generic-field-projection/tree/master/core)
+crate, but also make it clear as to why that crate (and intrusive collections in
+general are useful).  The code in this crate is not optimized; the main criteria
+for the implementations was for use as teaching tools.  As a result, their
+performance is low.  We leave to others (maybe you!) to improve the performance
+of this code.
 
 ## Intrusive Collections
 
@@ -16,7 +18,7 @@ As programmers, a large part of our time is spent organizing data to make it
 easy to access when we need it.  Because this is such a common problem, computer
 scientists have developed a number of useful data structures, some of which can
 be found in the rust standard library's
-[`collections`](file:///home/cfkaran2/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/share/doc/rust/html/std/collections/index.html)
+[`collections`](https://doc.rust-lang.org/std/collections/)
 module.  The main thing to note about each of these types is that the collection
 becomes the owner of the object that is placed within it.  *Objects are in the
 container.*  (As a side-note, these types of collections are sometimes referred
@@ -170,10 +172,10 @@ I'm trying to keep the example compact)
 Assume that we've got a properly formed data structure to start with, with the
 `priority_node`s forming a
 [heap](https://en.wikipedia.org/wiki/Heap_(data_structure)), and the `key_node`s
-forming a [balanced binary
-tree](https://en.wikipedia.org/wiki/Balanced_binary_tree).  Assuming that there
-is a way to get the `Thing` that the `priority_node` or `key_node` is a part of
-easily, then modifying the priority is simple:
+forming a
+[balanced binary tree](https://en.wikipedia.org/wiki/Balanced_binary_tree).
+Assuming that there is a way to get the `Thing` that the `priority_node` or
+`key_node` is a part of easily, then modifying the priority is simple:
 1. Start at some `Thing`.  Using the `key_node` instance, traverse the parent
    and child links until you find the `Thing` that you're interested in.
 2. Modify the priority in that `Thing`'s `priority_node`.
@@ -220,7 +222,7 @@ involves the following steps:
 2. Traversing the parent or child pointers to some other `Thing`.  This is safe
    because `Rc` and `Weak` enforce the rules for you.
 3. At each `priority_node` you wish to examine the `Thing` that contains the
-   `priority_node`.  This is **unsafe.**
+   `priority_node`.  This is **unsafe**.
 
 The reason that the last point is unsafe is because you don't know if the
 `HeapTreeNode` you now have a reference to is actually a part of a `Thing`.
@@ -235,14 +237,16 @@ There are two high-level modules in this crate.  The first is the
 `basic_datastructures` crate, and the second is the `lessons` crate.
 
 The `basic_datastructures` crate has some very simple implementations of common
-data structures ([singly linked
-list](https://en.wikipedia.org/wiki/Linked_list), [binary
-heap](https://en.wikipedia.org/wiki/Binary_heap), [red-black
-tree](https://en.wikipedia.org/wiki/Red%E2%80%93black_tree)).  These are
-deliberately designed to be as simple as is reasonably possible.  They are also
-heavily documented to make them easy to understand.  They are not performance
-optimized and are likely quite slow.  In addition, they are designed to panic
-rather than return results; in short, don't use these types in production code.
+data structures:
+- [singly linkedlist](https://en.wikipedia.org/wiki/Linked_list)
+- [binary heap](https://en.wikipedia.org/wiki/Binary_heap)
+- [red-blacktree](https://en.wikipedia.org/wiki/Red%E2%80%93black_tree)
+
+These are deliberately designed to be as simple as is reasonably possible.
+They are also heavily documented to make them easy to understand.  They are not
+performance optimized and are likely quite slow.  In addition, they are designed
+to panic rather than return results; in short, don't use these types in
+production code.
 
 The `lessons` crate is organized in what I thought would be a logical order from
 simplest composition to most difficult.  Each module is prefixed with a two
@@ -251,7 +255,7 @@ to make it clearer as to what is happening.
 
 # Comments, complaints, and issues
 
-Please use the [issue
-tracker](https://github.com/RustyYato/generic-field-projection/issues) to report
-any issues you find within these examples.  Good luck, and we hope this is
-helpful to you!
+Please use the
+[issue tracker](https://github.com/RustyYato/generic-field-projection/issues)
+to report any issues you find within these examples.  Good luck, and we hope
+this is helpful to you!
