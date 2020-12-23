@@ -222,6 +222,8 @@ pub unsafe trait Field {
     fn range(&self) -> Range<usize>
     where
         // TODO: find a way to relax both of these bounds
+        // see https://github.com/RustyYato/generic-field-projection/issues/39
+        // for more information
         Self::Parent: Sized,
         Self::Type: Sized,
     {
