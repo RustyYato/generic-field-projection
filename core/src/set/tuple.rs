@@ -23,10 +23,12 @@
 #[macro_export]
 macro_rules! type_function {
     (
-        $($(for($($g_params:tt)*))? fn($self:ident:$func:ty $(, $param:ident: $type:ty )* $(,)? ) -> $output:ty $block:block)*
+        $($(for($($g_params:tt)*))? fn($self:ident:$func:ty $(, $param:ident: $type:ty )* $(,)? ) -> $output:ty $(where ($($where_clause:tt)*))? $block:block)*
     ) => {$(
         #[allow(unused_parens)]
-        impl $(<$($g_params)*>)? $crate::set::tuple::TypeFunction<($($type),*)> for $func {
+        impl $(<$($g_params)*>)? $crate::set::tuple::TypeFunction<($($type),*)> for $func
+        $(where $($where_clause)*)?
+        {
             type Output = $output;
 
             #[inline]

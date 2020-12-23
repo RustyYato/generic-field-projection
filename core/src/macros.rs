@@ -30,13 +30,8 @@ macro_rules! field {
 
         #[deny(safe_packed_borrows)]
         unsafe impl $crate::Field for $field_ty_name {
-            type Name = $crate::macros::Once<&'static str>;
             type Parent = $parent;
             type Type = $field_ty;
-
-            fn name(&self) -> Self::Name {
-                $crate::macros::once(stringify!($field))
-            }
 
             #[inline]
             unsafe fn project_raw(

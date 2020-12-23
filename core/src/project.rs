@@ -58,14 +58,26 @@ type_function! {
     }
 
     for(I: Field, J: Field)
-    fn(self: FindOverlapInner<I>, input: J) -> bool {
+    fn(self: FindOverlapInner<I>, input: J) -> bool
+    where(
+        I::Parent: Sized,
+        J::Parent: Sized,
+        I::Type: Sized,
+        J::Type: Sized,
+    ){
         self.counter += 1;
 
         if self.id <= self.counter {
             return false
         }
 
-        self.field.name().zip(input.name())
-            .all(|(i, j)| i == j)
+        let field = self.field.range();
+        let input = input.range();
+
+        is_overlapping(field, input)
     }
+}
+
+fn is_overlapping(a: Range<usize>, b: Range<usize>) -> bool {
+    a.contains(&b.start) || a.contains(&b.end)
 }
