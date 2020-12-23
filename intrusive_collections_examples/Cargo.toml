@@ -1,0 +1,11 @@
+[package]
+name = "intrusive_collections_examples"
+version = "0.1.0"
+authors = ["Cem Karan <cem.f.karan.civ@mail.mil>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+gfp-core = { path = '../core' }
+gfp-derive = { path = '../derive' }
