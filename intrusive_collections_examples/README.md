@@ -4,10 +4,10 @@ This crate contains examples that may be of use in learning not only how to use
 the
 [`generic-field-projection`](https://github.com/RustyYato/generic-field-projection/tree/master/core)
 crate, but also make it clear as to why that crate (and intrusive collections in
-general are useful).  The code in this crate is not optimized; the main criteria
+general) are useful.  The code in this crate is not optimized; the main criteria
 for the implementations was for use as teaching tools.  As a result, their
-performance is low.  We leave to others (maybe you!) to improve the performance
-of this code.
+performance is low.  We leave it to others (maybe you!) to improve the
+performance of this code.
 
 ## Intrusive Collections
 
@@ -24,9 +24,9 @@ becomes the owner of the object that is placed within it.  *Objects are in the
 container.*  (As a side-note, these types of collections are sometimes referred
 to as *extrusive* collections to distinguish them from *intrusive* collections)
 
-Intrusive collections are the exact opposite; *each object owns a portions of
-the collection*.  If this seems confusing, consider how we could make a
-linked list of `Things`.
+Intrusive collections are the exact opposite; *each object owns a portion of the
+collection*.  If this seems confusing, consider how we could make a linked list
+of `Things`.
 
 #### Extrusive example
 
@@ -40,7 +40,7 @@ The easiest way is to use the
 [`LinkedList`](https://doc.rust-lang.org/std/collections/struct.LinkedList.html)
 type, and transfer ownership of the set of objects to the linked list.  This is
 the paradigm that most programmers are used to.  We assume that you're familiar
-with this paradigm, so we won't talk about it any more.
+with this paradigm, so we won't talk about it any more here.
 
 #### Intrusive example
 
@@ -54,7 +54,7 @@ struct Thing<'a> {
 An alternative to the extrusive collection is the intrusive collection as
 embodied in the example above.  In this case, the storage for the linked list is
 held within each element (`Thing`); it's what the `next` pointer is.  This is
-what I mean when I say that each object owns a portions of the collection; in
+what we mean when we say that each object owns a portion of the collection; in
 this case, `Thing` owns a portion of the linked list.
 
 ### Why they are useful
@@ -70,8 +70,8 @@ environments.
 The former case can be important in embedded applications, as well as inside of
 operating system kernels.
 
-The latter case is less obvious.  Since rust collections types are effectively
-templates, we know that creating a new
+The latter case is less obvious.  Since the rust standard library collections
+types are effectively templates, we know that creating a new
 [`LinkedList`](https://doc.rust-lang.org/std/collections/struct.LinkedList.html)
 for a `Thing` will produce code similar to the following:
 
@@ -111,7 +111,7 @@ What we want from our priority queue is *fast* access.  We want to be able to
 find the object quickly (which is what the `HashMap` does), and we want to be
 able to change its priority quickly.  We already have a slow method of doing
 this; we can store the `Thing`s in an array, and sort the array each time we
-insert a new `Thing`, or change a `Thing`'s priority.  This works, but is very,
+insert a new `Thing` or change a `Thing`'s priority.  This works, but is very,
 very slow.  So let's try to build a new data structure that lets us do the
 following:
 
@@ -138,9 +138,9 @@ This is where intrusive collections can help.
 
 #### How intrusive collections save the day (and why you need the `generic-field-projection` crate)
 
-Earlier, I mentioned that in an intrusive collection, each object owns a portion
-of the collection that they are a part of.  So for a mutable priority queue, we
-might have something like the following:
+Earlier, we mentioned that in an intrusive collection, each object owns a
+portion of the collection that they are a part of.  So for a mutable priority
+queue, we might have something like the following:
 
 ```rust
 use std::rc::{Rc, Weak};
@@ -167,7 +167,7 @@ pub struct Thing<'a> {
 ```
 
 (Normally `BinaryTreeNode` and `HeapTreeNode` would be in their own crates, but
-I'm trying to keep the example compact)
+we're trying to keep the example compact)
 
 Assume that we've got a properly formed data structure to start with, with the
 `priority_node`s forming a
@@ -183,7 +183,7 @@ Assuming that there is a way to get the `Thing` that the `priority_node` or
    the heap priority is maintained.
 
 So how do we get the `Thing` give only the `priority_node` or the `key_node` of
-the `Thing`?  If we were' programming in C or C++, we would use the
+the `Thing`?  If we were programming in C or C++, we would use the
 [`offset_of`](https://en.wikipedia.org/wiki/Offsetof) macro and do some pointer
 math to find the `Thing` given the location of the node within it.  While we can
 do that in Rust, pointer math is inherently an `unsafe` operation; do it wrong,
@@ -238,20 +238,21 @@ There are two high-level modules in this crate.  The first is the
 
 The `basic_datastructures` crate has some very simple implementations of common
 data structures:
-- [singly linkedlist](https://en.wikipedia.org/wiki/Linked_list)
+- [singly-linked list](https://en.wikipedia.org/wiki/Linked_list)
 - [binary heap](https://en.wikipedia.org/wiki/Binary_heap)
-- [red-blacktree](https://en.wikipedia.org/wiki/Red%E2%80%93black_tree)
+- [red-black tree](https://en.wikipedia.org/wiki/Red%E2%80%93black_tree)
 
-These are deliberately designed to be as simple as is reasonably possible.
-They are also heavily documented to make them easy to understand.  They are not
-performance optimized and are likely quite slow.  In addition, they are designed
-to panic rather than return results; in short, don't use these types in
-production code.
+These are deliberately designed to be as simple as is reasonably possible. They
+are also heavily documented to make them easy to understand.  They are not
+performance optimized and are likely to be quite slow.  In addition, they are
+designed to panic rather than return
+[`Result`](https://doc.rust-lang.org/std/result/enum.Result.html) instances; in
+short, don't use these types in production code.
 
-The `lessons` crate is organized in what I thought would be a logical order from
-simplest composition to most difficult.  Each module is prefixed with a two
-digit value, so you can see the progression.  They are also heavily documented
-to make it clearer as to what is happening.
+The `lessons` crate is organized in what we thought would be a logical order,
+starting from the simplest composition, to the most difficult.  Each module is
+prefixed with a two digit value so you can see the progression.  They are also
+heavily documented to make it clearer as to what is happening.
 
 # Comments, complaints, and issues
 
