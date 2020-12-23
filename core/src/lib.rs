@@ -19,6 +19,8 @@ mod project;
 #[doc(hidden)]
 pub mod set;
 
+use core::ops::Range;
+
 pub use self::{chain::*, dynamic::Dynamic, pin::*, set::FieldSet};
 pub use gfp_derive::Field;
 
@@ -136,11 +138,6 @@ pub trait ProjectToSet<F: FieldSet> {
 /// unsafe impl Field for FieldVal {
 ///     type Parent = Foo;
 ///     type Type = u32;
-///     type Name = std::iter::Copied<std::slice::Iter<'static, &'static str>>;
-///
-///     fn name(&self) -> Self::Name {
-///         ["bar", "tap", "val"].iter().copied()
-///     }
 ///
 ///     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
 ///         &raw const (*ptr).bar.tap.val
@@ -204,44 +201,6 @@ pub unsafe trait Field {
     /// The type of the field itself
     type Type: ?Sized;
 
-    /// An iterator that returns the fully qualified name of the field
-    type Name: Iterator<Item = &'static str> + Clone;
-
-    /// An iterator that returns the fully qualified name of the field
-    ///
-    /// # Safety:
-    ///
-    /// * The results of the iterator must be unique for each field
-    ///   of the given `Parent` type
-    /// * `Self::name` never returns an empty iterator.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// struct Foo {
-    ///     x: u32,
-    ///     bar: Bar,
-    /// }
-    ///
-    /// struct Bar {
-    ///     y: u32,
-    ///     yak: Yak,
-    /// }
-    ///
-    /// struct Yak {
-    ///     z: u32,
-    ///     // other fields
-    /// }
-    /// ```
-    ///
-    /// The field `foo.bar.yak.z` has the name `["bar", "yak", "z"]`.
-    ///
-    /// The name determines overlaps, in the following way:
-    ///
-    /// * Given two field types `a: A` and `b: B`, and `A::Parent == B::Parent`
-    /// * `overlap(a, b) => a.name().zip(b.name()).all(|(a_name, b_name)| a_name == b_name)`
-    fn name(&self) -> Self::Name;
-
     /// projects the raw pointer from the `Parent` type to the field `Type`
     ///
     /// # Safety
@@ -259,13 +218,24 @@ pub unsafe trait Field {
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent)
     -> *mut Self::Type;
 
+    /// Returns the range of offsets that the field covers
+    fn range(&self) -> Range<usize>
+    where
+        // TODO: find a way to relax both of these bounds
+        Self::Parent: Sized,
+        Self::Type: Sized,
+    {
+        let offset = self.field_offset();
+        offset..offset.wrapping_add(core::mem::size_of::<Self::Type>())
+    }
+
     /// Create an equivilent runtime offset-based field
-    fn dynamic(&self) -> Dynamic<Self::Parent, Self::Type, Self::Name>
+    fn dynamic(&self) -> Dynamic<Self::Parent, Self::Type>
     where
         Self::Parent: Sized,
         Self::Type: Sized,
     {
-        unsafe { Dynamic::from_raw_parts(self.field_offset(), self.name()) }
+        unsafe { Dynamic::from_offset(self.field_offset()) }
     }
 
     /// gets the offset of the field from the base pointer of `Parent`
@@ -390,14 +360,8 @@ pub unsafe trait Field {
 }
 
 unsafe impl<F: ?Sized + Field> Field for &F {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(self)
-    }
 
     #[inline]
     unsafe fn project_raw(
@@ -417,14 +381,8 @@ unsafe impl<F: ?Sized + Field> Field for &F {
 }
 
 unsafe impl<F: ?Sized + Field> Field for &mut F {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(self)
-    }
 
     #[inline]
     unsafe fn project_raw(
@@ -445,14 +403,8 @@ unsafe impl<F: ?Sized + Field> Field for &mut F {
 
 #[cfg(feature = "alloc")]
 unsafe impl<F: ?Sized + Field> Field for std::boxed::Box<F> {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(self)
-    }
 
     #[inline]
     unsafe fn project_raw(
@@ -473,14 +425,8 @@ unsafe impl<F: ?Sized + Field> Field for std::boxed::Box<F> {
 
 #[cfg(feature = "alloc")]
 unsafe impl<F: ?Sized + Field> Field for std::rc::Rc<F> {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(self)
-    }
 
     #[inline]
     unsafe fn project_raw(
@@ -501,14 +447,8 @@ unsafe impl<F: ?Sized + Field> Field for std::rc::Rc<F> {
 
 #[cfg(feature = "alloc")]
 unsafe impl<F: ?Sized + Field> Field for std::sync::Arc<F> {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(self)
-    }
 
     #[inline]
     unsafe fn project_raw(

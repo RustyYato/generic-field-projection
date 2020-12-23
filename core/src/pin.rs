@@ -21,14 +21,8 @@ pub struct PinToPin<F: Field + ?Sized> {
 }
 
 unsafe impl<F: ?Sized + Field> Field for PinToPin<F> {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(&self.field)
-    }
 
     #[inline]
     unsafe fn project_raw(
@@ -48,14 +42,8 @@ unsafe impl<F: ?Sized + Field> Field for PinToPin<F> {
 }
 
 unsafe impl<F: ?Sized + Field> Field for PinToPtr<F> {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(&self.0)
-    }
 
     #[inline]
     unsafe fn project_raw(
@@ -93,8 +81,7 @@ impl<F: Field> PinToPin<F> {
     #[inline]
     pub fn as_dyn_pin(
         &self,
-    ) -> PinToPin<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>>
-    {
+    ) -> PinToPin<&dyn Field<Parent = F::Parent, Type = F::Type>> {
         PinToPin {
             field: &self.field
         }
@@ -139,8 +126,7 @@ impl<F: Field> PinToPtr<F> {
     #[inline]
     pub fn as_dyn_pin(
         &self,
-    ) -> PinToPtr<&dyn Field<Parent = F::Parent, Type = F::Type, Name = F::Name>>
-    {
+    ) -> PinToPtr<&dyn Field<Parent = F::Parent, Type = F::Type>> {
         PinToPtr(&self.0)
     }
 }

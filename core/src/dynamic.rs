@@ -8,23 +8,23 @@ struct Invariant<T: ?Sized>(fn() -> *mut T);
 /// of `dyn Field<Parent = P, Type = T, Name = N>`.
 ///
 /// Generated from [`Field::dynamic`]
-pub struct Dynamic<P: ?Sized, T, N> {
+pub struct Dynamic<P: ?Sized, T: ?Sized> {
     offset: usize,
-    name:   N,
-    mark:   PhantomData<Invariant<(T, P)>>,
+    mark:   PhantomData<Invariant<(*const T, *const P)>>,
 }
 
-impl<P: ?Sized, T, N: Clone> Clone for Dynamic<P, T, N> {
+impl<P: ?Sized, T> Copy for Dynamic<P, T> {
+}
+impl<P: ?Sized, T> Clone for Dynamic<P, T> {
     fn clone(&self) -> Self {
         Self {
             offset: self.offset,
-            name:   self.name.clone(),
             mark:   PhantomData,
         }
     }
 }
 
-impl<P: ?Sized, T, N: Iterator<Item = &'static str> + Clone> Dynamic<P, T, N> {
+impl<P: ?Sized, T: ?Sized> Dynamic<P, T> {
     /// Create a dynamic field from an offset and a name iterator.
     ///
     /// # Safety
@@ -32,32 +32,24 @@ impl<P: ?Sized, T, N: Iterator<Item = &'static str> + Clone> Dynamic<P, T, N> {
     /// * `offset` - must be the offset in *bytes* from the start of `P`
     ///              to a field/sub-field of type `T`
     /// * `name`   - The fully qualified name of the field
-    pub unsafe fn from_raw_parts(offset: usize, name: N) -> Self {
+    pub unsafe fn from_offset(offset: usize) -> Self {
         Self {
             offset,
-            name,
             mark: PhantomData,
         }
     }
 }
 
-impl<P: ?Sized, T, N> Dynamic<P, T, N> {
+impl<P: ?Sized, T> Dynamic<P, T> {
     /// Get the offset
     pub fn offset(&self) -> usize {
         self.offset
     }
 }
 
-unsafe impl<P: ?Sized, T: Field, N: Iterator<Item = &'static str> + Clone> Field
-    for Dynamic<P, T, N>
-{
-    type Name = N;
+unsafe impl<P: ?Sized, T: Field> Field for Dynamic<P, T> {
     type Parent = P;
     type Type = T;
-
-    fn name(&self) -> Self::Name {
-        self.name.clone()
-    }
 
     unsafe fn project_raw(
         &self,

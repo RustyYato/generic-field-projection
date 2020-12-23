@@ -19,14 +19,8 @@ impl<A, B> Chain<A, B> {
 }
 
 unsafe impl<A: Field, B: Field<Parent = A::Type>> Field for Chain<A, B> {
-    type Name = core::iter::Chain<A::Name, B::Name>;
     type Parent = A::Parent;
     type Type = B::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        self.a.name().chain(self.b.name())
-    }
 
     #[inline]
     unsafe fn project_raw(

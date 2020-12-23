@@ -99,11 +99,6 @@ use syn;
 ///     unsafe impl ::gfp_core::Field for name<super::Person> {
 ///         type Parent = super::Person;
 ///         type Type = String;
-///         type Name = ::gfp_core::derive::Once<&'static str>;
-///         #[inline]
-///         fn name(&self) -> Self::Name {
-///             ::gfp_core::derive::once("name")
-///         }
 ///         #[inline]
 ///         unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
 ///             &raw const (*ptr).name
@@ -130,11 +125,6 @@ use syn;
 ///     unsafe impl ::gfp_core::Field for age<super::Person> {
 ///         type Parent = super::Person;
 ///         type Type = u16;
-///         type Name = ::gfp_core::derive::Once<&'static str>;
-///         #[inline]
-///         fn name(&self) -> Self::Name {
-///             ::gfp_core::derive::once("age")
-///         }
 ///         #[inline]
 ///         unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
 ///             &raw const (*ptr).age
@@ -161,11 +151,6 @@ use syn;
 ///     unsafe impl ::gfp_core::Field for children<super::Person> {
 ///         type Parent = super::Person;
 ///         type Type = Vec<Person>;
-///         type Name = ::gfp_core::derive::Once<&'static str>;
-///         #[inline]
-///         fn name(&self) -> Self::Name {
-///             ::gfp_core::derive::once("children")
-///         }
 ///         #[inline]
 ///         unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
 ///             &raw const (*ptr).children
@@ -295,12 +280,6 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
             unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
                 type Parent = super::#input_ident #generic;
                 type Type = #ty;
-                type Name = ::gfp_core::derive::Once<&'static str>;
-
-                #[inline]
-                fn name(&self) -> Self::Name {
-                    ::gfp_core::derive::once(stringify!(#ident))
-                }
 
                 #[inline]
                 unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
@@ -431,12 +410,6 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
             unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
                 type Parent = super::#input_ident #generic;
                 type Type = #ty;
-                type Name = ::gfp_core::derive::Once<&'static str>;
-
-                #[inline]
-                fn name(&self) -> Self::Name {
-                    ::gfp_core::derive::once(stringify!(#index))
-                }
 
                 #[inline]
                 unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
@@ -553,12 +526,6 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
             unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
                 type Parent = super::#input_ident #generic;
                 type Type = #ty;
-                type Name = ::gfp_core::derive::Once<&'static str>;
-
-                #[inline]
-                fn name(&self) -> Self::Name {
-                    ::gfp_core::derive::once(stringify!(#input_ident))
-                }
 
                 #[inline]
                 unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
