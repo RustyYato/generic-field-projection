@@ -59,10 +59,26 @@ typsy::call! {
         })
     }
 
-    fn[A: Field, B: Field](&mut self: FindOverlapInner<A>, input: B) -> bool {
+    fn[I: Field, J: Field](&mut self: FindOverlapInner<I>, input: J) -> bool
+    where(
+        I::Parent: Sized,
+        J::Parent: Sized,
+        I::Type: Sized,
+        J::Type: Sized,
+    ){
         self.counter += 1;
 
-        self.id > self.counter && self.field.name().zip(input.name())
-            .all(|(i, j)| i == j)
+        if self.id <= self.counter {
+            return false
+        }
+
+        let field = self.field.range();
+        let input = input.range();
+
+        is_overlapping(field, input)
     }
+}
+
+fn is_overlapping(a: Range<usize>, b: Range<usize>) -> bool {
+    a.contains(&b.start) || a.contains(&b.end)
 }
