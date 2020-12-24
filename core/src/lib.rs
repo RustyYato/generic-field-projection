@@ -278,7 +278,8 @@ pub unsafe trait Field {
     /// * `ptr` must point to a field of `Parent` with the type `Type`
     /// * `ptr` must have provenance over `Parent`
     ///
-    /// In particular it's always instant UB to convert a `&Type` to `&Parent`
+    /// In particular it's always instant UB to convert a
+    /// `field: &Type` to `&Parent`
     ///
     /// For example, the following function is UB no matter the choice of `Parent`
     /// and `Field`, because `&Field` *never* has provenance over `Parent`
@@ -312,7 +313,8 @@ pub unsafe trait Field {
     /// * `ptr` must point to a field of `Parent` with the type `Type`
     /// * `ptr` must have provenance over `Parent`
     ///
-    /// In particular it's always instant UB to convert a `&mut Type` to `&mut Parent`
+    /// In particular it's always instant UB to convert a
+    /// `field: &mut Type` to `&mut Parent`
     ///
     /// For example, the following function is UB no matter the choice of `Parent`
     /// and `Field`, because `&Field` *never* has provenance over `Parent`
@@ -402,7 +404,8 @@ pub unsafe trait Field {
         ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
     }
 
-    /// Chains the projection of this field with another field `F`
+    /// Chains the projection of this field with another field `F`.
+    /// `F::Parent == Self::Type`, otherwise `chain` will fail to compile
     fn chain<F: Field<Parent = Self::Type>>(self, f: F) -> Chain<Self, F>
     where
         Self: Sized,
