@@ -1,6 +1,6 @@
-use super::*;
+use typsy::cmp::Any;
 
-use crate::set::tuple::*;
+use super::*;
 
 #[cfg(feature = "alloc")]
 pub mod from_arc;
@@ -18,9 +18,8 @@ use crate::pin::*;
 
 pub struct PtrToRef<'a>(PhantomData<&'a ()>);
 
-type_function! {
-    for('a, T: 'a + ?Sized)
-    fn(self: PtrToRef<'a>, ptr: *const T) -> &'a T {
+typsy::call! {
+    fn['a, T: 'a + Sized](&mut self: PtrToRef<'a>, ptr: *const T) -> &'a T {
         unsafe { &*ptr }
     }
 }
@@ -45,20 +44,22 @@ pub struct FindOverlapInner<I> {
     field:   I,
 }
 
-type_function! {
-    for(S: Copy + TupleAny<FindOverlapInner<I>>, I: Field)
-    fn(self: FindOverlap<S>, input: I) -> bool {
+typsy::call! {
+    fn[S, F](&mut self: FindOverlap<S>, field: F) -> bool
+    where(
+        S: Copy + for<'b> Any<'b, FindOverlapInner<F>>,
+        F: Field,
+    ){
         self.counter += 1;
 
-        self.set.tup_any(FindOverlapInner {
+        self.set.any(FindOverlapInner {
             id: self.counter,
             counter: 0,
-            field: input
+            field
         })
     }
 
-    for(I: Field, J: Field)
-    fn(self: FindOverlapInner<I>, input: J) -> bool
+    fn[I: Field, J: Field](&mut self: FindOverlapInner<I>, input: J) -> bool
     where(
         I::Parent: Sized,
         J::Parent: Sized,
@@ -79,5 +80,52 @@ type_function! {
 }
 
 fn is_overlapping(a: Range<usize>, b: Range<usize>) -> bool {
-    a.contains(&b.start) || a.contains(&b.end)
+    !b.is_empty()
+        && !a.is_empty()
+        && (a.contains(&b.start) || b.contains(&a.start))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_overlapping;
+
+    // empty ranges can't overlap, because they represent zero sized types
+    // which can inhabit any address, and won't alias other values
+    #[test]
+    fn zst_no_overlap() {
+        assert!(!is_overlapping(1..1, 0..2));
+        assert!(!is_overlapping(1..1, 1..2));
+        assert!(!is_overlapping(1..1, 1..1));
+        assert!(!is_overlapping(1..1, 0..1));
+
+        assert!(!is_overlapping(0..2, 1..1));
+        assert!(!is_overlapping(1..2, 1..1));
+        assert!(!is_overlapping(1..1, 1..1));
+        assert!(!is_overlapping(0..1, 1..1));
+    }
+
+    #[test]
+    fn does_overlap() {
+        assert!(is_overlapping(1..4, 0..5));
+        assert!(is_overlapping(1..4, 0..2));
+        assert!(is_overlapping(1..4, 2..5));
+        assert!(is_overlapping(1..4, 2..3));
+
+        assert!(is_overlapping(0..5, 1..4));
+        assert!(is_overlapping(0..2, 1..4));
+        assert!(is_overlapping(2..5, 1..4));
+        assert!(is_overlapping(2..3, 1..4));
+
+        assert!(is_overlapping(1..4, 1..4));
+        assert!(is_overlapping(1..4, 0..4));
+        assert!(is_overlapping(0..4, 1..4));
+    }
+
+    #[test]
+    fn is_disjoint() {
+        assert!(!is_overlapping(1..4, 0..1));
+        assert!(!is_overlapping(1..4, 4..5));
+        assert!(!is_overlapping(1..4, 5..10));
+        assert!(!is_overlapping(5..10, 1..4));
+    }
 }
