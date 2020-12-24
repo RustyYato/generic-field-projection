@@ -17,12 +17,12 @@ mod pin;
 mod project;
 
 #[doc(hidden)]
-pub mod set;
+pub mod type_list;
+
+pub use self::{chain::*, dynamic::Dynamic, pin::*};
+pub use gfp_derive::Field;
 
 use core::ops::Range;
-
-pub use self::{chain::*, dynamic::Dynamic, pin::*, set::FieldSet};
-pub use gfp_derive::Field;
 
 #[doc(hidden)]
 #[macro_export]
@@ -65,13 +65,13 @@ pub trait ProjectTo<F: Field> {
     fn project_to(self, field: F) -> Self::Projection;
 }
 
-/// Projects a type to the given field
-pub trait ProjectToSet<F: FieldSet> {
+/// Projects a type to the given field list
+pub trait ProjectAll<Parent: ?Sized, F> {
     /// The projection of the type, can be used to directly access the field
     type Projection;
 
-    /// projects to the given field
-    fn project_set_to(self, field: F) -> Self::Projection;
+    /// projects to the given field list
+    fn project_all(self, field_list: F) -> Self::Projection;
 }
 
 /// Represents a field of some `Parent` type.
@@ -222,6 +222,8 @@ pub unsafe trait Field {
     fn range(&self) -> Range<usize>
     where
         // TODO: find a way to relax both of these bounds
+        // see https://github.com/RustyYato/generic-field-projection/issues/39
+        // for more information
         Self::Parent: Sized,
         Self::Type: Sized,
     {
