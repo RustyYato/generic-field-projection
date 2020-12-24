@@ -8,12 +8,12 @@ use typsy::{
 pub struct PtrToRefMut<'a>(PhantomData<&'a ()>);
 
 typsy::call! {
-    fn['a, T: 'a + ?Sized](&mut self: PtrToRefMut<'a>, ptr: *mut T) -> &'a mut T {
+    fn['a, T: 'a](&mut self: PtrToRefMut<'a>, ptr: *mut T) -> &'a mut T {
         unsafe { &mut *ptr }
     }
 }
 
-unsafe impl<F: ?Sized> PinnablePointer for &mut F {
+unsafe impl<T: ?Sized> PinnablePointer for &mut T {
 }
 impl<'a, F: Field> ProjectTo<F> for &'a mut F::Parent
 where
@@ -29,7 +29,6 @@ where
 
 impl<'a, F, Parent> ProjectAll<Parent, F> for &'a mut Parent
 where
-    Parent: ?Sized,
     F: FieldList<Parent>,
     ProjectedMut<Parent, F>: Map<PtrToRefMut<'a>>,
     F: Copy + for<'b> Any<'b, FindOverlap<F>>,

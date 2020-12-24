@@ -7,10 +7,10 @@ use typsy::{
 
 pub type Projected<Parent, F> = Mapped<F, ProjectRaw<Parent>>;
 pub type ProjectedMut<Parent, F> = Mapped<F, ProjectRawMut<Parent>>;
-pub struct ProjectRaw<Parent: ?Sized>(*const Parent);
-pub struct ProjectRawMut<Parent: ?Sized>(*mut Parent);
+pub struct ProjectRaw<Parent>(*const Parent);
+pub struct ProjectRawMut<Parent>(*mut Parent);
 
-impl<Parent: ?Sized> ProjectRaw<Parent> {
+impl<Parent> ProjectRaw<Parent> {
     /// projects the raw pointer from the `Parent` type to the field `Type`
     ///
     /// # Safety
@@ -22,7 +22,7 @@ impl<Parent: ?Sized> ProjectRaw<Parent> {
     }
 }
 
-impl<Parent: ?Sized> ProjectRawMut<Parent> {
+impl<Parent> ProjectRawMut<Parent> {
     /// projects the raw pointer from the `Parent` type to the field `Type`
     ///
     /// # Safety
@@ -44,12 +44,12 @@ typsy::call! {
 }
 
 /// Represents a list of fields
-pub trait FieldList<Parent: ?Sized>:
+pub trait FieldList<Parent>:
     Map<ProjectRaw<Parent>> + Map<ProjectRawMut<Parent>>
 {
 }
 
-impl<Parent: ?Sized> FieldList<Parent> for Nil {
+impl<Parent> FieldList<Parent> for Nil {
 }
 
 impl<F: Field, R> FieldList<F::Parent> for Cons<F, R> where

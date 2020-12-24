@@ -10,12 +10,12 @@ use super::*;
 
 use std::rc::Rc;
 
-pub struct ProjectedRc<P: ?Sized, T: ?Sized> {
+pub struct ProjectedRc<P, T> {
     _own:  Rc<P>,
     field: *const T,
 }
 
-impl<P: ?Sized, T: ?Sized> Deref for ProjectedRc<P, T> {
+impl<P, T> Deref for ProjectedRc<P, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -23,7 +23,7 @@ impl<P: ?Sized, T: ?Sized> Deref for ProjectedRc<P, T> {
     }
 }
 
-unsafe impl<F: ?Sized> PinnablePointer for Rc<F> {
+unsafe impl<T: ?Sized> PinnablePointer for Rc<T> {
 }
 impl<F: Field> ProjectTo<F> for Rc<F::Parent> {
     type Projection = ProjectedRc<F::Parent, F::Type>;
@@ -39,7 +39,7 @@ impl<F: Field> ProjectTo<F> for Rc<F::Parent> {
     }
 }
 
-pub struct ProjectedRcSet<P: ?Sized, T: ?Sized> {
+pub struct ProjectedRcSet<P, T> {
     _own:  Rc<P>,
     field: T,
 }
@@ -47,12 +47,12 @@ pub struct ProjectedRcSet<P: ?Sized, T: ?Sized> {
 pub struct Split<P: ?Sized>(Rc<P>);
 
 typsy::call! {
-    fn[P: ?Sized, T: ?Sized](&mut self: Split<P>, field: *const T) -> ProjectedRc<P, T> {
+    fn[P, T](&mut self: Split<P>, field: *const T) -> ProjectedRc<P, T> {
         ProjectedRc { _own: self.0.clone(), field }
     }
 }
 
-impl<P: ?Sized, T> ProjectedRcSet<P, T> {
+impl<P, T> ProjectedRcSet<P, T> {
     pub fn get<'a>(&'a self) -> Mapped<T, PtrToRef<'a>>
     where
         T: Copy + Map<PtrToRef<'a>>,
@@ -68,7 +68,7 @@ impl<P: ?Sized, T> ProjectedRcSet<P, T> {
     }
 }
 
-impl<'a, Parent: ?Sized, F: FieldList<Parent>> ProjectAll<Parent, F>
+impl<'a, Parent, F: FieldList<Parent>> ProjectAll<Parent, F>
     for Rc<Parent>
 {
     type Projection = ProjectedRcSet<Parent, Projected<Parent, F>>;

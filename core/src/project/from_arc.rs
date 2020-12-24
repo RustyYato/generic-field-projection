@@ -10,19 +10,19 @@ use super::*;
 
 use std::sync::Arc;
 
-pub struct ProjectedArc<P: ?Sized, T: ?Sized> {
+pub struct ProjectedArc<P, T> {
     _own:  Arc<P>,
     field: *const T,
 }
 
-unsafe impl<P: ?Sized, T: ?Sized> Send for ProjectedArc<P, T> where Arc<P>: Send
+unsafe impl<P, T> Send for ProjectedArc<P, T> where Arc<P>: Send
 {
 }
-unsafe impl<P: ?Sized, T: ?Sized> Sync for ProjectedArc<P, T> where Arc<P>: Sync
+unsafe impl<P, T> Sync for ProjectedArc<P, T> where Arc<P>: Sync
 {
 }
 
-impl<P: ?Sized, T: ?Sized> Deref for ProjectedArc<P, T> {
+impl<P, T> Deref for ProjectedArc<P, T> {
     type Target = T;
 
     fn deref(&self) -> &T {
@@ -30,7 +30,7 @@ impl<P: ?Sized, T: ?Sized> Deref for ProjectedArc<P, T> {
     }
 }
 
-unsafe impl<F: ?Sized> PinnablePointer for Arc<F> {
+unsafe impl<T: ?Sized> PinnablePointer for Arc<T> {
 }
 impl<F: Field> ProjectTo<F> for Arc<F::Parent> {
     type Projection = ProjectedArc<F::Parent, F::Type>;
@@ -46,29 +46,27 @@ impl<F: Field> ProjectTo<F> for Arc<F::Parent> {
     }
 }
 
-pub struct ProjectedArcSet<P: ?Sized, T: ?Sized> {
+pub struct ProjectedArcSet<P, T> {
     _own:  Arc<P>,
     field: T,
 }
 
-unsafe impl<P: ?Sized, T: ?Sized> Send for ProjectedArcSet<P, T> where
-    Arc<P>: Send
+unsafe impl<P, T> Send for ProjectedArcSet<P, T> where Arc<P>: Send
 {
 }
-unsafe impl<P: ?Sized, T: ?Sized> Sync for ProjectedArcSet<P, T> where
-    Arc<P>: Sync
+unsafe impl<P, T> Sync for ProjectedArcSet<P, T> where Arc<P>: Sync
 {
 }
 
-pub struct Split<P: ?Sized>(Arc<P>);
+pub struct Split<P>(Arc<P>);
 
 typsy::call! {
-    fn[P: ?Sized, T: ?Sized](&mut self: Split<P>, field: *const T) -> ProjectedArc<P, T> {
+    fn[P, T](&mut self: Split<P>, field: *const T) -> ProjectedArc<P, T> {
         ProjectedArc { _own: self.0.clone(), field }
     }
 }
 
-impl<P: ?Sized, T> ProjectedArcSet<P, T> {
+impl<P, T> ProjectedArcSet<P, T> {
     pub fn get<'a>(&'a self) -> Mapped<T, PtrToRef<'a>>
     where
         T: Copy + Map<PtrToRef<'a>>,
@@ -84,9 +82,7 @@ impl<P: ?Sized, T> ProjectedArcSet<P, T> {
     }
 }
 
-impl<'a, Parent: ?Sized, F: FieldList<Parent>> ProjectAll<Parent, F>
-    for Arc<Parent>
-{
+impl<'a, Parent, F: FieldList<Parent>> ProjectAll<Parent, F> for Arc<Parent> {
     type Projection = ProjectedArcSet<Parent, Projected<Parent, F>>;
 
     #[inline]

@@ -16,12 +16,12 @@ use std::boxed::Box;
 //     fn(self: PtrToNonNull, ptr: *mut T) -> NonNull<T> { unsafe { NonNull::new_unchecked(ptr) } }
 // }
 
-pub struct BoxProjection<T: ?Sized, F: ?Sized> {
+pub struct BoxProjection<T, F> {
     bx:    NonNull<T>,
     field: NonNull<F>,
 }
 
-impl<T: ?Sized, F: ?Sized> Deref for BoxProjection<T, F> {
+impl<T, F> Deref for BoxProjection<T, F> {
     type Target = F;
 
     fn deref(&self) -> &F {
@@ -29,15 +29,13 @@ impl<T: ?Sized, F: ?Sized> Deref for BoxProjection<T, F> {
     }
 }
 
-impl<T: ?Sized, F: ?Sized> DerefMut for BoxProjection<T, F> {
+impl<T, F> DerefMut for BoxProjection<T, F> {
     fn deref_mut(&mut self) -> &mut F {
         unsafe { self.field.as_mut() }
     }
 }
 
-unsafe impl<#[may_dangle] T: ?Sized, #[may_dangle] F: ?Sized> Drop
-    for BoxProjection<T, F>
-{
+unsafe impl<#[may_dangle] T, #[may_dangle] F> Drop for BoxProjection<T, F> {
     fn drop(&mut self) {
         unsafe {
             Box::from_raw(self.bx.as_ptr());
@@ -45,7 +43,7 @@ unsafe impl<#[may_dangle] T: ?Sized, #[may_dangle] F: ?Sized> Drop
     }
 }
 
-unsafe impl<F: ?Sized> PinnablePointer for Box<F> {
+unsafe impl<T: ?Sized> PinnablePointer for Box<T> {
 }
 impl<F: Field> ProjectTo<F> for Box<F::Parent> {
     type Projection = BoxProjection<F::Parent, F::Type>;
