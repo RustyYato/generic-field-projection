@@ -34,14 +34,14 @@ macro_rules! ptr_project {
 
 #[doc(hidden)]
 pub mod derive {
-    use core::cell::UnsafeCell;
-    pub use core::{
-        iter::{once, Once},
-        marker::PhantomData,
-    };
+    pub use core::iter::{once, Once};
+    use core::marker::PhantomData;
 
-    pub struct InvImp<T: ?Sized>(fn() -> UnsafeCell<T>);
-    pub struct Invariant<T: ?Sized>(pub PhantomData<InvImp<T>>);
+    pub struct Invariant<T: ?Sized>(PhantomData<fn() -> *mut T>);
+
+    impl<T: ?Sized> Invariant<T> {
+        pub const INIT: Self = Self(PhantomData);
+    }
 
     impl<T: ?Sized> Clone for Invariant<T> {
         fn clone(&self) -> Self {

@@ -1,8 +1,4 @@
-use core::marker::PhantomData;
-
 use crate::Field;
-
-struct Invariant<T: ?Sized>(fn() -> *mut T);
 
 /// A runtime offset based `Field`. This is a more efficient version
 /// of `dyn Field<Parent = P, Type = T, Name = N>`.
@@ -10,7 +6,7 @@ struct Invariant<T: ?Sized>(fn() -> *mut T);
 /// Generated from [`Field::dynamic`]
 pub struct Dynamic<P, T> {
     offset: usize,
-    mark:   PhantomData<Invariant<(*const T, *const P)>>,
+    _mark:  crate::derive::Invariant<(*const T, *const P)>,
 }
 
 impl<P, T> Copy for Dynamic<P, T> {
@@ -19,7 +15,7 @@ impl<P, T> Clone for Dynamic<P, T> {
     fn clone(&self) -> Self {
         Self {
             offset: self.offset,
-            mark:   PhantomData,
+            _mark:  crate::derive::Invariant::INIT,
         }
     }
 }
@@ -35,7 +31,7 @@ impl<P, T> Dynamic<P, T> {
     pub unsafe fn from_offset(offset: usize) -> Self {
         Self {
             offset,
-            mark: PhantomData,
+            _mark: crate::derive::Invariant::INIT,
         }
     }
 }
