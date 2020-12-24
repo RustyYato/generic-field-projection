@@ -67,8 +67,7 @@ typsy::call! {
     }
 }
 
-impl<Parent, F: Copy + FieldList<Parent>, P> ProjectAll<Parent, F>
-    for Pin<P>
+impl<Parent, F: Copy + FieldList<Parent>, P> ProjectAll<Parent, F> for Pin<P>
 where
     P: PinnablePointer + ProjectAll<Parent, F>,
     F: Map<CreateTag>,

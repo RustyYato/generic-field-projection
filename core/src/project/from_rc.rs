@@ -68,9 +68,7 @@ impl<P, T> ProjectedRcSet<P, T> {
     }
 }
 
-impl<'a, Parent, F: FieldList<Parent>> ProjectAll<Parent, F>
-    for Rc<Parent>
-{
+impl<'a, Parent, F: FieldList<Parent>> ProjectAll<Parent, F> for Rc<Parent> {
     type Projection = ProjectedRcSet<Parent, Projected<Parent, F>>;
 
     #[inline]
