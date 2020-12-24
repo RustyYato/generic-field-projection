@@ -80,5 +80,5 @@ typsy::call! {
 }
 
 fn is_overlapping(a: Range<usize>, b: Range<usize>) -> bool {
-    a.contains(&b.start) || a.contains(&b.end)
+    a.contains(&b.start) || b.contains(&a.start)
 }
