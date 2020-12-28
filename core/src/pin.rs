@@ -77,8 +77,9 @@ impl<F: Field> PinToPin<F> {
         }
     }
 
+    /// Get the wrapped field
     #[inline]
-    pub(crate) fn field(self) -> F {
+    pub fn field(self) -> F {
         self.field
     }
 
@@ -86,6 +87,16 @@ impl<F: Field> PinToPin<F> {
     #[inline]
     pub fn as_ref(&self) -> PinToPin<&F> {
         unsafe { PinToPin::new_unchecked(&self.field) }
+    }
+
+    /// Convert to a dynamic field that can project pinned types to pinned fields
+    pub fn pin_dynamic(&self) -> PinToPin<crate::Dynamic<F::Parent, F::Type>> {
+        // # Safety
+        //
+        // * It is to go from `Pin<Ptr<T>>` to `Pin<Ptr<Field>>` for any
+        //   pinnable pointer by virtue of `Self` being a `PinToPin`
+        //   and `Field::dynamic` returning the *same* field
+        unsafe { PinToPin::new_unchecked(self.field.dynamic()) }
     }
 }
 

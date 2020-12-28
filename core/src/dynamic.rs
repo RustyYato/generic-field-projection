@@ -13,10 +13,7 @@ impl<P, T> Copy for Dynamic<P, T> {
 }
 impl<P, T> Clone for Dynamic<P, T> {
     fn clone(&self) -> Self {
-        Self {
-            offset: self.offset,
-            _mark:  crate::derive::Invariant::INIT,
-        }
+        *self
     }
 }
 
@@ -43,7 +40,7 @@ impl<P, T> Dynamic<P, T> {
     }
 }
 
-unsafe impl<P, T: Field> Field for Dynamic<P, T> {
+unsafe impl<P, T> Field for Dynamic<P, T> {
     type Parent = P;
     type Type = T;
 
