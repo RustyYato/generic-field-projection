@@ -17,8 +17,7 @@ where
     }
 }
 
-impl<'a, Parent: ?Sized, F: FieldList<Parent>> ProjectAll<Parent, F>
-    for &'a Parent
+impl<'a, Parent, F: FieldList<Parent>> ProjectAll<Parent, F> for &'a Parent
 where
     Parent: 'a,
     Projected<Parent, F>: Map<PtrToRef<'a>>,

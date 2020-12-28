@@ -86,9 +86,7 @@ use syn;
 ///     #[allow(non_camel_case_types)]
 ///     pub struct name<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> name<T> {
-///         pub const INIT: Self = Self(::gfp_core::derive::Invariant(
-///             ::gfp_core::derive::PhantomData,
-///         ));
+///         pub const INIT: Self = Self(::gfp_core::derive::Invariant::INIT);
 ///     }
 ///     impl<T> Clone for name<T> {
 ///         fn clone(&self) -> Self {
@@ -112,9 +110,7 @@ use syn;
 ///     #[allow(non_camel_case_types)]
 ///     pub struct age<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> age<T> {
-///         pub const INIT: Self = Self(::gfp_core::derive::Invariant(
-///             ::gfp_core::derive::PhantomData,
-///         ));
+///         pub const INIT: Self = Self(::gfp_core::derive::Invariant::INIT);
 ///     }
 ///     impl<T> Clone for age<T> {
 ///         fn clone(&self) -> Self {
@@ -138,9 +134,7 @@ use syn;
 ///     #[allow(non_camel_case_types)]
 ///     pub struct children<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> children<T> {
-///         pub const INIT: Self = Self(::gfp_core::derive::Invariant(
-///             ::gfp_core::derive::PhantomData,
-///         ));
+///         pub const INIT: Self = Self(::gfp_core::derive::Invariant::INIT);
 ///     }
 ///     impl<T> Clone for children<T> {
 ///         fn clone(&self) -> Self {
@@ -260,7 +254,7 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
         contents.push(item!(
             impl<T> #ident<T> {
-                pub const INIT: Self = Self(::gfp_core::derive::Invariant(::gfp_core::derive::PhantomData));
+                pub const INIT: Self = Self(::gfp_core::derive::Invariant::INIT);
             }
         ));
 
@@ -385,7 +379,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
         contents.push(item!(
             impl<T> #ident<T> {
-                pub const INIT: Self = Self(::gfp_core::derive::Invariant(::gfp_core::derive::PhantomData));
+                pub const INIT: Self = Self(::gfp_core::derive::Invariant::INIT);
             }
         ));
 
@@ -505,7 +499,7 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
         contents.push(item!(
             impl<T> #ident<T> {
                 pub const unsafe fn init() -> Self {
-                    Self(::gfp_core::derive::Invariant(::gfp_core::derive::PhantomData))
+                    Self(::gfp_core::derive::Invariant::INIT)
                 }
             }
         ));

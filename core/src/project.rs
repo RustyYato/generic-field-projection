@@ -59,13 +59,7 @@ typsy::call! {
         })
     }
 
-    fn[I: Field, J: Field](&mut self: FindOverlapInner<I>, input: J) -> bool
-    where(
-        I::Parent: Sized,
-        J::Parent: Sized,
-        I::Type: Sized,
-        J::Type: Sized,
-    ){
+    fn[I: Field, J: Field](&mut self: FindOverlapInner<I>, input: J) -> bool {
         self.counter += 1;
 
         if self.id <= self.counter {

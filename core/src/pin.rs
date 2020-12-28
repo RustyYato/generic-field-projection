@@ -11,16 +11,16 @@ pub unsafe trait PinnablePointer: core::ops::Deref {}
 /// from a `Pin`
 #[repr(transparent)]
 #[derive(Copy, Clone)]
-pub struct PinToPtr<F: Field + ?Sized>(pub F);
+pub struct PinToPtr<F: Field>(pub F);
 
 /// A field-type which is pin-projectable
 #[repr(transparent)]
 #[derive(Copy, Clone)]
-pub struct PinToPin<F: Field + ?Sized> {
+pub struct PinToPin<F: Field> {
     field: F,
 }
 
-unsafe impl<F: ?Sized + Field> Field for PinToPin<F> {
+unsafe impl<F: Field> Field for PinToPin<F> {
     type Parent = F::Parent;
     type Type = F::Type;
 
@@ -41,7 +41,7 @@ unsafe impl<F: ?Sized + Field> Field for PinToPin<F> {
     }
 }
 
-unsafe impl<F: ?Sized + Field> Field for PinToPtr<F> {
+unsafe impl<F: Field> Field for PinToPtr<F> {
     type Parent = F::Parent;
     type Type = F::Type;
 
@@ -77,40 +77,26 @@ impl<F: Field> PinToPin<F> {
         }
     }
 
-    /// Convert to a dynamically dispatched field projection
+    /// Get the wrapped field
     #[inline]
-    pub fn as_dyn_pin(
-        &self,
-    ) -> PinToPin<&dyn Field<Parent = F::Parent, Type = F::Type>> {
-        PinToPin {
-            field: &self.field
-        }
-    }
-
-    #[inline]
-    pub(crate) fn field(self) -> F {
+    pub fn field(self) -> F {
         self.field
-    }
-}
-
-impl<F: Field + ?Sized> PinToPin<F> {
-    /// You must validate the safety notes of
-    /// [`PinProjectable<F>`](trait.PinProjectable.html)
-    ///
-    /// # Safety
-    ///
-    /// It must be safe to go from `Pin<Ptr<T>>` to `Pin<Ptr<Field>>` for any
-    /// pinnable pointer
-    #[inline]
-    pub unsafe fn from_ref_unchecked(field: &F) -> &Self {
-        #[allow(clippy::transmute_ptr_to_ptr)]
-        core::mem::transmute::<&F, &Self>(field)
     }
 
     /// converts to a reference to the underlying field
     #[inline]
     pub fn as_ref(&self) -> PinToPin<&F> {
         unsafe { PinToPin::new_unchecked(&self.field) }
+    }
+
+    /// Convert to a dynamic field that can project pinned types to pinned fields
+    pub fn pin_dynamic(&self) -> PinToPin<crate::Dynamic<F::Parent, F::Type>> {
+        // # Safety
+        //
+        // * It is to go from `Pin<Ptr<T>>` to `Pin<Ptr<Field>>` for any
+        //   pinnable pointer by virtue of `Self` being a `PinToPin`
+        //   and `Field::dynamic` returning the *same* field
+        unsafe { PinToPin::new_unchecked(self.field.dynamic()) }
     }
 }
 
@@ -120,26 +106,6 @@ impl<F: Field> PinToPtr<F> {
     #[inline]
     pub fn new(field: F) -> Self {
         Self(field)
-    }
-
-    /// Convert to a dynamically dispatched field projection
-    #[inline]
-    pub fn as_dyn_pin(
-        &self,
-    ) -> PinToPtr<&dyn Field<Parent = F::Parent, Type = F::Type>> {
-        PinToPtr(&self.0)
-    }
-}
-
-impl<F: Field + ?Sized> PinToPtr<F> {
-    /// You must validate the safety notes of
-    /// [`PinProjectable<F>`](trait.PinProjectable.html)
-    #[inline]
-    pub fn from_ref(field: &F) -> &Self {
-        unsafe {
-            #[allow(clippy::transmute_ptr_to_ptr)]
-            core::mem::transmute::<&F, &Self>(field)
-        }
     }
 
     /// converts to a reference to the underlying field

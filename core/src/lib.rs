@@ -34,17 +34,13 @@ macro_rules! ptr_project {
 
 #[doc(hidden)]
 pub mod derive {
-    use core::cell::UnsafeCell;
-    pub use core::{
-        iter::{once, Once},
-        marker::PhantomData,
-    };
+    pub use core::iter::{once, Once};
+    use core::marker::PhantomData;
 
-    pub struct Invariant<T: ?Sized>(pub PhantomData<UnsafeCell<T>>);
+    pub struct Invariant<T: ?Sized>(PhantomData<fn() -> *mut T>);
 
-    unsafe impl<T: ?Sized> Send for Invariant<T> {
-    }
-    unsafe impl<T: ?Sized> Sync for Invariant<T> {
+    impl<T: ?Sized> Invariant<T> {
+        pub const INIT: Self = Self(PhantomData);
     }
 
     impl<T: ?Sized> Clone for Invariant<T> {
@@ -66,7 +62,7 @@ pub trait ProjectTo<F: Field> {
 }
 
 /// Projects a type to the given field list
-pub trait ProjectAll<Parent: ?Sized, F> {
+pub trait ProjectAll<Parent, F> {
     /// The projection of the type, can be used to directly access the field
     type Projection;
 
@@ -195,11 +191,16 @@ pub trait ProjectAll<Parent: ?Sized, F> {
 /// # }
 /// ```
 pub unsafe trait Field {
+    // TODO: find a way to relax both of these bounds on
+    // `Parent` and `Type` to `?Sized`
+    // see https://github.com/RustyYato/generic-field-projection/issues/39
+    // for more information
+
     /// The type that the field comes from
-    type Parent: ?Sized;
+    type Parent;
 
     /// The type of the field itself
-    type Type: ?Sized;
+    type Type;
 
     /// projects the raw pointer from the `Parent` type to the field `Type`
     ///
@@ -219,32 +220,18 @@ pub unsafe trait Field {
     -> *mut Self::Type;
 
     /// Returns the range of offsets that the field covers
-    fn range(&self) -> Range<usize>
-    where
-        // TODO: find a way to relax both of these bounds
-        // see https://github.com/RustyYato/generic-field-projection/issues/39
-        // for more information
-        Self::Parent: Sized,
-        Self::Type: Sized,
-    {
+    fn range(&self) -> Range<usize> {
         let offset = self.field_offset();
         offset..offset.wrapping_add(core::mem::size_of::<Self::Type>())
     }
 
     /// Create an equivilent runtime offset-based field
-    fn dynamic(&self) -> Dynamic<Self::Parent, Self::Type>
-    where
-        Self::Parent: Sized,
-        Self::Type: Sized,
-    {
+    fn dynamic(&self) -> Dynamic<Self::Parent, Self::Type> {
         unsafe { Dynamic::from_offset(self.field_offset()) }
     }
 
     /// gets the offset of the field from the base pointer of `Parent`
-    fn field_offset(&self) -> usize
-    where
-        Self::Parent: Sized,
-    {
+    fn field_offset(&self) -> usize {
         use core::mem::MaybeUninit;
 
         unsafe {
@@ -279,10 +266,7 @@ pub unsafe trait Field {
     unsafe fn inverse_project_raw(
         &self,
         ptr: *const Self::Type,
-    ) -> *const Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *const Self::Parent {
         // Safety
         // * `ptr` is guaranteed to be a pointer to a field of `Parent`
         // * `field_offset` is guarateed to give the correct offset of the field
@@ -298,10 +282,7 @@ pub unsafe trait Field {
     unsafe fn inverse_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
-    ) -> *mut Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *mut Self::Parent {
         // Safety
         // * `ptr` is guaranteed to be a pointer to a field of `Parent`
         // * `field_offset` is guarateed to give the correct offset of the field
@@ -312,10 +293,7 @@ pub unsafe trait Field {
     fn wrapping_project_raw(
         &self,
         ptr: *const Self::Type,
-    ) -> *const Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *const Self::Parent {
         ptr.cast::<u8>().wrapping_add(self.field_offset()).cast()
     }
 
@@ -323,10 +301,7 @@ pub unsafe trait Field {
     fn wrapping_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
-    ) -> *mut Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *mut Self::Parent {
         ptr.cast::<u8>().wrapping_add(self.field_offset()).cast()
     }
 
@@ -334,10 +309,7 @@ pub unsafe trait Field {
     fn wrapping_inverse_project_raw(
         &self,
         ptr: *const Self::Type,
-    ) -> *const Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *const Self::Parent {
         ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
     }
 
@@ -345,10 +317,7 @@ pub unsafe trait Field {
     fn wrapping_inverse_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
-    ) -> *mut Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *mut Self::Parent {
         ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
     }
 
