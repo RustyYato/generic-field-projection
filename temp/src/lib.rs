@@ -4,7 +4,7 @@
 
 pub mod linked_list {
     use core::{cell::Cell, ptr::NonNull};
-    use gfp_core::Field;
+    use gfp_core::{Field, UncheckedInverseProjectTo, UncheckedProjectTo};
 
     pub struct Link {
         link: Cell<Option<NonNull<Link>>>,
@@ -32,17 +32,6 @@ pub mod linked_list {
         pub fn get(&self) -> Option<NonNull<Link>> {
             self.link.get()
         }
-
-        pub unsafe fn owner<F: Field<Type = Link>>(
-            &self,
-            field: F,
-        ) -> Option<NonNull<F::Parent>> {
-            self.get().map(|link| unsafe {
-                NonNull::new_unchecked(
-                    field.inverse_project_raw_mut(link.as_ptr()),
-                )
-            })
-        }
     }
 
     #[derive(Field)]
@@ -51,6 +40,7 @@ pub mod linked_list {
         prev: Link,
     }
 
+    #[allow(non_snake_case)]
     impl DoubleLink {
         pub fn new() -> Self {
             Self {
@@ -59,113 +49,83 @@ pub mod linked_list {
             }
         }
 
-        pub fn next(&self) -> *const DoubleLink {
-            unsafe {
-                let next = self.next.get();
-                if next.is_null() {
-                    core::ptr::null_mut()
-                } else {
-                    Self::fields().next.inverse_project_raw(next)
-                }
-            }
+        pub fn next(&self) -> Option<NonNull<DoubleLink>> {
+            unsafe { self.next.get().inverse_project_to(Self::fields().next) }
         }
 
-        pub fn prev(&self) -> *const DoubleLink {
-            unsafe {
-                let prev = self.prev.get();
-                if prev.is_null() {
-                    core::ptr::null_mut()
-                } else {
-                    Self::fields().prev.inverse_project_raw(prev)
-                }
-            }
+        pub fn prev(&self) -> Option<NonNull<DoubleLink>> {
+            unsafe { self.prev.get().inverse_project_to(Self::fields().prev) }
         }
 
         pub unsafe fn unlink_next(&self) {
-            let next = self.next.get();
-            if !next.is_null() {
-                let next = Self::fields().next.inverse_project_raw(next);
-                (*next).prev.link(core::ptr::null());
+            if let Some(next) = self.next.get() {
+                let next = next.inverse_project_to(Self::fields().next);
+                next.as_ref().prev.unlink();
             }
-            self.next.link(core::ptr::null());
+            self.next.unlink();
         }
 
         pub unsafe fn unlink_prev(&self) {
-            let next = self.next.get();
-            if !next.is_null() {
-                let next = Self::fields().next.inverse_project_raw(next);
-                (*next).prev.link(core::ptr::null());
+            if let Some(prev) = self.prev.get() {
+                let prev = prev.inverse_project_to(Self::fields().prev);
+                prev.as_ref().prev.unlink();
             }
-            self.next.link(core::ptr::null());
+            self.prev.unlink();
         }
 
-        pub unsafe fn link_next(self: *const Self, next: *const Self) {
-            (*next).prev.link(Self::fields().prev.project_raw(self));
-            let next = Self::fields().next.project_raw(next);
+        pub unsafe fn link_next(self: *const Self, next: NonNull<Self>) {
+            let DoubleLink = Self::fields();
+            let this = NonNull::new_unchecked(self as *mut Self);
+            next.as_ref().prev.link(this.project_to(DoubleLink.prev));
+            let next = next.project_to(DoubleLink.next);
             (*self).next.link(next);
         }
 
-        pub unsafe fn link_prev(self: *const Self, prev: *const Self) {
-            (*prev).next.link(Self::fields().next.project_raw(self));
-            let prev = Self::fields().prev.project_raw(prev);
+        pub unsafe fn link_prev(self: *const Self, prev: NonNull<Self>) {
+            let DoubleLink = Self::fields();
+            let this = NonNull::new_unchecked(self as *mut Self);
+            prev.as_ref().next.link(this.project_to(DoubleLink.next));
+            let prev = prev.project_to(DoubleLink.prev);
             (*self).prev.link(prev);
         }
 
-        pub unsafe fn insert_next(self: *const Self, next: *const Self) {
-            let fields = Self::fields();
-            if !(*self).next.get().is_null() {
-                let self_next = (*self).next.get();
-                fields.next.inverse_project_raw(self_next).link_prev(next);
+        pub unsafe fn insert_next(self: *const Self, next: NonNull<Self>) {
+            let DoubleLink = Self::fields();
+
+            if let Some(self_next) = (*self).next.get() {
+                let this: *const Self =
+                    self_next.inverse_project_to(DoubleLink.next).as_ptr();
+                this.link_prev(next);
             }
+
             self.link_next(next);
         }
 
-        pub unsafe fn insert_prev(self: *const Self, prev: *const Self) {
-            let fields = Self::fields();
-            if !(*self).prev.get().is_null() {
-                let self_prev = (*self).prev.get();
-                fields.prev.inverse_project_raw(self_prev).link_next(prev);
+        pub unsafe fn insert_prev(self: *const Self, prev: NonNull<Self>) {
+            let DoubleLink = Self::fields();
+
+            if let Some(self_prev) = (*self).prev.get() {
+                let this: *const Self =
+                    self_prev.inverse_project_to(DoubleLink.prev).as_ptr();
+                this.link_next(prev);
             }
+
             self.link_prev(prev);
         }
 
-        pub unsafe fn next_value<F: Field<Type = DoubleLink>>(
-            &self,
-            field: F,
-        ) -> *const F::Parent {
-            self.next.next_value(field.chain(DoubleLink::fields().next))
-        }
+        pub unsafe fn remove(&self) {
+            let DoubleLink = Self::fields();
+            let next = self.next.get().inverse_project_to(DoubleLink.next);
+            let prev = self.prev.get().inverse_project_to(DoubleLink.prev);
 
-        pub unsafe fn prev_value<F: Field<Type = DoubleLink>>(
-            &self,
-            field: F,
-        ) -> *const F::Parent {
-            self.prev.next_value(field.chain(DoubleLink::fields().prev))
-        }
-
-        pub fn unlink(&self) {
-            let fields = Self::fields();
-            let next = self.next.get();
-            let prev = self.prev.get();
-
-            let next = if next.is_null() {
-                core::ptr::null_mut()
-            } else {
-                unsafe { fields.next.inverse_project_raw(next) }
-            };
-            let prev = if prev.is_null() {
-                core::ptr::null_mut()
-            } else {
-                unsafe { fields.prev.inverse_project_raw(prev) }
-            };
-
-            unsafe {
-                if !prev.is_null() {
-                    prev.link_next(next);
-                }
-                if !next.is_null() {
-                    next.link_prev(prev);
-                }
+            match (next, prev) {
+                (Some(next), Some(prev)) => {
+                    (prev.as_ptr() as *const Self).link_next(next);
+                    (next.as_ptr() as *const Self).link_prev(prev);
+                },
+                (Some(next), None) => next.as_ref().unlink_prev(),
+                (None, Some(prev)) => prev.as_ref().unlink_next(),
+                (None, None) => (),
             }
 
             self.next.unlink();
@@ -174,7 +134,9 @@ pub mod linked_list {
     }
 }
 
-use gfp_core::Field;
+use std::ptr::NonNull;
+
+use gfp_core::{Field, UncheckedInverseProjectTo, UncheckedProjectTo};
 use linked_list::DoubleLink;
 
 #[derive(Field)]
@@ -184,6 +146,7 @@ pub struct Foo {
     link: DoubleLink,
 }
 
+#[allow(unused, non_snake_case)]
 impl Foo {
     pub fn new() -> Self {
         Self {
@@ -193,50 +156,70 @@ impl Foo {
         }
     }
 
-    fn link(&self) -> *const DoubleLink {
-        unsafe { Self::fields().link.project_raw(self) }
+    fn link(&self) -> NonNull<DoubleLink> {
+        unsafe { NonNull::from(self).project_to(Self::fields().link) }
     }
 
-    unsafe fn link_next(&self, next: Option<&Self>) {
-        let next = core::mem::transmute::<_, *const Self>(next);
-        let link = Self::fields().link;
+    unsafe fn unlink_next(&self) {
+        self.link.unlink_next()
+    }
+
+    unsafe fn unlink_prev(&self) {
+        self.link.unlink_prev()
+    }
+
+    unsafe fn link_next(&self, next: &Self) {
+        let Foo = Self::fields();
         let self_next = self.link.next();
-        if !self_next.is_null() {
-            self_next.link_prev(core::ptr::null());
+        if let Some(next) = self.link.next() {
+            next.as_ref().unlink_prev();
         }
-        link.project_raw(self).link_next(link.project_raw(next));
+        Foo.link
+            .project_raw(self)
+            .link_next(NonNull::from(next).project_to(Foo.link));
     }
 
-    unsafe fn link_prev(&self, prev: Option<&Self>) {
-        let prev = core::mem::transmute::<_, *const Self>(prev);
-        let link = Self::fields().link;
+    unsafe fn link_prev(&self, prev: &Self) {
+        let Foo = Self::fields();
         let self_prev = self.link.prev();
-        if !self_prev.is_null() {
-            self_prev.link_prev(core::ptr::null());
+        if let Some(prev) = self.link.prev() {
+            prev.as_ref().unlink_next();
         }
-        link.project_raw(self).link_prev(link.project_raw(prev))
+        Foo.link
+            .project_raw(self)
+            .link_prev(NonNull::from(prev).project_to(Foo.link));
     }
 
     unsafe fn insert_next(&self, next: &Self) {
-        let link = Self::fields().link;
-        link.project_raw(self).insert_next(link.project_raw(next))
+        let Foo = Self::fields();
+        Foo.link
+            .project_raw(self)
+            .insert_next(NonNull::from(next).project_to(Foo.link))
     }
 
     unsafe fn insert_prev(&self, prev: &Self) {
-        let link = Self::fields().link;
-        link.project_raw(self).insert_prev(link.project_raw(prev))
+        let Foo = Self::fields();
+        Foo.link
+            .project_raw(self)
+            .insert_prev(NonNull::from(prev).project_to(Foo.link))
     }
 
     unsafe fn next(&self) -> Option<&Self> {
-        self.link.next_value(Foo::fields().link).as_ref()
+        self.link
+            .next()
+            .inverse_project_to(Foo::fields().link)
+            .map(|foo| &*foo.as_ptr())
     }
 
     unsafe fn prev(&self) -> Option<&Self> {
-        self.link.prev_value(Foo::fields().link).as_ref()
+        self.link
+            .prev()
+            .inverse_project_to(Foo::fields().link)
+            .map(|foo| &*foo.as_ptr())
     }
 
-    unsafe fn unlink(&self) {
-        self.link.unlink();
+    unsafe fn remove(&self) {
+        self.link.remove();
     }
 
     fn get(&self) -> (i32, i32) {
@@ -260,28 +243,42 @@ fn foo() {
     *yam.y = 60;
 
     unsafe {
-        foo.link_next(Some(&yam));
-        foo.link_next(Some(&bar));
+        foo.link_next(&yam);
+        foo.link_next(&bar);
 
-        assert!(matches!(foo.prev(), None));
+        assert_eq!(foo.prev().map(Foo::get), None);
         assert_eq!(foo.next().map(Foo::get), Some((30, 40)));
         assert_eq!(bar.prev().map(Foo::get), Some((10, 20)));
         assert_eq!(bar.next().map(Foo::get), None);
         assert_eq!(yam.prev().map(Foo::get), None);
         assert_eq!(yam.next().map(Foo::get), None);
 
-        foo.unlink();
+        foo.remove();
 
-        assert!(matches!(bar.prev(), None));
+        assert_eq!(foo.prev().map(Foo::get), None);
+        assert_eq!(foo.next().map(Foo::get), None);
+        assert_eq!(bar.prev().map(Foo::get), None);
+        assert_eq!(bar.next().map(Foo::get), None);
+        assert_eq!(yam.prev().map(Foo::get), None);
+        assert_eq!(yam.next().map(Foo::get), None);
 
         foo.insert_next(&yam);
         foo.insert_next(&bar);
 
-        assert!(matches!(foo.prev(), None));
+        assert_eq!(foo.prev().map(Foo::get), None);
         assert_eq!(foo.next().map(Foo::get), Some((30, 40)));
         assert_eq!(bar.prev().map(Foo::get), Some((10, 20)));
         assert_eq!(bar.next().map(Foo::get), Some((50, 60)));
         assert_eq!(yam.prev().map(Foo::get), Some((30, 40)));
+        assert_eq!(yam.next().map(Foo::get), None);
+
+        bar.remove();
+
+        assert_eq!(foo.prev().map(Foo::get), None);
+        assert_eq!(foo.next().map(Foo::get), Some((50, 60)));
+        assert_eq!(bar.prev().map(Foo::get), None);
+        assert_eq!(bar.next().map(Foo::get), None);
+        assert_eq!(yam.prev().map(Foo::get), Some((10, 20)));
         assert_eq!(yam.next().map(Foo::get), None);
     }
 }
