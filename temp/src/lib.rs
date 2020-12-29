@@ -2,42 +2,46 @@
 #![feature(raw_ref_op)]
 #![feature(arbitrary_self_types)]
 
-mod linked_list {
-    use core::cell::Cell;
+pub mod linked_list {
+    use core::{cell::Cell, ptr::NonNull};
     use gfp_core::Field;
 
     pub struct Link {
-        link: Cell<*const Link>,
+        link: Cell<Option<NonNull<Link>>>,
     }
 
     impl Link {
         pub fn new() -> Self {
             Self {
-                link: Cell::new(core::ptr::null_mut()),
-            }
-        }
-
-        pub unsafe fn set(&self, next: *const Link) {
-            self.link.set(next)
-        }
-
-        pub fn get(&self) -> *const Link {
-            self.link.get()
-        }
-
-        pub unsafe fn next_value<F: Field<Type = Link>>(
-            &self,
-            field: F,
-        ) -> *const F::Parent {
-            if self.link.get().is_null() {
-                core::ptr::null_mut()
-            } else {
-                field.inverse_project_raw(self.link.get())
+                link: Cell::new(None),
             }
         }
 
         pub fn unlink(&self) {
-            self.link.set(core::ptr::null_mut());
+            self.link.set(None);
+        }
+
+        pub unsafe fn link(&self, next: NonNull<Link>) {
+            self.link.set(Some(next))
+        }
+
+        pub unsafe fn set(&self, next: Option<NonNull<Link>>) {
+            self.link.set(next)
+        }
+
+        pub fn get(&self) -> Option<NonNull<Link>> {
+            self.link.get()
+        }
+
+        pub unsafe fn owner<F: Field<Type = Link>>(
+            &self,
+            field: F,
+        ) -> Option<NonNull<F::Parent>> {
+            self.get().map(|link| unsafe {
+                NonNull::new_unchecked(
+                    field.inverse_project_raw_mut(link.as_ptr()),
+                )
+            })
         }
     }
 
@@ -77,42 +81,52 @@ mod linked_list {
             }
         }
 
-        pub unsafe fn set_next(self: *const Self, next: *const Self) {
-            let next = if next.is_null() {
-                core::ptr::null_mut()
-            } else {
-                (*next).prev.set(Self::fields().prev.project_raw(self));
-                Self::fields().next.project_raw(next)
-            };
-            (*self).next.set(next);
+        pub unsafe fn unlink_next(&self) {
+            let next = self.next.get();
+            if !next.is_null() {
+                let next = Self::fields().next.inverse_project_raw(next);
+                (*next).prev.link(core::ptr::null());
+            }
+            self.next.link(core::ptr::null());
         }
 
-        pub unsafe fn set_prev(self: *const Self, prev: *const Self) {
-            let prev = if prev.is_null() {
-                core::ptr::null_mut()
-            } else {
-                (*prev).next.set(Self::fields().next.project_raw(self));
-                Self::fields().prev.project_raw(prev)
-            };
-            (*self).prev.set(prev);
+        pub unsafe fn unlink_prev(&self) {
+            let next = self.next.get();
+            if !next.is_null() {
+                let next = Self::fields().next.inverse_project_raw(next);
+                (*next).prev.link(core::ptr::null());
+            }
+            self.next.link(core::ptr::null());
+        }
+
+        pub unsafe fn link_next(self: *const Self, next: *const Self) {
+            (*next).prev.link(Self::fields().prev.project_raw(self));
+            let next = Self::fields().next.project_raw(next);
+            (*self).next.link(next);
+        }
+
+        pub unsafe fn link_prev(self: *const Self, prev: *const Self) {
+            (*prev).next.link(Self::fields().next.project_raw(self));
+            let prev = Self::fields().prev.project_raw(prev);
+            (*self).prev.link(prev);
         }
 
         pub unsafe fn insert_next(self: *const Self, next: *const Self) {
             let fields = Self::fields();
             if !(*self).next.get().is_null() {
                 let self_next = (*self).next.get();
-                fields.next.inverse_project_raw(self_next).set_prev(next);
+                fields.next.inverse_project_raw(self_next).link_prev(next);
             }
-            self.set_next(next);
+            self.link_next(next);
         }
 
         pub unsafe fn insert_prev(self: *const Self, prev: *const Self) {
             let fields = Self::fields();
             if !(*self).prev.get().is_null() {
                 let self_prev = (*self).prev.get();
-                fields.prev.inverse_project_raw(self_prev).set_next(prev);
+                fields.prev.inverse_project_raw(self_prev).link_next(prev);
             }
-            self.set_prev(prev);
+            self.link_prev(prev);
         }
 
         pub unsafe fn next_value<F: Field<Type = DoubleLink>>(
@@ -147,10 +161,10 @@ mod linked_list {
 
             unsafe {
                 if !prev.is_null() {
-                    prev.set_next(next);
+                    prev.link_next(next);
                 }
                 if !next.is_null() {
-                    next.set_prev(prev);
+                    next.link_prev(prev);
                 }
             }
 
@@ -183,24 +197,24 @@ impl Foo {
         unsafe { Self::fields().link.project_raw(self) }
     }
 
-    unsafe fn set_next(&self, next: Option<&Self>) {
+    unsafe fn link_next(&self, next: Option<&Self>) {
         let next = core::mem::transmute::<_, *const Self>(next);
         let link = Self::fields().link;
         let self_next = self.link.next();
         if !self_next.is_null() {
-            self_next.set_prev(core::ptr::null());
+            self_next.link_prev(core::ptr::null());
         }
-        link.project_raw(self).set_next(link.project_raw(next));
+        link.project_raw(self).link_next(link.project_raw(next));
     }
 
-    unsafe fn set_prev(&self, prev: Option<&Self>) {
+    unsafe fn link_prev(&self, prev: Option<&Self>) {
         let prev = core::mem::transmute::<_, *const Self>(prev);
         let link = Self::fields().link;
         let self_prev = self.link.prev();
         if !self_prev.is_null() {
-            self_prev.set_prev(core::ptr::null());
+            self_prev.link_prev(core::ptr::null());
         }
-        link.project_raw(self).set_prev(link.project_raw(prev))
+        link.project_raw(self).link_prev(link.project_raw(prev))
     }
 
     unsafe fn insert_next(&self, next: &Self) {
@@ -246,8 +260,8 @@ fn foo() {
     *yam.y = 60;
 
     unsafe {
-        foo.set_next(Some(&yam));
-        foo.set_next(Some(&bar));
+        foo.link_next(Some(&yam));
+        foo.link_next(Some(&bar));
 
         assert!(matches!(foo.prev(), None));
         assert_eq!(foo.next().map(Foo::get), Some((30, 40)));
