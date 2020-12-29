@@ -15,6 +15,7 @@ mod dynamic;
 pub mod macros;
 mod pin;
 mod project;
+mod unchecked_project;
 
 #[doc(hidden)]
 pub mod type_list;
@@ -55,10 +56,50 @@ pub mod derive {
 /// Projects a type to the given field
 pub trait ProjectTo<F: Field> {
     /// The projection of the type, can be used to directly access the field
-    type Projection: core::ops::Deref<Target = F::Type>;
+    type Projection;
 
     /// projects to the given field
     fn project_to(self, field: F) -> Self::Projection;
+}
+
+// TODO: reword this documentation, tis bad
+/// Projects a type to the given field
+///
+/// The safety condition of this projection depends on the type
+/// that implements this trait.
+///
+/// * For `*const T`, `*mut T`, and `NonNull<T>`, it's the same as
+///   `project_raw`/`project_raw_mut`
+/// * For `Option<T>`, if it is `Some`, then the safety condtion on `T`
+///   applies, otherwise there is no safety condition
+pub trait UncheckedProjectTo<F: Field> {
+    /// The projection of the type, can be used to directly access the field
+    type Projection;
+
+    /// projects to the given field
+    ///
+    /// Safety: see type documentation
+    unsafe fn project_to(self, field: F) -> Self::Projection;
+}
+
+// TODO: reword this documentation, tis bad
+/// Projects a field to it's parent
+///
+/// The safety condition of this projection depends on the type
+/// that implements this trait.
+///
+/// * For `*const T`, `*mut T`, and `NonNull<T>`, it's the same as
+///   `inverse_project_raw`/`inverse_project_raw_mut`
+/// * For `Option<T>`, if it is `Some`, then the safety condtion on `T`
+///   applies, otherwise there is no safety condition
+pub trait UncheckedInverseProjectTo<F: Field> {
+    /// The projection of the type, can be used to directly access the field
+    type Projection;
+
+    /// projects to the parent
+    ///
+    /// Safety: see type documentation
+    unsafe fn inverse_project_to(self, field: F) -> Self::Projection;
 }
 
 /// Projects a type to the given field list
