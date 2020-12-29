@@ -56,7 +56,7 @@ pub mod derive {
 /// Projects a type to the given field
 pub trait ProjectTo<F: Field> {
     /// The projection of the type, can be used to directly access the field
-    type Projection: core::ops::Deref<Target = F::Type>;
+    type Projection;
 
     /// projects to the given field
     fn project_to(self, field: F) -> Self::Projection;
