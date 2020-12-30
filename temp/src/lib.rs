@@ -4,7 +4,6 @@
 
 pub mod linked_list {
     use core::{cell::Cell, ptr::NonNull};
-    use gfp_core::{Field, UncheckedInverseProjectTo, UncheckedProjectTo};
 
     pub struct Link {
         link: Cell<Option<NonNull<Link>>>,
@@ -33,6 +32,12 @@ pub mod linked_list {
             self.link.get()
         }
     }
+}
+
+pub mod doubly_linked_list {
+    use crate::linked_list::Link;
+    use core::ptr::NonNull;
+    use gfp_core::{Field, UncheckedInverseProjectTo, UncheckedProjectTo};
 
     #[derive(Field)]
     pub struct DoubleLink {
@@ -136,8 +141,8 @@ pub mod linked_list {
 
 use std::ptr::NonNull;
 
+use doubly_linked_list::DoubleLink;
 use gfp_core::{Field, UncheckedInverseProjectTo, UncheckedProjectTo};
-use linked_list::DoubleLink;
 
 #[derive(Field)]
 pub struct Foo {
