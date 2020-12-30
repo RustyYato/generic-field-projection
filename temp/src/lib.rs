@@ -161,19 +161,19 @@ impl Foo {
         }
     }
 
-    fn link(&self) -> NonNull<DoubleLink> {
+    pub fn link(&self) -> NonNull<DoubleLink> {
         unsafe { NonNull::from(self).project_to(Self::fields().link) }
     }
 
-    unsafe fn unlink_next(&self) {
+    pub unsafe fn unlink_next(&self) {
         self.link.unlink_next()
     }
 
-    unsafe fn unlink_prev(&self) {
+    pub unsafe fn unlink_prev(&self) {
         self.link.unlink_prev()
     }
 
-    unsafe fn link_next(&self, next: &Self) {
+    pub unsafe fn link_next(&self, next: &Self) {
         let Foo = Self::fields();
         let self_next = self.link.next();
         if let Some(next) = self.link.next() {
@@ -184,7 +184,7 @@ impl Foo {
             .link_next(NonNull::from(next).project_to(Foo.link));
     }
 
-    unsafe fn link_prev(&self, prev: &Self) {
+    pub unsafe fn link_prev(&self, prev: &Self) {
         let Foo = Self::fields();
         let self_prev = self.link.prev();
         if let Some(prev) = self.link.prev() {
@@ -195,39 +195,39 @@ impl Foo {
             .link_prev(NonNull::from(prev).project_to(Foo.link));
     }
 
-    unsafe fn insert_next(&self, next: &Self) {
+    pub unsafe fn insert_next(&self, next: &Self) {
         let Foo = Self::fields();
         Foo.link
             .project_raw(self)
             .insert_next(NonNull::from(next).project_to(Foo.link))
     }
 
-    unsafe fn insert_prev(&self, prev: &Self) {
+    pub unsafe fn insert_prev(&self, prev: &Self) {
         let Foo = Self::fields();
         Foo.link
             .project_raw(self)
             .insert_prev(NonNull::from(prev).project_to(Foo.link))
     }
 
-    unsafe fn next(&self) -> Option<&Self> {
+    pub unsafe fn next(&self) -> Option<&Self> {
         self.link
             .next()
             .inverse_project_to(Foo::fields().link)
             .map(|foo| &*foo.as_ptr())
     }
 
-    unsafe fn prev(&self) -> Option<&Self> {
+    pub unsafe fn prev(&self) -> Option<&Self> {
         self.link
             .prev()
             .inverse_project_to(Foo::fields().link)
             .map(|foo| &*foo.as_ptr())
     }
 
-    unsafe fn remove(&self) {
+    pub unsafe fn remove(&self) {
         self.link.remove();
     }
 
-    fn get(&self) -> (i32, i32) {
+    pub fn get(&self) -> (i32, i32) {
         (*self.x, *self.y)
     }
 }
