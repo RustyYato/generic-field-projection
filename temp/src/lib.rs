@@ -157,6 +157,138 @@ pub mod doubly_linked_list {
     }
 }
 
+mod avl {
+    use core::{cell::Cell, ptr::NonNull};
+    use std::cmp::Ordering;
+
+    use gfp_core::{Field, UncheckedInverseProjectTo, UncheckedProjectTo};
+
+    #[repr(u8)]
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    enum Weight {
+        Equal = 0,
+        Heavy = 1,
+        SuperHeavy = 2,
+    }
+
+    #[repr(transparent)]
+    #[derive(Clone, Copy)]
+    struct Tagged(NonNull<TreeNode>);
+
+    impl Tagged {
+        fn inc(&mut self) {
+            let mut ptr = &mut self.0 as *mut NonNull<TreeNode> as *mut usize;
+            unsafe {
+                *ptr += 1;
+            }
+        }
+
+        fn dec(&mut self) {
+            let mut ptr = &mut self.0 as *mut NonNull<TreeNode> as *mut usize;
+            unsafe {
+                *ptr -= 1;
+            }
+        }
+
+        fn weight(&self) -> Weight {
+            unsafe { core::mem::transmute(self.0.as_ptr() as u8 & 0b11) }
+        }
+
+        fn as_ptr(&self) -> NonNull<TreeNode> {
+            let mut ptr = self.0;
+            unsafe {
+                let ptr = &mut ptr as *mut NonNull<TreeNode> as *mut usize;
+                *ptr &= !0b11;
+            }
+            ptr
+        }
+    }
+
+    impl<F: Field<Parent = TreeNode>> UncheckedProjectTo<F> for Tagged {
+        type Projection = NonNull<F::Type>;
+
+        unsafe fn project_to(self, field: F) -> Self::Projection {
+            self.as_ptr().project_to(field)
+        }
+    }
+
+    impl<F: Field<Type = TreeNode>> UncheckedInverseProjectTo<F> for Tagged {
+        type Projection = NonNull<F::Parent>;
+
+        unsafe fn inverse_project_to(self, field: F) -> Self::Projection {
+            self.as_ptr().inverse_project_to(field)
+        }
+    }
+
+    #[derive(Field)]
+    pub struct TreeNode {
+        left:  Cell<Option<Tagged>>,
+        right: Cell<Option<Tagged>>,
+    }
+
+    impl TreeNode {
+        pub fn new() -> Self {
+            Self {
+                left:  Cell::new(None),
+                right: Cell::new(None),
+            }
+        }
+
+        pub unsafe fn insert<F: Field<Type = Self>>(
+            self: *const Self,
+            node: NonNull<Self>,
+            field: F,
+        ) where
+            F: Copy + Field<Type = Self>,
+            F::Parent: Ord,
+        {
+            let TreeNode = Self::fields();
+            let this_parent = self.inverse_project_to(field);
+            let node_parent = node.inverse_project_to(field);
+
+            if &*this_parent < node_parent.as_ref() {
+                let left = &(*self).left;
+                let right = &(*self).right;
+                match left.get() {
+                    None => {
+                        let mut node = Tagged(node);
+
+                        if right.get().is_none() {
+                            // this sub-tree is left heavy,
+                            // because there is no right node
+                            node.inc();
+                        }
+
+                        left.set(Some(node))
+                    },
+                    Some(mut left) => {
+                        // left.weight() cannot be `Weight::SuperHeavy` here
+                        // because that only occurs during rebalancing
+                        left.inc();
+                        let left_ptr: *const Self = left.as_ptr().as_ptr();
+                        left_ptr.insert(node, field);
+
+                        match left.weight() {
+                            Weight::Heavy => {
+                                //
+                            },
+                            Weight::SuperHeavy => (),
+                            Weight::Equal => {
+                                // we incremented the weight, so this is impossible
+                                core::hint::unreachable_unchecked()
+                            },
+                        }
+
+                        (*self).left.set(left);
+                    },
+                }
+            } else {
+                todo!()
+            }
+        }
+    }
+}
+
 use std::ptr::NonNull;
 
 use doubly_linked_list::DoubleLink;
