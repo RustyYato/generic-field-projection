@@ -62,6 +62,24 @@ pub mod doubly_linked_list {
             unsafe { self.prev.get().inverse_project_to(Self::fields().prev) }
         }
 
+        pub unsafe fn next_from<F: Field<Type = Self>>(
+            &self,
+            field: F,
+        ) -> Option<NonNull<F::Parent>> {
+            self.next
+                .get()
+                .inverse_project_to(field.chain(Self::fields().next))
+        }
+
+        pub unsafe fn prev_from<F: Field<Type = Self>>(
+            &self,
+            field: F,
+        ) -> Option<NonNull<F::Parent>> {
+            self.prev
+                .get()
+                .inverse_project_to(field.chain(Self::fields().prev))
+        }
+
         pub unsafe fn unlink_next(&self) {
             if let Some(next) = self.next.get() {
                 let next = next.inverse_project_to(Self::fields().next);
@@ -142,7 +160,7 @@ pub mod doubly_linked_list {
 use std::ptr::NonNull;
 
 use doubly_linked_list::DoubleLink;
-use gfp_core::{Field, UncheckedInverseProjectTo, UncheckedProjectTo};
+use gfp_core::{Field, UncheckedProjectTo};
 
 #[derive(Field)]
 pub struct Foo {
@@ -211,15 +229,13 @@ impl Foo {
 
     pub unsafe fn next(&self) -> Option<&Self> {
         self.link
-            .next()
-            .inverse_project_to(Foo::fields().link)
+            .next_from(Foo::fields().link)
             .map(|foo| &*foo.as_ptr())
     }
 
     pub unsafe fn prev(&self) -> Option<&Self> {
         self.link
-            .prev()
-            .inverse_project_to(Foo::fields().link)
+            .prev_from(Foo::fields().link)
             .map(|foo| &*foo.as_ptr())
     }
 
