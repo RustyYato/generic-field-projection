@@ -23,7 +23,7 @@ pub mod type_list;
 pub use self::{chain::*, dynamic::Dynamic, pin::*};
 pub use gfp_derive::Field;
 
-use core::ops::Range;
+use core::{marker::PhantomData, ops::Range};
 
 #[doc(hidden)]
 #[macro_export]
@@ -50,6 +50,84 @@ pub mod derive {
         }
     }
     impl<T: ?Sized> Copy for Invariant<T> {
+    }
+}
+
+// Dev Note: we use `fn() -> T` so that we are
+// covariant and non-owning in `T`, this means that
+// auto-traits are always automatically implemented, and
+// we have minimal lifetime restrictions.
+/// The identity operations on `Field`, every operation is
+/// guaranteed to be a no-op
+pub struct Identity<T>(PhantomData<fn() -> T>);
+
+impl<T> Identity<T> {
+    /// The canonical `Identity`
+    pub const NEW: Self = Self(PhantomData);
+}
+
+unsafe impl<T> Field for Identity<T> {
+    type Parent = T;
+    type Type = T;
+
+    unsafe fn project_raw(
+        &self,
+        ptr: *const Self::Parent,
+    ) -> *const Self::Type {
+        ptr
+    }
+
+    unsafe fn project_raw_mut(
+        &self,
+        ptr: *mut Self::Parent,
+    ) -> *mut Self::Type {
+        ptr
+    }
+
+    fn field_offset(&self) -> usize {
+        0
+    }
+
+    unsafe fn inverse_project_raw(
+        &self,
+        ptr: *const Self::Type,
+    ) -> *const Self::Parent {
+        ptr
+    }
+
+    unsafe fn inverse_project_raw_mut(
+        &self,
+        ptr: *mut Self::Type,
+    ) -> *mut Self::Parent {
+        ptr
+    }
+
+    fn wrapping_project_raw(
+        &self,
+        ptr: *const Self::Type,
+    ) -> *const Self::Parent {
+        ptr
+    }
+
+    fn wrapping_project_raw_mut(
+        &self,
+        ptr: *mut Self::Type,
+    ) -> *mut Self::Parent {
+        ptr
+    }
+
+    fn wrapping_inverse_project_raw(
+        &self,
+        ptr: *const Self::Type,
+    ) -> *const Self::Parent {
+        ptr
+    }
+
+    fn wrapping_inverse_project_raw_mut(
+        &self,
+        ptr: *mut Self::Type,
+    ) -> *mut Self::Parent {
+        ptr
     }
 }
 
