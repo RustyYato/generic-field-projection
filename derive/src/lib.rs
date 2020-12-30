@@ -368,9 +368,8 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
     let (generic_header, generic, where_clause) = generics.split_for_impl();
     for (i, field) in fields.unnamed.iter().enumerate() {
-        // TODO: use syn::format_ident
-        let ident =
-            syn::Ident::new(&format!("_{}", i), proc_macro2::Span::call_site());
+        use syn::spanned::Spanned;
+        let ident = quote::format_ident!("_{}", i, span = field.span());
 
         contents.push(item!(
             #[allow(non_camel_case_types)]

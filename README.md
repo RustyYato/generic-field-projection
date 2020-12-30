@@ -2,7 +2,7 @@
 
 This is a general purpose projection library that doesn't special case any
 pointer type except for raw pointers. This makes the UX for all smart pointers
-the same, and more consistent.
+the same, and more consistent. (Even types you may not think of as pointers!)
 
 This workspace is a proof of concept for the pointer to field concept discussed
 in this [Rust
@@ -21,9 +21,18 @@ struct Foo {
     pub names: String,
     bar: Bar,
 }
-```
 
-// TODO: Finish README
+let Foo = Foo::fields();
+
+let foo = Foo { .. };
+pin_utils::pin_mut!(foo);
+let typsy::hlist_pat!(names, bar) = foo.project_all((
+    unsafe { PinToPin::new(Foo.names) },
+    unsafe { PinToPin::new(Foo.bar) }
+));
+let names: Pin<&mut String> = names;
+let bar: Pin<&mut Bar> = bar;
+```
 
 # Contributing
 

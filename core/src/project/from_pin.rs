@@ -26,7 +26,7 @@ where
 
 impl<'a, F: Field, P> ProjectTo<PinToPtr<F>> for Pin<P>
 where
-    // TODO: I don't know if `PinnablePointer` is strictly required here
+    // FIXME: I don't know if `PinnablePointer` is strictly required here
     P: PinnablePointer + ProjectTo<F>,
 {
     type Projection = P::Projection;

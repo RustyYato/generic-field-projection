@@ -53,7 +53,7 @@ pub mod derive {
     }
 }
 
-// Dev Note: we use `fn() -> T` so that we are
+// NOTE: we use `fn() -> T` so that we are
 // covariant and non-owning in `T`, this means that
 // auto-traits are always automatically implemented, and
 // we have minimal lifetime restrictions.
@@ -140,7 +140,7 @@ pub trait ProjectTo<F: Field> {
     fn project_to(self, field: F) -> Self::Projection;
 }
 
-// TODO: reword this documentation, tis bad
+// FIXME: reword this documentation, tis bad
 /// Projects a type to the given field
 ///
 /// The safety condition of this projection depends on the type
@@ -160,7 +160,7 @@ pub trait UncheckedProjectTo<F: Field> {
     unsafe fn project_to(self, field: F) -> Self::Projection;
 }
 
-// TODO: reword this documentation, tis bad
+// FIXME: reword this documentation, tis bad
 /// Projects a field to it's parent
 ///
 /// The safety condition of this projection depends on the type

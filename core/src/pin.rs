@@ -4,7 +4,7 @@ use super::*;
 ///
 /// # Safety
 ///
-/// TODO: add safety docs
+/// FIXME: add safety docs
 pub unsafe trait PinnablePointer: core::ops::Deref {}
 
 /// Represents a field that can will be projected to a pointer when projected
