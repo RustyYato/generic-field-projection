@@ -1,5 +1,11 @@
 //! Experimental support for pinnable pointers
 
+use type_list::FieldList;
+use typsy::{
+    map::{Map, Mapped},
+    zip::{Zip, Zipped},
+};
+
 use super::*;
 
 impl<'a, F: Field, P> ProjectTo<PinToPin<F>> for Pin<P>
@@ -41,41 +47,44 @@ pub struct CreateTag;
 
 pub struct BuildOutput;
 
-type_function! {
-    for(F: Field) fn(self: CreateTag, _pin_to_pin: PinToPin<F>) -> MakePin {
+typsy::call! {
+    fn[F: Field](&mut self: CreateTag, _pin_to_pin: PinToPin<F>) -> MakePin {
         MakePin
     }
 
-    for(F: Field) fn(self: CreateTag, _pin_to_ptr: PinToPtr<F>) -> MakePtr {
+    fn[F: Field](&mut self: CreateTag, _pin_to_ptr: PinToPtr<F>) -> MakePtr {
         MakePtr
     }
 
-    for(T: Deref) fn(self: BuildOutput, MakePin: MakePin, value: T) -> Pin<T> {
+    fn[T: Deref](&mut self: BuildOutput, arg: (MakePin, T)) -> Pin<T> {
+        let (MakePin,  value) = arg;
         unsafe { Pin::new_unchecked(value) }
     }
 
-    for(T) fn(self: BuildOutput, MakePtr: MakePtr, value: T) -> T {
+    fn[T](&mut self: BuildOutput, arg: (MakePtr, T)) -> T {
+        let (MakePtr, value) = arg;
         value
     }
 }
 
-impl<F: Copy + FieldSet, P> ProjectToSet<F> for Pin<P>
+impl<Parent, F: Copy + FieldList<Parent>, P> ProjectAll<Parent, F> for Pin<P>
 where
-    P: PinnablePointer + ProjectToSet<F>,
-    F: TupleMap<CreateTag>,
-    TMap<F, CreateTag>: TupleZip<P::Projection, BuildOutput>,
+    P: PinnablePointer + ProjectAll<Parent, F>,
+    F: Map<CreateTag>,
+    Mapped<F, CreateTag>: Zip<P::Projection>,
+    Zipped<Mapped<F, CreateTag>, P::Projection>: Map<BuildOutput>,
 {
-    type Projection = TZip<TMap<F, CreateTag>, P::Projection, BuildOutput>;
+    type Projection =
+        Mapped<Zipped<Mapped<F, CreateTag>, P::Projection>, BuildOutput>;
 
     #[inline]
-    fn project_set_to(self, field: F) -> Self::Projection {
+    fn project_all(self, field: F) -> Self::Projection {
         unsafe {
-            let tags = field.tup_map(CreateTag);
+            let tags = field.map(CreateTag);
 
-            let raw_output =
-                Pin::into_inner_unchecked(self).project_set_to(field);
+            let raw_output = Pin::into_inner_unchecked(self).project_all(field);
 
-            tags.tup_zip(raw_output, BuildOutput)
+            tags.zip(raw_output).map(BuildOutput)
         }
     }
 }

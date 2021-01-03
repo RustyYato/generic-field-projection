@@ -10,16 +10,20 @@
 extern crate alloc as std;
 
 mod chain;
+mod dynamic;
 #[doc(hidden)]
 pub mod macros;
 mod pin;
 mod project;
+mod unchecked_project;
 
 #[doc(hidden)]
-pub mod set;
+pub mod type_list;
 
-pub use self::{chain::*, pin::*, set::FieldSet};
+pub use self::{chain::*, dynamic::Dynamic, pin::*};
 pub use gfp_derive::Field;
+
+use core::{marker::PhantomData, ops::Range};
 
 #[doc(hidden)]
 #[macro_export]
@@ -31,17 +35,13 @@ macro_rules! ptr_project {
 
 #[doc(hidden)]
 pub mod derive {
-    use core::cell::UnsafeCell;
-    pub use core::{
-        iter::{once, Once},
-        marker::PhantomData,
-    };
+    pub use core::iter::{once, Once};
+    use core::marker::PhantomData;
 
-    pub struct Invariant<T: ?Sized>(pub PhantomData<UnsafeCell<T>>);
+    pub struct Invariant<T: ?Sized>(PhantomData<fn() -> *mut T>);
 
-    unsafe impl<T: ?Sized> Send for Invariant<T> {
-    }
-    unsafe impl<T: ?Sized> Sync for Invariant<T> {
+    impl<T: ?Sized> Invariant<T> {
+        pub const INIT: Self = Self(PhantomData);
     }
 
     impl<T: ?Sized> Clone for Invariant<T> {
@@ -53,22 +53,140 @@ pub mod derive {
     }
 }
 
+// Dev Note: we use `fn() -> T` so that we are
+// covariant and non-owning in `T`, this means that
+// auto-traits are always automatically implemented, and
+// we have minimal lifetime restrictions.
+/// The identity operations on `Field`, every operation is
+/// guaranteed to be a no-op
+pub struct Identity<T>(PhantomData<fn() -> T>);
+
+impl<T> Identity<T> {
+    /// The canonical `Identity`
+    pub const NEW: Self = Self(PhantomData);
+}
+
+unsafe impl<T> Field for Identity<T> {
+    type Parent = T;
+    type Type = T;
+
+    unsafe fn project_raw(
+        &self,
+        ptr: *const Self::Parent,
+    ) -> *const Self::Type {
+        ptr
+    }
+
+    unsafe fn project_raw_mut(
+        &self,
+        ptr: *mut Self::Parent,
+    ) -> *mut Self::Type {
+        ptr
+    }
+
+    fn field_offset(&self) -> usize {
+        0
+    }
+
+    unsafe fn inverse_project_raw(
+        &self,
+        ptr: *const Self::Type,
+    ) -> *const Self::Parent {
+        ptr
+    }
+
+    unsafe fn inverse_project_raw_mut(
+        &self,
+        ptr: *mut Self::Type,
+    ) -> *mut Self::Parent {
+        ptr
+    }
+
+    fn wrapping_project_raw(
+        &self,
+        ptr: *const Self::Type,
+    ) -> *const Self::Parent {
+        ptr
+    }
+
+    fn wrapping_project_raw_mut(
+        &self,
+        ptr: *mut Self::Type,
+    ) -> *mut Self::Parent {
+        ptr
+    }
+
+    fn wrapping_inverse_project_raw(
+        &self,
+        ptr: *const Self::Type,
+    ) -> *const Self::Parent {
+        ptr
+    }
+
+    fn wrapping_inverse_project_raw_mut(
+        &self,
+        ptr: *mut Self::Type,
+    ) -> *mut Self::Parent {
+        ptr
+    }
+}
+
 /// Projects a type to the given field
 pub trait ProjectTo<F: Field> {
     /// The projection of the type, can be used to directly access the field
-    type Projection: core::ops::Deref<Target = F::Type>;
+    type Projection;
 
     /// projects to the given field
     fn project_to(self, field: F) -> Self::Projection;
 }
 
+// TODO: reword this documentation, tis bad
 /// Projects a type to the given field
-pub trait ProjectToSet<F: FieldSet> {
+///
+/// The safety condition of this projection depends on the type
+/// that implements this trait.
+///
+/// * For `*const T`, `*mut T`, and `NonNull<T>`, it's the same as
+///   `project_raw`/`project_raw_mut`
+/// * For `Option<T>`, if it is `Some`, then the safety condtion on `T`
+///   applies, otherwise there is no safety condition
+pub trait UncheckedProjectTo<F: Field> {
     /// The projection of the type, can be used to directly access the field
     type Projection;
 
     /// projects to the given field
-    fn project_set_to(self, field: F) -> Self::Projection;
+    ///
+    /// Safety: see type documentation
+    unsafe fn project_to(self, field: F) -> Self::Projection;
+}
+
+// TODO: reword this documentation, tis bad
+/// Projects a field to it's parent
+///
+/// The safety condition of this projection depends on the type
+/// that implements this trait.
+///
+/// * For `*const T`, `*mut T`, and `NonNull<T>`, it's the same as
+///   `inverse_project_raw`/`inverse_project_raw_mut`
+/// * For `Option<T>`, if it is `Some`, then the safety condtion on `T`
+///   applies, otherwise there is no safety condition
+pub trait UncheckedInverseProjectTo<F: Field> {
+    /// The projection of the type, can be used to directly access the field
+    type Projection;
+
+    /// projects to the parent
+    ///
+    /// Safety: see type documentation
+    unsafe fn inverse_project_to(self, field: F) -> Self::Projection;
+}
+
+/// Projects a type to the given field list
+pub trait ProjectAll<Parent, F> {
+    /// The projection of the type, can be used to directly access the field
+    type Projection;
+
+    /// projects to the given field list
+    fn project_all(self, field_list: F) -> Self::Projection;
 }
 
 /// Represents a field of some `Parent` type.
@@ -135,11 +253,6 @@ pub trait ProjectToSet<F: FieldSet> {
 /// unsafe impl Field for FieldVal {
 ///     type Parent = Foo;
 ///     type Type = u32;
-///     type Name = std::iter::Copied<std::slice::Iter<'static, &'static str>>;
-///
-///     fn name(&self) -> Self::Name {
-///         ["bar", "tap", "val"].iter().copied()
-///     }
 ///
 ///     unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
 ///         &raw const (*ptr).bar.tap.val
@@ -197,19 +310,16 @@ pub trait ProjectToSet<F: FieldSet> {
 /// # }
 /// ```
 pub unsafe trait Field {
+    // TODO: find a way to relax both of these bounds on
+    // `Parent` and `Type` to `?Sized`
+    // see https://github.com/RustyYato/generic-field-projection/issues/39
+    // for more information
+
     /// The type that the field comes from
-    type Parent: ?Sized;
+    type Parent;
 
     /// The type of the field itself
-    type Type: ?Sized;
-
-    /// An iterator that returns the fuully qualified name of the field
-    type Name: Iterator<Item = &'static str>;
-
-    /// An iterator that returns the fully qualified name of the field
-    ///
-    /// This must be unique for each field of the given `Parent` type
-    fn name(&self) -> Self::Name;
+    type Type;
 
     /// projects the raw pointer from the `Parent` type to the field `Type`
     ///
@@ -228,11 +338,19 @@ pub unsafe trait Field {
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent)
     -> *mut Self::Type;
 
+    /// Returns the range of offsets that the field covers
+    fn range(&self) -> Range<usize> {
+        let offset = self.field_offset();
+        offset..offset.wrapping_add(core::mem::size_of::<Self::Type>())
+    }
+
+    /// Create an equivilent runtime offset-based field
+    fn dynamic(&self) -> Dynamic<Self::Parent, Self::Type> {
+        unsafe { Dynamic::from_offset(self.field_offset()) }
+    }
+
     /// gets the offset of the field from the base pointer of `Parent`
-    fn field_offset(&self) -> usize
-    where
-        Self::Parent: Sized,
-    {
+    fn field_offset(&self) -> usize {
         use core::mem::MaybeUninit;
 
         unsafe {
@@ -267,10 +385,7 @@ pub unsafe trait Field {
     unsafe fn inverse_project_raw(
         &self,
         ptr: *const Self::Type,
-    ) -> *const Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *const Self::Parent {
         // Safety
         // * `ptr` is guaranteed to be a pointer to a field of `Parent`
         // * `field_offset` is guarateed to give the correct offset of the field
@@ -286,10 +401,7 @@ pub unsafe trait Field {
     unsafe fn inverse_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
-    ) -> *mut Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *mut Self::Parent {
         // Safety
         // * `ptr` is guaranteed to be a pointer to a field of `Parent`
         // * `field_offset` is guarateed to give the correct offset of the field
@@ -300,10 +412,7 @@ pub unsafe trait Field {
     fn wrapping_project_raw(
         &self,
         ptr: *const Self::Type,
-    ) -> *const Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *const Self::Parent {
         ptr.cast::<u8>().wrapping_add(self.field_offset()).cast()
     }
 
@@ -311,10 +420,7 @@ pub unsafe trait Field {
     fn wrapping_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
-    ) -> *mut Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *mut Self::Parent {
         ptr.cast::<u8>().wrapping_add(self.field_offset()).cast()
     }
 
@@ -322,10 +428,7 @@ pub unsafe trait Field {
     fn wrapping_inverse_project_raw(
         &self,
         ptr: *const Self::Type,
-    ) -> *const Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *const Self::Parent {
         ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
     }
 
@@ -333,10 +436,7 @@ pub unsafe trait Field {
     fn wrapping_inverse_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
-    ) -> *mut Self::Parent
-    where
-        Self::Parent: Sized,
-    {
+    ) -> *mut Self::Parent {
         ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
     }
 
@@ -350,14 +450,8 @@ pub unsafe trait Field {
 }
 
 unsafe impl<F: ?Sized + Field> Field for &F {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(self)
-    }
 
     #[inline]
     unsafe fn project_raw(
@@ -377,14 +471,8 @@ unsafe impl<F: ?Sized + Field> Field for &F {
 }
 
 unsafe impl<F: ?Sized + Field> Field for &mut F {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(self)
-    }
 
     #[inline]
     unsafe fn project_raw(
@@ -405,14 +493,8 @@ unsafe impl<F: ?Sized + Field> Field for &mut F {
 
 #[cfg(feature = "alloc")]
 unsafe impl<F: ?Sized + Field> Field for std::boxed::Box<F> {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(self)
-    }
 
     #[inline]
     unsafe fn project_raw(
@@ -433,14 +515,8 @@ unsafe impl<F: ?Sized + Field> Field for std::boxed::Box<F> {
 
 #[cfg(feature = "alloc")]
 unsafe impl<F: ?Sized + Field> Field for std::rc::Rc<F> {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(self)
-    }
 
     #[inline]
     unsafe fn project_raw(
@@ -461,14 +537,8 @@ unsafe impl<F: ?Sized + Field> Field for std::rc::Rc<F> {
 
 #[cfg(feature = "alloc")]
 unsafe impl<F: ?Sized + Field> Field for std::sync::Arc<F> {
-    type Name = F::Name;
     type Parent = F::Parent;
     type Type = F::Type;
-
-    #[inline]
-    fn name(&self) -> Self::Name {
-        F::name(self)
-    }
 
     #[inline]
     unsafe fn project_raw(
