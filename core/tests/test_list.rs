@@ -2,6 +2,7 @@
 #![allow(non_camel_case_types, clippy::blacklisted_name)]
 
 use gfp_core::*;
+use typsy::convert::Convert;
 
 #[derive(Default, Field)]
 struct Foo {
@@ -31,7 +32,8 @@ fn simple() {
     let foo = Foo::fields();
     let bar = Bar::fields();
 
-    let (x, y_a) = foo_ref.project_set_to((foo.x, foo.y.chain(bar.a)));
+    let typsy::hlist_pat!(x, y_a) =
+        foo_ref.project_all((foo.x, foo.y.chain(bar.a)).into_hlist());
 
     *x = 1;
     *y_a = 10;
@@ -51,10 +53,13 @@ fn pin() {
     let mut value = Foo::default();
     let value_ref = Pin::new(&mut value);
 
-    let (mut x, y_a) = value_ref.project_set_to((
-        unsafe { PinToPin::new_unchecked(foo.x) },
-        PinToPtr::new(foo.y.chain(bar.a)),
-    ));
+    let typsy::hlist_pat!(mut x, y_a) = value_ref.project_all(
+        (
+            unsafe { PinToPin::new_unchecked(foo.x) },
+            PinToPtr::new(foo.y.chain(bar.a)),
+        )
+            .into_hlist(),
+    );
 
     *x = 1;
     *y_a = 10;
@@ -76,9 +81,9 @@ fn arc() {
     let foo = Foo::fields();
     let bar = Bar::fields();
 
-    let (foo_x, foo_y_a) = arc
+    let typsy::hlist_pat!(foo_x, foo_y_a) = arc
         .clone()
-        .project_set_to((foo.x, foo.y.chain(bar.a)))
+        .project_all((foo.x, foo.y.chain(bar.a)).into_hlist())
         .split();
 
     assert_eq!(*foo_x, 10);

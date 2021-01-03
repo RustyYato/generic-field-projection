@@ -1,22 +1,19 @@
 use super::*;
+use type_list::{FieldList, ProjectRawMut, ProjectedMut};
+use typsy::{
+    cmp::Any,
+    map::{Map, Mapped},
+};
 
 pub struct PtrToRefMut<'a>(PhantomData<&'a ()>);
 
-impl<'a> PtrToRefMut<'a> {
-    #[inline]
-    pub(crate) unsafe fn new() -> Self {
-        Self(PhantomData)
-    }
-}
-
-type_function! {
-    for('a, T: 'a + ?Sized)
-    fn(self: PtrToRefMut<'a>, ptr: *mut T) -> &'a mut T {
+typsy::call! {
+    fn['a, T: 'a](&mut self: PtrToRefMut<'a>, ptr: *mut T) -> &'a mut T {
         unsafe { &mut *ptr }
     }
 }
 
-unsafe impl<F: ?Sized> PinnablePointer for &mut F {
+unsafe impl<T: ?Sized> PinnablePointer for &mut T {
 }
 impl<'a, F: Field> ProjectTo<F> for &'a mut F::Parent
 where
@@ -30,24 +27,26 @@ where
     }
 }
 
-impl<'a, F: FieldSet> ProjectToSet<F> for &'a mut F::Parent
+impl<'a, F, Parent> ProjectAll<Parent, F> for &'a mut Parent
 where
-    F::Parent: 'a,
-    F::TypeSetMut: TupleMap<PtrToRefMut<'a>>,
-
-    F: Copy + TupleAny<FindOverlap<F>>,
+    F: FieldList<Parent>,
+    ProjectedMut<Parent, F>: Map<PtrToRefMut<'a>>,
+    F: Copy + for<'b> Any<'b, FindOverlap<F>>,
 {
-    type Projection = TMap<F::TypeSetMut, PtrToRefMut<'a>>;
+    /// The projection of the type, can be used to directly access the field
+    type Projection = Mapped<ProjectedMut<Parent, F>, PtrToRefMut<'a>>;
 
-    #[inline]
-    fn project_set_to(self, field: F) -> Self::Projection {
+    /// projects to the given field
+    fn project_all(self, field: F) -> Self::Projection {
+        assert!(
+            !field.any(FindOverlap::new(field)),
+            "Found overlapping fields"
+        );
+
         unsafe {
-            if field.tup_any(FindOverlap::new(field)) {
-                panic!("Found overlapping fields")
-            } else {
-                let type_set = field.project_raw_mut(self);
-                type_set.tup_map(PtrToRefMut::new())
-            }
+            field
+                .map(ProjectRawMut::new(self))
+                .map(PtrToRefMut(PhantomData))
         }
     }
 }
