@@ -5,6 +5,7 @@
 //! you will find in any beginning programming course.
 
 use std::rc::Rc;
+use std::iter::Iterator;
 
 /// Our didactic example, a single node of a singly linked list.
 ///
@@ -143,5 +144,36 @@ impl SinglyLinkedListNode {
 
         (*previous).next = self.next;
         self.set_next_to_null();
+    }
+
+    /// Produces a new iterator object for the singly linked list.
+    ///
+    /// This will produce a new iterator object for the list of
+    /// `SinglyLinkedListNode` instances.  Because of the reasons that were
+    /// listed earlier, iterating over a singly linked list is always unsafe.
+    pub unsafe fn iter(&self) -> SinglyLinkedListNodeIterator {
+        SinglyLinkedListNodeIterator{
+            current: Some(self)
+        }
+    }
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct SinglyLinkedListNodeIterator {
+    current: Option<*const SinglyLinkedListNode>
+}
+
+impl Iterator for SinglyLinkedListNodeIterator {
+    type Item = *const SinglyLinkedListNode;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.current {
+            Some(c) => {
+                self.current = unsafe{(*c).next};
+
+                Some(c)
+            },
+            None => None,
+        }
     }
 }
