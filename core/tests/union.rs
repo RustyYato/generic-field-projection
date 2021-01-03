@@ -1,6 +1,7 @@
 #![feature(raw_ref_op)]
 
 use gfp_core::*;
+use typsy::convert::Convert as _;
 
 #[derive(Field)]
 union Union {
@@ -30,5 +31,5 @@ fn try_aliasing() {
 
     let union = unsafe { Union::fields() };
 
-    (&mut a).project_set_to((union.foo, union.bar));
+    (&mut a).project_all((union.foo, union.bar).into_hlist());
 }

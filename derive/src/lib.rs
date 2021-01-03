@@ -86,9 +86,7 @@ use syn;
 ///     #[allow(non_camel_case_types)]
 ///     pub struct name<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> name<T> {
-///         pub const INIT: Self = Self(::gfp_core::derive::Invariant(
-///             ::gfp_core::derive::PhantomData,
-///         ));
+///         pub const INIT: Self = Self(::gfp_core::derive::Invariant::INIT);
 ///     }
 ///     impl<T> Clone for name<T> {
 ///         fn clone(&self) -> Self {
@@ -99,11 +97,6 @@ use syn;
 ///     unsafe impl ::gfp_core::Field for name<super::Person> {
 ///         type Parent = super::Person;
 ///         type Type = String;
-///         type Name = ::gfp_core::derive::Once<&'static str>;
-///         #[inline]
-///         fn name(&self) -> Self::Name {
-///             ::gfp_core::derive::once("name")
-///         }
 ///         #[inline]
 ///         unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
 ///             &raw const (*ptr).name
@@ -117,9 +110,7 @@ use syn;
 ///     #[allow(non_camel_case_types)]
 ///     pub struct age<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> age<T> {
-///         pub const INIT: Self = Self(::gfp_core::derive::Invariant(
-///             ::gfp_core::derive::PhantomData,
-///         ));
+///         pub const INIT: Self = Self(::gfp_core::derive::Invariant::INIT);
 ///     }
 ///     impl<T> Clone for age<T> {
 ///         fn clone(&self) -> Self {
@@ -130,11 +121,6 @@ use syn;
 ///     unsafe impl ::gfp_core::Field for age<super::Person> {
 ///         type Parent = super::Person;
 ///         type Type = u16;
-///         type Name = ::gfp_core::derive::Once<&'static str>;
-///         #[inline]
-///         fn name(&self) -> Self::Name {
-///             ::gfp_core::derive::once("age")
-///         }
 ///         #[inline]
 ///         unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
 ///             &raw const (*ptr).age
@@ -148,9 +134,7 @@ use syn;
 ///     #[allow(non_camel_case_types)]
 ///     pub struct children<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> children<T> {
-///         pub const INIT: Self = Self(::gfp_core::derive::Invariant(
-///             ::gfp_core::derive::PhantomData,
-///         ));
+///         pub const INIT: Self = Self(::gfp_core::derive::Invariant::INIT);
 ///     }
 ///     impl<T> Clone for children<T> {
 ///         fn clone(&self) -> Self {
@@ -161,11 +145,6 @@ use syn;
 ///     unsafe impl ::gfp_core::Field for children<super::Person> {
 ///         type Parent = super::Person;
 ///         type Type = Vec<Person>;
-///         type Name = ::gfp_core::derive::Once<&'static str>;
-///         #[inline]
-///         fn name(&self) -> Self::Name {
-///             ::gfp_core::derive::once("children")
-///         }
 ///         #[inline]
 ///         unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
 ///             &raw const (*ptr).children
@@ -275,7 +254,7 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
         contents.push(item!(
             impl<T> #ident<T> {
-                pub const INIT: Self = Self(::gfp_core::derive::Invariant(::gfp_core::derive::PhantomData));
+                pub const INIT: Self = Self(::gfp_core::derive::Invariant::INIT);
             }
         ));
 
@@ -295,12 +274,6 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
             unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
                 type Parent = super::#input_ident #generic;
                 type Type = #ty;
-                type Name = ::gfp_core::derive::Once<&'static str>;
-
-                #[inline]
-                fn name(&self) -> Self::Name {
-                    ::gfp_core::derive::once(stringify!(#ident))
-                }
 
                 #[inline]
                 unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
@@ -406,7 +379,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
         contents.push(item!(
             impl<T> #ident<T> {
-                pub const INIT: Self = Self(::gfp_core::derive::Invariant(::gfp_core::derive::PhantomData));
+                pub const INIT: Self = Self(::gfp_core::derive::Invariant::INIT);
             }
         ));
 
@@ -431,12 +404,6 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
             unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
                 type Parent = super::#input_ident #generic;
                 type Type = #ty;
-                type Name = ::gfp_core::derive::Once<&'static str>;
-
-                #[inline]
-                fn name(&self) -> Self::Name {
-                    ::gfp_core::derive::once(stringify!(#index))
-                }
 
                 #[inline]
                 unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
@@ -532,7 +499,7 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
         contents.push(item!(
             impl<T> #ident<T> {
                 pub const unsafe fn init() -> Self {
-                    Self(::gfp_core::derive::Invariant(::gfp_core::derive::PhantomData))
+                    Self(::gfp_core::derive::Invariant::INIT)
                 }
             }
         ));
@@ -553,12 +520,6 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
             unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
                 type Parent = super::#input_ident #generic;
                 type Type = #ty;
-                type Name = ::gfp_core::derive::Once<&'static str>;
-
-                #[inline]
-                fn name(&self) -> Self::Name {
-                    ::gfp_core::derive::once(stringify!(#input_ident))
-                }
 
                 #[inline]
                 unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
