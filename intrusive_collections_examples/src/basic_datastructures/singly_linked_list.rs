@@ -157,6 +157,30 @@ impl SinglyLinkedListNode {
     }
 }
 
+/// A type that implements `std::iter::Iterator` for `SinglyLinkedListNode`.
+///
+/// This type is an iterator of `SinglyLinkedListNode` instances.  You may use
+/// the `SinglyLinkedListNode::iter` method to create an instance of this type,
+/// which can then be iterated over.  E.g.:
+///
+/// ```rust
+/// pub main() {
+///     let mut a = SinglyLinkedListNode::default();
+///     let mut b = SinglyLinkedListNode::default();
+///     let mut c = SinglyLinkedListNode::default();
+///
+///     b.insert(&mut a);
+///     c.insert(&mut b);
+///
+///     // We now have a small linked list `a -> b -> c`.
+///     // We can now iterate over it.
+///     unsafe {
+///         for node in a.iter() {
+///             // Pretty boring here, all we can do is iterate right now!
+///         }
+///     }
+/// }
+/// ```
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SinglyLinkedListNodeIterator {
     current: Option<*const SinglyLinkedListNode>,
