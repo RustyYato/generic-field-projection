@@ -2,7 +2,14 @@
 //!
 //! This is an implementation of the canonical
 //! [singly linked list](https://en.wikipedia.org/wiki/Singly_linked_list) that
-//! you will find in any beginning programming course.
+//! you will find in any beginning programming course.  This implementation is
+//! intended as a learning tool, and so the implementation is kept as simple as
+//! possible.  One of the first thing the note about the implementation is that
+//! there isn't any `special` node, here; all nodes are exactly the same.  That
+//! means that optimizations such as storing the length of the list in a special
+//! node, or maintaining a `first` or `last` node isn't possible.  It is
+//! possible to build a more powerful linked list than this using various
+//! techniques, but none of those will be done here.
 
 use std::{iter::Iterator, rc::Rc};
 
