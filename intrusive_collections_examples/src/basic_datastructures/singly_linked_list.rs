@@ -4,8 +4,7 @@
 //! [singly linked list](https://en.wikipedia.org/wiki/Singly_linked_list) that
 //! you will find in any beginning programming course.
 
-use std::rc::Rc;
-use std::iter::Iterator;
+use std::{iter::Iterator, rc::Rc};
 
 /// Our didactic example, a single node of a singly linked list.
 ///
@@ -152,15 +151,15 @@ impl SinglyLinkedListNode {
     /// `SinglyLinkedListNode` instances.  Because of the reasons that were
     /// listed earlier, iterating over a singly linked list is always unsafe.
     pub unsafe fn iter(&self) -> SinglyLinkedListNodeIterator {
-        SinglyLinkedListNodeIterator{
-            current: Some(self)
+        SinglyLinkedListNodeIterator {
+            current: Some(self),
         }
     }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SinglyLinkedListNodeIterator {
-    current: Option<*const SinglyLinkedListNode>
+    current: Option<*const SinglyLinkedListNode>,
 }
 
 impl Iterator for SinglyLinkedListNodeIterator {
@@ -169,7 +168,7 @@ impl Iterator for SinglyLinkedListNodeIterator {
     fn next(&mut self) -> Option<Self::Item> {
         match self.current {
             Some(c) => {
-                self.current = unsafe{(*c).next};
+                self.current = unsafe { (*c).next };
 
                 Some(c)
             },
