@@ -49,8 +49,7 @@ pub trait FieldList<Parent>:
 {
 }
 
-impl<Parent> FieldList<Parent> for Nil {
-}
+impl<Parent> FieldList<Parent> for Nil {}
 
 impl<F: Field, R> FieldList<F::Parent> for Cons<F, R> where
     Self: Map<ProjectRaw<F::Parent>> + Map<ProjectRawMut<F::Parent>>

@@ -168,7 +168,7 @@ pub fn derive_field(ty: TokenStream) -> TokenStream {
             syn::Error::new(ty.ident.span(), "enums are not supported")
                 .to_compile_error()
                 .into()
-        },
+        }
     }
 }
 
@@ -203,7 +203,7 @@ fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
             syn::Error::new(ty.ident.span(), "Unit structs are not supported")
                 .to_compile_error()
                 .into()
-        },
+        }
         _ => unreachable!(),
     }
 }
@@ -397,7 +397,7 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
         let index = syn::Member::Unnamed(syn::Index {
             index: i as u32,
-            span:  proc_macro2::Span::call_site(),
+            span: proc_macro2::Span::call_site(),
         });
 
         contents.push(item!(
@@ -462,10 +462,7 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
         ..
     } = ty;
 
-    let fields = if let syn::Data::Union(syn::DataUnion {
-        fields, ..
-    }) = data
-    {
+    let fields = if let syn::Data::Union(syn::DataUnion { fields, .. }) = data {
         fields
     } else {
         unreachable!()

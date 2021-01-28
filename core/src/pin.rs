@@ -72,9 +72,7 @@ impl<F: Field> PinToPin<F> {
     /// pinnable pointer
     #[inline]
     pub unsafe fn new_unchecked(field: F) -> Self {
-        Self {
-            field,
-        }
+        Self { field }
     }
 
     /// Get the wrapped field

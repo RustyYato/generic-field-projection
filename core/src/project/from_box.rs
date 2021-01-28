@@ -17,7 +17,7 @@ use std::boxed::Box;
 // }
 
 pub struct BoxProjection<T, F> {
-    bx:    NonNull<T>,
+    bx: NonNull<T>,
     field: NonNull<F>,
 }
 
@@ -43,8 +43,7 @@ unsafe impl<#[may_dangle] T, #[may_dangle] F> Drop for BoxProjection<T, F> {
     }
 }
 
-unsafe impl<T: ?Sized> PinnablePointer for Box<T> {
-}
+unsafe impl<T: ?Sized> PinnablePointer for Box<T> {}
 impl<F: Field> ProjectTo<F> for Box<F::Parent> {
     type Projection = BoxProjection<F::Parent, F::Type>;
 
@@ -55,10 +54,7 @@ impl<F: Field> ProjectTo<F> for Box<F::Parent> {
             let bx = NonNull::new_unchecked(bx);
             let field = NonNull::new_unchecked(field);
 
-            BoxProjection {
-                bx,
-                field,
-            }
+            BoxProjection { bx, field }
         }
     }
 }

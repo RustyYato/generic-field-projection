@@ -13,8 +13,7 @@ typsy::call! {
     }
 }
 
-unsafe impl<T: ?Sized> PinnablePointer for &mut T {
-}
+unsafe impl<T: ?Sized> PinnablePointer for &mut T {}
 impl<'a, F: Field> ProjectTo<F> for &'a mut F::Parent
 where
     F::Parent: 'a,

@@ -3,8 +3,7 @@ use super::*;
 use type_list::{FieldList, ProjectRaw, Projected};
 use typsy::map::{Map, Mapped};
 
-unsafe impl<F: ?Sized> PinnablePointer for &F {
-}
+unsafe impl<F: ?Sized> PinnablePointer for &F {}
 impl<'a, F: Field> ProjectTo<F> for &'a F::Parent
 where
     F::Parent: 'a,

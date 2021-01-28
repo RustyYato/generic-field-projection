@@ -11,10 +11,7 @@ impl<A, B> Chain<A, B> {
     #[inline]
     /// create a new `Chain`
     pub const fn new(a: A, b: B) -> Self {
-        Self {
-            a,
-            b,
-        }
+        Self { a, b }
     }
 }
 

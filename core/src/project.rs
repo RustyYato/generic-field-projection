@@ -37,22 +37,19 @@ typsy::call! {
 
 pub struct FindOverlap<S> {
     counter: u64,
-    set:     S,
+    set: S,
 }
 
 impl<S> FindOverlap<S> {
     fn new(set: S) -> Self {
-        FindOverlap {
-            set,
-            counter: 0,
-        }
+        FindOverlap { set, counter: 0 }
     }
 }
 
 pub struct FindOverlapInner<I> {
-    id:      u64,
+    id: u64,
     counter: u64,
-    field:   I,
+    field: I,
 }
 
 typsy::call! {

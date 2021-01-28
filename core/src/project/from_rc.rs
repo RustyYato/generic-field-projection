@@ -11,7 +11,7 @@ use super::*;
 use std::rc::Rc;
 
 pub struct ProjectedRc<P, T> {
-    _own:  Rc<P>,
+    _own: Rc<P>,
     field: *const T,
 }
 
@@ -23,24 +23,20 @@ impl<P, T> Deref for ProjectedRc<P, T> {
     }
 }
 
-unsafe impl<T: ?Sized> PinnablePointer for Rc<T> {
-}
+unsafe impl<T: ?Sized> PinnablePointer for Rc<T> {}
 impl<F: Field> ProjectTo<F> for Rc<F::Parent> {
     type Projection = ProjectedRc<F::Parent, F::Type>;
 
     fn project_to(self, field: F) -> Self::Projection {
         unsafe {
             let field = field.project_raw(&self as &_);
-            ProjectedRc {
-                _own: self,
-                field,
-            }
+            ProjectedRc { _own: self, field }
         }
     }
 }
 
 pub struct ProjectedRcSet<P, T> {
-    _own:  Rc<P>,
+    _own: Rc<P>,
     field: T,
 }
 
@@ -76,7 +72,7 @@ impl<'a, Parent, F: FieldList<Parent>> ProjectAll<Parent, F> for Rc<Parent> {
         unsafe {
             ProjectedRcSet {
                 field: field.map(ProjectRaw::new(&self as &_)),
-                _own:  self,
+                _own: self,
             }
         }
     }

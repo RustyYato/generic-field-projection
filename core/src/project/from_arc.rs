@@ -11,16 +11,12 @@ use super::*;
 use std::sync::Arc;
 
 pub struct ProjectedArc<P, T> {
-    _own:  Arc<P>,
+    _own: Arc<P>,
     field: *const T,
 }
 
-unsafe impl<P, T> Send for ProjectedArc<P, T> where Arc<P>: Send
-{
-}
-unsafe impl<P, T> Sync for ProjectedArc<P, T> where Arc<P>: Sync
-{
-}
+unsafe impl<P, T> Send for ProjectedArc<P, T> where Arc<P>: Send {}
+unsafe impl<P, T> Sync for ProjectedArc<P, T> where Arc<P>: Sync {}
 
 impl<P, T> Deref for ProjectedArc<P, T> {
     type Target = T;
@@ -30,33 +26,25 @@ impl<P, T> Deref for ProjectedArc<P, T> {
     }
 }
 
-unsafe impl<T: ?Sized> PinnablePointer for Arc<T> {
-}
+unsafe impl<T: ?Sized> PinnablePointer for Arc<T> {}
 impl<F: Field> ProjectTo<F> for Arc<F::Parent> {
     type Projection = ProjectedArc<F::Parent, F::Type>;
 
     fn project_to(self, field: F) -> Self::Projection {
         unsafe {
             let field = field.project_raw(&self as &_);
-            ProjectedArc {
-                _own: self,
-                field,
-            }
+            ProjectedArc { _own: self, field }
         }
     }
 }
 
 pub struct ProjectedArcSet<P, T> {
-    _own:  Arc<P>,
+    _own: Arc<P>,
     field: T,
 }
 
-unsafe impl<P, T> Send for ProjectedArcSet<P, T> where Arc<P>: Send
-{
-}
-unsafe impl<P, T> Sync for ProjectedArcSet<P, T> where Arc<P>: Sync
-{
-}
+unsafe impl<P, T> Send for ProjectedArcSet<P, T> where Arc<P>: Send {}
+unsafe impl<P, T> Sync for ProjectedArcSet<P, T> where Arc<P>: Sync {}
 
 pub struct Split<P>(Arc<P>);
 
@@ -90,7 +78,7 @@ impl<'a, Parent, F: FieldList<Parent>> ProjectAll<Parent, F> for Arc<Parent> {
         unsafe {
             ProjectedArcSet {
                 field: field.map(ProjectRaw::new(&self as &_)),
-                _own:  self,
+                _own: self,
             }
         }
     }
