@@ -3,9 +3,10 @@
 #![forbid(missing_docs)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-//! This crate provides a generic interface to project to fields, think of it as
-//! an extended version of `Deref` that handles all pointer types equally.
-
+//! A generic interface to project to struct fields as an extended version of
+//! `Deref` which handles all pointer types equally and allows for arbitrary
+//! composition and cloning of fields between selected structs using
+//! procedurally generated code and associated macro based helper methods.
 #[cfg(all(not(feature = "std"), feature = "alloc"))]
 extern crate alloc as std;
 
@@ -53,16 +54,14 @@ pub mod derive {
     }
 }
 
-// Dev Note: we use `fn() -> T` so that we are
-// covariant and non-owning in `T`, this means that
-// auto-traits are always automatically implemented, and
-// we have minimal lifetime restrictions.
-/// The identity operations on `Field`, every operation is
-/// guaranteed to be a no-op
+// Dev Note: we use `fn() -> T` so that we are covariant and non-owning in `T`,
+// this means that auto-traits are always automatically implemented, and we have
+// minimal lifetime restrictions.
+/// Identity operations on a `Field` struct which are guaranteed to be no-op
 pub struct Identity<T>(PhantomData<fn() -> T>);
 
 impl<T> Identity<T> {
-    /// The canonical `Identity`
+    /// - default initializer for the `Identity` trait
     pub const NEW: Self = Self(PhantomData);
 }
 
@@ -131,67 +130,67 @@ unsafe impl<T> Field for Identity<T> {
     }
 }
 
-/// Projects a type to the given field
+/// Projects a type to a given `Field`
 pub trait ProjectTo<F: Field> {
-    /// The projection of the type, can be used to directly access the field
+    /// - directly access to the generated `Field`
     type Projection;
 
-    /// projects to the given field
+    /// - project to a given `Field`
     fn project_to(self, field: F) -> Self::Projection;
 }
 
-// TODO: reword this documentation, tis bad
-/// Projects a type to the given field
+/// Project a given Field onto a procedurally generated Field using an `unsafe`
+/// field projection trait. Safe usage depends entirely on the type implementing
+/// this trait.
 ///
-/// The safety condition of this projection depends on the type
-/// that implements this trait.
+/// Safety Specifications:
+/// * For `*const T`, `*mut T`, and `NonNull<T>`, the safety condition is
+/// equivalent to `project_raw`/`project_raw_mut`
 ///
-/// * For `*const T`, `*mut T`, and `NonNull<T>`, it's the same as
-///   `project_raw`/`project_raw_mut`
-/// * For `Option<T>`, if it is `Some`, then the safety condtion on `T`
-///   applies, otherwise there is no safety condition
+/// * For `Option<T>`, if it is `Some`, the safety condition on `T` applies
+///
+/// * No safety condition otherwise applies
 pub trait UncheckedProjectTo<F: Field> {
-    /// The projection of the type, can be used to directly access the field
+    /// - direct access to a `Copy`/`Clone` of the generated `Field`
     type Projection;
 
-    /// projects to the given field
-    ///
-    /// Safety: see type documentation
+    /// - projection to a given `Field`s field
+    /// - safety specifications from above apply
     unsafe fn project_to(self, field: F) -> Self::Projection;
 }
 
-// TODO: reword this documentation, tis bad
-/// Projects a field to it's parent
+/// Project a generated `Field` type back into its related source `struct` using
+/// an `unsafe` field projection trait. Safe usage depends entirely on the type
+/// implementing this trait.
 ///
-/// The safety condition of this projection depends on the type
-/// that implements this trait.
+/// Safety Specifications:
+/// * For `*const T`, `*mut T`, and `NonNull<T>`, the safety condition is
+/// equivalent to `project_raw`/`project_raw_mut`
 ///
-/// * For `*const T`, `*mut T`, and `NonNull<T>`, it's the same as
-///   `inverse_project_raw`/`inverse_project_raw_mut`
-/// * For `Option<T>`, if it is `Some`, then the safety condtion on `T`
-///   applies, otherwise there is no safety condition
+/// * For `Option<T>`, if it is `Some`, the safety condition on `T` applies
+///
+/// * No safety condition otherwise applies
 pub trait UncheckedInverseProjectTo<F: Field> {
-    /// The projection of the type, can be used to directly access the field
+    /// - direct access to a `Copy`/`Clone` of the generated `Field`
     type Projection;
 
-    /// projects to the parent
-    ///
-    /// Safety: see type documentation
+    /// - projection to the related source `struct` of a given `Field`
+    /// - safety specifications from above apply
     unsafe fn inverse_project_to(self, field: F) -> Self::Projection;
 }
 
-/// Projects a type to the given field list
+/// Projects a type to the given `Field` list
 pub trait ProjectAll<Parent, F> {
-    /// The projection of the type, can be used to directly access the field
+    /// - direct access to the generated `Field`
     type Projection;
 
-    /// projects to the given field list
+    /// - projection to the given `Field` list
     fn project_all(self, field_list: F) -> Self::Projection;
 }
 
-/// Represents a field of some `Parent` type.
-///
-/// You can derive this trait for all fields of `Parent` by using:
+/// A generated representation of some `Parent` types `struct`. `Parent`
+/// represents the type where the field came from , `Type` represents the type
+/// of the field itself.
 ///
 /// ```rust
 /// #![feature(raw_ref_op)]
@@ -208,14 +207,11 @@ pub trait ProjectAll<Parent, F> {
 ///
 /// # Safety
 ///
-/// * `Parent` must represent the type where the field came from
-/// * `Type` must represent the type of the field itself
-/// * `project_raw` and `project_raw_mut` must only access the given field
-/// * `name` must return an iterator that yields all of the fields from `Parent`
-///   to the given field,
-/// * You must not override `field_offset`, `inverse_project_raw`,
-///   or `inverse_project_raw_mut`
-/// ex.
+/// * `project_raw` and `project_raw_mut` must only access the given `Field`
+/// * `name` must return an iterator yielding all the fields from `Parent` to
+///   the given field
+/// * `field_offset`, `inverse_project_raw`, or `inverse_project_raw_mut` must
+/// not be overridden
 ///
 /// ```rust
 /// struct Foo {
@@ -231,7 +227,7 @@ pub trait ProjectAll<Parent, F> {
 /// }
 /// ```
 ///
-/// if want to get field `val` from `Foo`, you must implement field like so,
+/// Get field `val` from `Foo` through an implemented field:
 ///
 /// ```rust
 /// #![feature(raw_ref_op)]
@@ -264,9 +260,9 @@ pub trait ProjectAll<Parent, F> {
 /// }
 /// ```
 ///
-/// But it is better to just derive `Field` on the types that you need to, and
-/// then use the [`chain`](trait.Fields.html#method.chain) combinator to project
-/// to the fields of fields
+/// Derive `Field` on the needed types, using the
+/// [`chain`](trait.Fields.html#method.chain) combinator to project to the
+/// fields of `Field`
 ///
 /// ```rust
 /// #![feature(raw_ref_op)]
@@ -295,7 +291,7 @@ pub trait ProjectAll<Parent, F> {
 ///         Tap::fields().val
 ///     );
 ///
-///     // or if you are going to use that projection a lot
+///     // or for convenience
 ///
 ///     use gfp_core::Chain;
 ///
@@ -310,18 +306,18 @@ pub trait ProjectAll<Parent, F> {
 /// # }
 /// ```
 pub unsafe trait Field {
-    // TODO: find a way to relax both of these bounds on
-    // `Parent` and `Type` to `?Sized`
-    // see https://github.com/RustyYato/generic-field-projection/issues/39
-    // for more information
+    // TODO: find a way to relax both of these bounds on `Parent` and `Type` to
+    // `?Sized` see
+    // https://github.com/RustyYato/generic-field-projection/issues/39 for more
+    // information
 
-    /// The type that the field comes from
+    /// - type which is generating `Field`
     type Parent;
 
-    /// The type of the field itself
+    /// - a type representation of `Field` itself
     type Type;
 
-    /// projects the raw pointer from the `Parent` type to the field `Type`
+    /// Project a raw pointer from `Parent` to `Type`
     ///
     /// # Safety
     ///
@@ -330,26 +326,34 @@ pub unsafe trait Field {
     unsafe fn project_raw(&self, ptr: *const Self::Parent)
     -> *const Self::Type;
 
-    /// projects the raw pointer from the `Parent` type to the field `Type`
+    /// Project a mutable raw pointer from `Parent` to `Type`
     ///
     /// # Safety
     ///
-    /// `ptr` must point to a valid allocation of `Parent`
+    /// * `ptr` must point to a valid allocation of `Parent`
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent)
     -> *mut Self::Type;
 
-    /// Returns the range of offsets that the field covers
+    /// - return range of offsets covered by `Field`
     fn range(&self) -> Range<usize> {
         let offset = self.field_offset();
         offset..offset.wrapping_add(core::mem::size_of::<Self::Type>())
     }
 
-    /// Create an equivilent runtime offset-based field
+    /// - create an equivalent run-time offset-based `Field`
     fn dynamic(&self) -> Dynamic<Self::Parent, Self::Type> {
         unsafe { Dynamic::from_offset(self.field_offset()) }
     }
 
-    /// gets the offset of the field from the base pointer of `Parent`
+    /// Return the offset of a `Field` from a base pointer of a `Parent`, the
+    /// offset will always be positive, since `Field`s are derived from
+    /// `Parent`s
+    ///
+    /// # Safety
+    /// * `parent_ptr` point to a valid uninitialized allocation of `Parent`
+    /// * we never write to `field_ptr` so  the projection is safe
+    /// * `parent_ptr` and `field_ptr` are guaranteed to be in the same
+    /// allocation following from the safety requirements on `Field`
     fn field_offset(&self) -> usize {
         use core::mem::MaybeUninit;
 
@@ -357,58 +361,46 @@ pub unsafe trait Field {
             let parent = MaybeUninit::<Self::Parent>::uninit();
             let parent_ptr = parent.as_ptr();
 
-            // Safety
-            // * `parent_ptr` does point to a valid allocation of `Parent`
-            //      * it just happens to be uninitialized
-            // * the projection is not safe to write to
-            //      * we never write to `field_ptr`
             let field_ptr = self.project_raw(parent_ptr);
 
-            // Safety
-            // * `parent_ptr` and `field_ptr` are guaranteed to be in the same
-            //      allocation because of the safety requirements on `Field`
             let offset =
                 field_ptr.cast::<u8>().offset_from(parent_ptr.cast::<u8>());
 
-            // The offset will always be positive, because fields must
-            // come after their parents
             offset as usize
         }
     }
 
-    /// projects the raw pointer from the field `Type` to the `Parent` type
+    /// Project a raw pointer from a `Type` to its generating `Parent`
     ///
     /// # Safety
     ///
-    /// * `ptr` must point into a valid allocation of `Type`
-    /// * `ptr` must point to a field of `Parent` with the type `Type`
+    /// * `ptr` must point to a valid allocation of `Type`
+    /// * `ptr` must point to a field of `Parent` of type `Type`
+    /// * `ptr` is guaranteed to point to a field of `Parent`
+    /// * `field_offset` is guaranteed to return the correct `Field` offset
     unsafe fn inverse_project_raw(
         &self,
         ptr: *const Self::Type,
     ) -> *const Self::Parent {
-        // Safety
-        // * `ptr` is guaranteed to be a pointer to a field of `Parent`
-        // * `field_offset` is guarateed to give the correct offset of the field
         ptr.cast::<u8>().sub(self.field_offset()).cast()
     }
 
-    /// projects the raw pointer from the field `Type` to the `Parent` type
+    /// Project a raw pointer from a `Type` to its generating `Parent`
     ///
     /// # Safety
     ///
     /// * `ptr` must point into a valid allocation of `Type`
     /// * `ptr` must point to a field of `Parent` with the type `Type`
+    /// * `ptr` is guaranteed to point to a field of `Parent`
+    /// * `field_offset` is guaranteed to return the correct `Field` offset
     unsafe fn inverse_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
     ) -> *mut Self::Parent {
-        // Safety
-        // * `ptr` is guaranteed to be a pointer to a field of `Parent`
-        // * `field_offset` is guarateed to give the correct offset of the field
         ptr.cast::<u8>().sub(self.field_offset()).cast()
     }
 
-    /// projects the raw pointer from the field `Type` to the `Parent` type
+    /// - project a raw pointer from a `Type` to its generating `Parent`
     fn wrapping_project_raw(
         &self,
         ptr: *const Self::Type,
@@ -416,7 +408,7 @@ pub unsafe trait Field {
         ptr.cast::<u8>().wrapping_add(self.field_offset()).cast()
     }
 
-    /// projects the raw pointer from the field `Type` to the `Parent` type
+    /// - project a raw pointer from a `Type` to its generating `Parent`
     fn wrapping_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
@@ -424,7 +416,7 @@ pub unsafe trait Field {
         ptr.cast::<u8>().wrapping_add(self.field_offset()).cast()
     }
 
-    /// projects the raw pointer from the field `Type` to the `Parent` type
+    /// - projects a raw pointer from a `Type` to its generating `Parent`
     fn wrapping_inverse_project_raw(
         &self,
         ptr: *const Self::Type,
@@ -432,7 +424,7 @@ pub unsafe trait Field {
         ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
     }
 
-    /// projects the raw pointer from the field `Type` to the `Parent` type
+    /// - projects a raw pointer from a `Type` to its generating `Parent`
     fn wrapping_inverse_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
@@ -440,7 +432,7 @@ pub unsafe trait Field {
         ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
     }
 
-    /// Chains the projection of this field with another field `F`
+    /// - chain a projection of one `Field` with another
     fn chain<F: Field<Parent = Self::Type>>(self, f: F) -> Chain<Self, F>
     where
         Self: Sized,

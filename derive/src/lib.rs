@@ -19,8 +19,8 @@ use syn;
 /// aliasing of unique references and because accessing union fields is
 /// inherently `unsafe`.
 ///
-/// For `struct`, getting the field types is safe because there is no way to
-/// cause UB.
+/// For `struct`, getting the field types is safe since the memory
+/// operations defined are `Clone` and `Copy` so UB is not possible.
 ///
 ///  * note: unit structs don't generate any extra code (i.e. `struct Foo;`)
 ///
@@ -62,15 +62,16 @@ use syn;
 ///         children: Person_fields::children::INIT,
 ///     };
 ///
-///     /// get an instance of `PersonFields` easily by calling
-///     /// `Person::fields()`, then you can use this to access the
-///     ///
-///     /// ```rust
-///     /// let fields = Person::fields();
-///     ///
-///     /// person.project_to(fields.age);
-///     /// person.project_to(fields.name);
-///     /// ```
+///     // get an instance of `PersonFields` easily by calling
+///     // `Person::fields()`, then you can use this to access the
+///     //
+///     // ```rust
+///     // let fields = Person::fields();
+///     //
+///     // person.project_to(fields.name);
+///     // person.project_to(fields.age);
+///     // person.project_to(fields.children);
+///     // ```
 ///     fn fields() -> PersonFields {
 ///         PersonFields {
 ///             name: Person_fields::name::INIT,
@@ -82,7 +83,7 @@ use syn;
 /// #[allow(non_snake_case)]
 /// mod Person_fields {
 ///     use super::*;
-///     // represents the `name` field of `Person`
+///     // defines the `name` field of `PersonFields`
 ///     #[allow(non_camel_case_types)]
 ///     pub struct name<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> name<T> {
@@ -106,7 +107,7 @@ use syn;
 ///             &raw mut (*ptr).name
 ///         }
 ///     }
-///     // represents the `age` field of `Person`
+///     // defines the `age` field of `PersonFields`
 ///     #[allow(non_camel_case_types)]
 ///     pub struct age<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> age<T> {
@@ -130,7 +131,7 @@ use syn;
 ///             &raw mut (*ptr).age
 ///         }
 ///     }
-///     // represents the `children` field of `Person`
+///     // defines the `children` field of `PersonFields`
 ///     #[allow(non_camel_case_types)]
 ///     pub struct children<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> children<T> {
