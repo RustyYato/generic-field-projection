@@ -62,7 +62,7 @@ pub mod derive {
 pub struct Identity<T>(PhantomData<fn() -> T>);
 
 impl<T> Identity<T> {
-    /// default initializer for the `Identity`
+    /// Default initializer for the `Identity`
     pub const NEW: Self = Self(PhantomData);
 }
 
@@ -133,10 +133,10 @@ unsafe impl<T> Field for Identity<T> {
 
 /// Projects a type to a given `Field`
 pub trait ProjectTo<F: Field> {
-    /// direct access to the field
+    /// Direct access to the field
     type Projection;
 
-    /// project to a given `Field`
+    /// Project to a given `Field`
     fn project_to(self, field: F) -> Self::Projection;
 }
 
@@ -152,11 +152,11 @@ pub trait ProjectTo<F: Field> {
 ///
 /// * Other types must define their own safety conditions
 pub trait UncheckedProjectTo<F: Field> {
-    /// direct access to via a pointer-like type to the field
+    /// Direct access to via a pointer-like type to the field
     type Projection;
 
-    /// - projection to a given `Field`s field
-    /// - safety specifications from above apply
+    /// Projection to a given `Field`s field where the safety specifications
+    /// from above apply
     unsafe fn project_to(self, field: F) -> Self::Projection;
 }
 
@@ -172,20 +172,20 @@ pub trait UncheckedProjectTo<F: Field> {
 ///
 /// * Other types must define their own safety conditions
 pub trait UncheckedInverseProjectTo<F: Field> {
-    /// direct access via a pointer-like type to the field
+    /// Direct access via a pointer-like type to the field
     type Projection;
 
-    /// projection to the related source `struct` of a given `Field`
+    /// Projection to the related source `struct` of a given `Field` where the
     /// safety specifications from above apply
     unsafe fn inverse_project_to(self, field: F) -> Self::Projection;
 }
 
 /// Projects a type to the given `Field` list
 pub trait ProjectAll<Parent, F> {
-    /// direct access to the generated `Field` list
+    /// Direct access to the generated `Field` list
     type Projection;
 
-    /// projection to the given `Field` list
+    /// Projection to the given `Field` list
     fn project_all(self, field_list: F) -> Self::Projection;
 }
 
@@ -310,10 +310,10 @@ pub unsafe trait Field {
     // https://github.com/RustyYato/generic-field-projection/issues/39 for more
     // information
 
-    /// type which is generating `Field`
+    /// Type which is generating `Field`
     type Parent;
 
-    /// a type representation of `Field` itself
+    /// A type representation of `Field` itself
     type Type;
 
     /// Project a raw pointer from `Parent` to `Type`
@@ -333,13 +333,13 @@ pub unsafe trait Field {
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent)
     -> *mut Self::Type;
 
-    /// return range of offsets covered by the field
+    /// Return range of offsets covered by the field
     fn range(&self) -> Range<usize> {
         let offset = self.field_offset();
         offset..offset.wrapping_add(core::mem::size_of::<Self::Type>())
     }
 
-    /// create an equivalent run-time offset-based `Field`
+    /// Create an equivalent run-time offset-based `Field`
     fn dynamic(&self) -> Dynamic<Self::Parent, Self::Type> {
         unsafe { Dynamic::from_offset(self.field_offset()) }
     }
@@ -395,7 +395,7 @@ pub unsafe trait Field {
         ptr.cast::<u8>().sub(self.field_offset()).cast()
     }
 
-    /// project a raw pointer from a `Type` to its `Parent`
+    /// Project a raw pointer from a `Type` to its `Parent`
     fn wrapping_project_raw(
         &self,
         ptr: *const Self::Type,
@@ -403,7 +403,7 @@ pub unsafe trait Field {
         ptr.cast::<u8>().wrapping_add(self.field_offset()).cast()
     }
 
-    /// project a raw pointer from a `Type` to its `Parent`
+    /// Project a raw pointer from a `Type` to its `Parent`
     fn wrapping_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
@@ -411,7 +411,7 @@ pub unsafe trait Field {
         ptr.cast::<u8>().wrapping_add(self.field_offset()).cast()
     }
 
-    /// projects a raw pointer from a `Type` to its `Parent`
+    /// Projects a raw pointer from a `Type` to its `Parent`
     fn wrapping_inverse_project_raw(
         &self,
         ptr: *const Self::Type,
@@ -419,7 +419,7 @@ pub unsafe trait Field {
         ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
     }
 
-    /// projects a raw pointer from a `Type` to its `Parent`
+    /// Projects a raw pointer from a `Type` to its `Parent`
     fn wrapping_inverse_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
@@ -427,7 +427,7 @@ pub unsafe trait Field {
         ptr.cast::<u8>().wrapping_sub(self.field_offset()).cast()
     }
 
-    /// chain a projection of one `Field` with another
+    /// Chain a projection of one `Field` with another
     fn chain<F: Field<Parent = Self::Type>>(self, f: F) -> Chain<Self, F>
     where
         Self: Sized,
