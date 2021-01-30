@@ -175,8 +175,8 @@ pub trait UncheckedInverseProjectTo<F: Field> {
     /// direct access via a pointer-like type to the field
     type Projection;
 
-    /// - projection to the related source `struct` of a given `Field`
-    /// - safety specifications from above apply
+    /// projection to the related source `struct` of a given `Field`
+    /// safety specifications from above apply
     unsafe fn inverse_project_to(self, field: F) -> Self::Projection;
 }
 
@@ -189,9 +189,9 @@ pub trait ProjectAll<Parent, F> {
     fn project_all(self, field_list: F) -> Self::Projection;
 }
 
-/// A generated representation of some `Parent` types `struct` or `union`. `Parent`
-/// represents the type where the field came from, `Type` represents the type
-/// of the field itself.
+/// A generated representation of some `Parent` types `struct` or `union`.
+/// `Parent` represents the type where the field came from, `Type` represents
+/// the type of the field itself.
 ///
 /// ```rust
 /// #![feature(raw_ref_op)]
@@ -310,7 +310,7 @@ pub unsafe trait Field {
     // https://github.com/RustyYato/generic-field-projection/issues/39 for more
     // information
 
-    /// - type which is generating `Field`
+    /// type which is generating `Field`
     type Parent;
 
     /// a type representation of `Field` itself
