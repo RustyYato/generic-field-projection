@@ -19,8 +19,8 @@ use syn;
 /// aliasing of unique references and because accessing union fields is
 /// inherently `unsafe`.
 ///
-/// For `struct`, getting the field types is safe since the memory
-/// operations defined are `Clone` and `Copy` so UB is not possible.
+/// For `struct`, getting the field types is safe since the memory operations
+/// defined use raw pointers to initialized fields so UB is not possible.
 ///
 ///  * note: unit structs don't generate any extra code (i.e. `struct Foo;`)
 ///
@@ -83,7 +83,7 @@ use syn;
 /// #[allow(non_snake_case)]
 /// mod Person_fields {
 ///     use super::*;
-///     // defines the `name` field of `PersonFields`
+///     // represents the `name` field of `Person`
 ///     #[allow(non_camel_case_types)]
 ///     pub struct name<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> name<T> {
@@ -107,7 +107,7 @@ use syn;
 ///             &raw mut (*ptr).name
 ///         }
 ///     }
-///     // defines the `age` field of `PersonFields`
+///     // represents the `age` field of `Person`
 ///     #[allow(non_camel_case_types)]
 ///     pub struct age<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> age<T> {
@@ -131,7 +131,7 @@ use syn;
 ///             &raw mut (*ptr).age
 ///         }
 ///     }
-///     // defines the `children` field of `PersonFields`
+///     // represents the `children` field of `Person`
 ///     #[allow(non_camel_case_types)]
 ///     pub struct children<T>(::gfp_core::derive::Invariant<T>);
 ///     impl<T> children<T> {
