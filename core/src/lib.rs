@@ -140,7 +140,7 @@ pub trait ProjectTo<F: Field> {
     fn project_to(self, field: F) -> Self::Projection;
 }
 
-/// Project a given Field onto a procedurally generated Field using an `unsafe`
+/// Project a given `Field` onto a procedurally generated Field using an `unsafe`
 /// field projection trait. Safe usage depends entirely on the type implementing
 /// this trait.
 ///
@@ -374,6 +374,11 @@ pub unsafe trait Field {
     }
 
     /// Project a raw pointer from a `Type` to its generating `Parent`
+    ///
+    /// # Safety
+    ///
+    /// * `ptr` must point into a valid allocation of `Type`
+    /// * `ptr` must point to a field of `Parent` with the type `Type`
     unsafe fn inverse_project_raw(
         &self,
         ptr: *const Self::Type,
@@ -396,6 +401,11 @@ pub unsafe trait Field {
     }
 
     /// Project a raw pointer from a `Type` to its `Parent`
+    ///
+    /// # Safety
+    ///
+    /// * `ptr` must point into a valid allocation of `Type`
+    /// * `ptr` must point to a field of `Parent` with the type `Type`
     fn wrapping_project_raw(
         &self,
         ptr: *const Self::Type,
