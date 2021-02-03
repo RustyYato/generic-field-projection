@@ -51,7 +51,8 @@ pub mod derive {
             *self
         }
     }
-    impl<T: ?Sized> Copy for Invariant<T> {}
+    impl<T: ?Sized> Copy for Invariant<T> {
+    }
 }
 
 // Dev Note: we use `fn() -> T` so that we are covariant and non-owning in `T`,
@@ -322,7 +323,7 @@ pub unsafe trait Field {
     /// * `ptr` must point to a valid allocation of `Parent`
     /// * the projection is not safe to write to
     unsafe fn project_raw(&self, ptr: *const Self::Parent)
-        -> *const Self::Type;
+    -> *const Self::Type;
 
     /// Project a mutable raw pointer from `Parent` to `Type`
     ///
@@ -330,7 +331,7 @@ pub unsafe trait Field {
     ///
     /// * `ptr` must point to a valid allocation of `Parent`
     unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent)
-        -> *mut Self::Type;
+    -> *mut Self::Type;
 
     /// Return range of offsets covered by the field
     fn range(&self) -> Range<usize> {
