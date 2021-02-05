@@ -11,7 +11,7 @@
 //! possible to build a more powerful linked list than this using various
 //! techniques, but none of those will be done here.
 
-use std::iter::Iterator;
+use std::{iter::Iterator, marker::PhantomPinned};
 
 /// Our didactic example, a single node of a singly linked list.
 ///
@@ -76,6 +76,15 @@ pub struct SinglyLinkedListNode {
     /// there is another pointer to follow, when this is `None`, there is no
     /// next pointer to follow.
     next: Option<*const SinglyLinkedListNode>,
+
+    /// Since we're using raw pointers, we **cannot** allow these instances to
+    /// be moved by the compiler (dropping is OK, but moving will almost
+    /// certainly cause UB).  For more information on why this is necessary,
+    /// start reading at
+    /// https://doc.rust-lang.org/std/pin/index.html#example-self-referential-struct
+    /// and be extra careful to read all the way through the explanations about
+    /// drop!
+    _pin: PhantomPinned,
 }
 
 impl SinglyLinkedListNode {
