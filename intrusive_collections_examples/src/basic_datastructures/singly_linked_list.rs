@@ -11,7 +11,7 @@
 //! possible to build a more powerful linked list than this using various
 //! techniques, but none of those will be done here.
 
-use std::{iter::Iterator, rc::Rc};
+use std::iter::Iterator;
 
 /// Our didactic example, a single node of a singly linked list.
 ///
