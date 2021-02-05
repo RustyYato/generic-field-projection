@@ -9,4 +9,5 @@
 //! [singly linked list](https://en.wikipedia.org/wiki/Singly_linked_list) that
 //! you will find in any beginning programming course.
 
+pub mod red_black_tree;
 pub mod singly_linked_list;
