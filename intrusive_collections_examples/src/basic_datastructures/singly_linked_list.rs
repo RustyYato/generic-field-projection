@@ -18,36 +18,36 @@ use std::{iter::Iterator, rc::Rc};
 /// The first thing to notice about this type is that there is no storage for
 /// the thing that we want to store.  Normally, we'd expect a type similar to:
 /// ```rust
-/// pub struct OwningSinglyLinkedList<T> {
+/// pub struct OwningSinglyLinkedListNode<T> {
 ///     object: T,
-///     next: Option<*const OwningSinglyLinkedList<T>>
+///     next: Option<*const OwningSinglyLinkedListNode<T>>
 /// }
 /// ```
 /// which has storage for the type that we'd like to store.
 ///
 /// An intrusive data structure flips this on it's head; each instance of `T`
 /// owns a single node of the linked list.  So, given only a reference to a
-/// `SinglyLinkedList` node, how do you get back the `T` that it's a part of?
-/// The trick is that the compiler knows how `T` is laid out in memory.  Given
-/// a pointer to a `T`, we can calculate how many bytes there are to reach where
-/// the `SinglyLinkedList` node is laid out.  Here is a compressed example of
-/// what we're talking about:
+/// `SinglyLinkedListNode` node, how do you get back the `T` that it's a part
+/// of? The trick is that the compiler knows how `T` is laid out in memory.
+/// Given a pointer to a `T`, we can calculate how many bytes there are to reach
+/// where the `SinglyLinkedListNode` node is laid out.  Here is a compressed
+/// example of what we're talking about:
 /// ```rust
 /// #[derive(Debug, Default)]
-/// pub struct SinglyLinkedList {
-///     next: Option<*const SinglyLinkedList>,
+/// pub struct SinglyLinkedListNode {
+///     next: Option<*const SinglyLinkedListNode>,
 /// }
 ///
 /// #[derive(Debug, Default)]
 /// pub struct Thing {
 ///     field: Vec<u8>,
-///     next: SinglyLinkedList,
+///     next: SinglyLinkedListNode,
 /// }
 ///
 /// fn main() {
 ///     let thing = Thing::default();
 ///     let ptr1: *const Thing = &thing;
-///     let ptr2: *const SinglyLinkedList = &(thing.next);
+///     let ptr2: *const SinglyLinkedListNode = &(thing.next);
 ///     let offset = unsafe { (ptr2 as *const u8).offset_from(ptr1 as *const u8) };
 ///     println!(
 ///         "The 'next' field is offset from the start of 'thing' by {:?} bytes",
