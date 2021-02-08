@@ -65,6 +65,10 @@ impl Default for RedBlackTreeNodeColor {
     }
 }
 
+/// There are several places where we need bounds on the type of the key.
+/// Rather than specifying them individually, we'll specify them all here.
+pub trait KeyTrait: Debug + Clone + Default + Ord + Hash {}
+
 /// Our didactic example, a single node of a red-black tree.
 ///
 /// The first thing to notice about this type is that there is no storage for
@@ -146,7 +150,7 @@ impl Default for RedBlackTreeNodeColor {
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RedBlackTreeNode<T>
 where
-    T: Debug + Clone + Default + PartialEq + Eq + PartialOrd + Ord + Hash,
+    T: KeyTrait,
 {
     /// This is the key used to compare different nodes in the tree.  While it
     /// is possible to defer this to the object that owns the node, we're going
@@ -183,7 +187,7 @@ where
 
 impl<T> Drop for RedBlackTreeNode<T>
 where
-    T: Debug + Clone + Default + PartialEq + Eq + PartialOrd + Ord + Hash,
+    T: KeyTrait,
 {
     /// Our custom Drop implementation to fix up our neighbors' pointers.
     ///
@@ -208,14 +212,7 @@ where
                 s: &RedBlackTreeNode<T>,
                 neighbor: *mut RedBlackTreeNode<T>,
             ) where
-                T: Debug
-                    + Clone
-                    + Default
-                    + PartialEq
-                    + Eq
-                    + PartialOrd
-                    + Ord
-                    + Hash,
+                T: KeyTrait,
             {
                 let self_pointer: *const RedBlackTreeNode<T> = s;
                 if let Some(parent) = (*neighbor).parent {
@@ -254,7 +251,7 @@ where
 
 impl<T> RedBlackTreeNode<T>
 where
-    T: Debug + Clone + Default + PartialEq + Eq + PartialOrd + Ord + Hash,
+    T: KeyTrait,
 {
     /// Returns an immutable reference to the key in this node.
     ///
@@ -342,14 +339,14 @@ where
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct RedBlackTreeNodeIterator<T>
 where
-    T: Debug + Clone + Default + PartialEq + Eq + PartialOrd + Ord + Hash,
+    T: KeyTrait,
 {
     current: Option<*const RedBlackTreeNode<T>>,
 }
 
 impl<T> Iterator for RedBlackTreeNodeIterator<T>
 where
-    T: Debug + Clone + Default + PartialEq + Eq + PartialOrd + Ord + Hash,
+    T: KeyTrait,
 {
     type Item = *const RedBlackTreeNode<T>;
 
