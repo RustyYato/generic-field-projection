@@ -155,8 +155,11 @@ pub trait UncheckedProjectTo<F: Field> {
     /// Direct access to via a pointer-like type to the field
     type Projection;
 
-    /// Projection to a given `Field`s field where the safety specifications
-    /// from above apply
+    /// Projection to a given `Field`s field
+    ///
+    /// # Safety
+    ///
+    /// see trait docs
     unsafe fn project_to(self, field: F) -> Self::Projection;
 }
 
@@ -175,8 +178,11 @@ pub trait UncheckedInverseProjectTo<F: Field> {
     /// Direct access via a pointer-like type to the field
     type Projection;
 
-    /// Projection to the related source `struct` of a given `Field` where the
-    /// safety specifications from above apply
+    /// Projection to the related source `struct` of a given `Field`
+    ///
+    /// # Safety
+    ///
+    /// see trait docs
     unsafe fn inverse_project_to(self, field: F) -> Self::Projection;
 }
 
@@ -379,6 +385,22 @@ pub unsafe trait Field {
     ///
     /// * `ptr` must point into a valid allocation of `Type`
     /// * `ptr` must point to a field of `Parent` with the type `Type`
+    /// * `ptr` must have provenance over `Parent`
+    ///
+    /// In particular it's always instant UB to convert a
+    /// `field: &Type` to `&Parent`
+    ///
+    /// For example, the following function is UB no matter the choice of `Parent`
+    /// and `Field`, because `&Field` *never* has provenance over `Parent`
+    /// ```rust
+    /// # struct Parent { field: Type } struct Type; use gfp_core::Field;
+    /// unsafe fn unsound(field: &Type, field_type: impl Field<Type = Type, Parent = Parent>) -> *const Parent {
+    ///     field_type.inverse_project_raw(field)
+    /// }
+    /// ```
+    ///
+    /// Therefore, in order to safely use `inverse_project_raw` safely,
+    /// you *must* only operate on raw pointers.
     unsafe fn inverse_project_raw(
         &self,
         ptr: *const Self::Type,
@@ -395,6 +417,22 @@ pub unsafe trait Field {
     ///
     /// * `ptr` must point into a valid allocation of `Type`
     /// * `ptr` must point to a field of `Parent` with the type `Type`
+    /// * `ptr` must have provenance over `Parent`
+    ///
+    /// In particular it's always instant UB to convert a
+    /// `field: &mut Type` to `&mut Parent`
+    ///
+    /// For example, the following function is UB no matter the choice of `Parent`
+    /// and `Field`, because `&Field` *never* has provenance over `Parent`
+    /// ```rust
+    /// # struct Parent { field: Type } struct Type; use gfp_core::Field;
+    /// unsafe fn unsound(field: &mut Type, field_type: impl Field<Type = Type, Parent = Parent>) -> *mut Parent {
+    ///     field_type.inverse_project_raw_mut(field)
+    /// }
+    /// ```
+    ///
+    /// Therefore, in order to safely use `inverse_project_raw_mut` safely,
+    /// you *must* only operate on raw pointers.
     unsafe fn inverse_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
@@ -406,6 +444,11 @@ pub unsafe trait Field {
     }
 
     /// Project a raw pointer from a `Type` to its `Parent`
+    ///
+    /// # Safety
+    ///
+    /// In order to safely dereference the resulting pointer, you *must* follow
+    /// the safety docs in `project_raw`
     fn wrapping_project_raw(
         &self,
         ptr: *const Self::Type,
@@ -414,6 +457,11 @@ pub unsafe trait Field {
     }
 
     /// Project a raw pointer from a `Type` to its `Parent`
+    ///
+    /// # Safety
+    ///
+    /// In order to safely dereference the resulting pointer, you *must* follow
+    /// the safety docs in `project_raw_mut`
     fn wrapping_project_raw_mut(
         &self,
         ptr: *mut Self::Type,
@@ -422,6 +470,11 @@ pub unsafe trait Field {
     }
 
     /// Projects a raw pointer from a `Type` to its `Parent`
+    ///
+    /// # Safety
+    ///
+    /// In order to safely dereference the resulting pointer, you *must* follow
+    /// the safety docs in `inverse_project_raw`
     fn wrapping_inverse_project_raw(
         &self,
         ptr: *const Self::Type,
@@ -430,6 +483,11 @@ pub unsafe trait Field {
     }
 
     /// Projects a raw pointer from a `Type` to its `Parent`
+    ///
+    /// # Safety
+    ///
+    /// In order to safely dereference the resulting pointer, you *must* follow
+    /// the safety docs in `inverse_project_raw_mut`
     fn wrapping_inverse_project_raw_mut(
         &self,
         ptr: *mut Self::Type,

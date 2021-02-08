@@ -70,6 +70,7 @@ fn pin() {
 
 #[test]
 #[cfg(feature = "alloc")]
+#[allow(clippy::field_reassign_with_default)]
 fn arc() {
     let mut foo = Foo::default();
 
@@ -82,7 +83,6 @@ fn arc() {
     let bar = Bar::fields();
 
     let typsy::hlist_pat!(foo_x, foo_y_a) = arc
-        .clone()
         .project_all((foo.x, foo.y.chain(bar.a)).into_hlist())
         .split();
 

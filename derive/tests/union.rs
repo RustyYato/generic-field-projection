@@ -7,6 +7,7 @@ union Union {
     bar: [u8; 4],
 }
 
+#[allow(clippy::blacklisted_name)]
 pub fn union() {
     let a = Union {
         bar: [0, 1, 2, 3]
