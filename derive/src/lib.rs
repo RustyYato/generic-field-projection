@@ -187,6 +187,31 @@ macro_rules! expr {
     }}
 }
 
+fn gen_header(
+    generic_header: syn::ImplGenerics,
+    ident: syn::Ident,
+    input_ident: syn::Ident,
+    generic: syn::TypeGenerics,
+    ty: &syn::Type,
+) -> proc_macro::TokenStream {
+    item!(
+        unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
+            type Parent = super::#input_ident #generic;
+            type Type = #ty;
+
+            #[inline]
+            unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+                ::gfp_core::ptr_project!(const ptr #ident)
+            }
+
+            #[inline]
+            unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+                ::gfp_core::ptr_project!(mut ptr #ident)
+            }
+        }
+    )
+}
+
 fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
     match ty.data {
         syn::Data::Struct(syn::DataStruct {
@@ -270,22 +295,12 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
         ));
 
         let ty = &field.ty;
-
-        contents.push(item!(
-            unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
-                type Parent = super::#input_ident #generic;
-                type Type = #ty;
-
-                #[inline]
-                unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
-                    ::gfp_core::ptr_project!(const ptr #ident)
-                }
-
-                #[inline]
-                unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
-                    ::gfp_core::ptr_project!(mut ptr #ident)
-                }
-            }
+        contents.push(gen_header(
+            generic_header,
+            ident,
+            input_ident,
+            generic,
+            ty,
         ));
 
         let ty = TokenStream::from(quote!(
@@ -401,21 +416,12 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
             span:  proc_macro2::Span::call_site(),
         });
 
-        contents.push(item!(
-            unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
-                type Parent = super::#input_ident #generic;
-                type Type = #ty;
-
-                #[inline]
-                unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
-                    &(*ptr).#index
-                }
-
-                #[inline]
-                unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
-                    &mut (*ptr).#index
-                }
-            }
+        contents.push(gen_header(
+            generic_header,
+            ident,
+            input_ident,
+            generic,
+            ty,
         ));
 
         let ty = TokenStream::from(quote!(
