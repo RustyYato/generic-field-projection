@@ -1,7 +1,7 @@
 #![feature(raw_ref_op)]
 #![allow(non_camel_case_types, clippy::blacklisted_name)]
 
-use gfp_core::*;
+use gfp_core::{Field, PinToPin, ProjectTo};
 
 #[derive(Default, Field)]
 struct Foo {
@@ -25,6 +25,7 @@ struct Quaz {
 
 #[test]
 #[allow(non_camel_case_types)]
+#[allow(clippy::field_reassign_with_default)]
 fn simple_test() {
     use core::pin::Pin;
 

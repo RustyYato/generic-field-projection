@@ -5,9 +5,6 @@ use proc_macro_roids::*;
 use proc_macro::TokenStream;
 use quote::quote;
 
-use proc_macro2;
-use syn;
-
 /// This macro generates a number of field types and automatically derives
 /// `gfp_core::Field` for them. It will also generate a type to make accessing
 /// these field types easier.

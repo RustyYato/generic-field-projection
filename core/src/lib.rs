@@ -155,8 +155,11 @@ pub trait UncheckedProjectTo<F: Field> {
     /// Direct access to via a pointer-like type to the field
     type Projection;
 
-    /// Projection to a given `Field`s field where the safety specifications
-    /// from above apply
+    /// Projection to a given `Field`s field
+    ///
+    /// # Safety
+    ///
+    /// see trait docs
     unsafe fn project_to(self, field: F) -> Self::Projection;
 }
 
@@ -175,8 +178,11 @@ pub trait UncheckedInverseProjectTo<F: Field> {
     /// Direct access via a pointer-like type to the field
     type Projection;
 
-    /// Projection to the related source `struct` of a given `Field` where the
-    /// safety specifications from above apply
+    /// Projection to the related source `struct` of a given `Field`
+    ///
+    /// # Safety
+    ///
+    /// see trait docs
     unsafe fn inverse_project_to(self, field: F) -> Self::Projection;
 }
 

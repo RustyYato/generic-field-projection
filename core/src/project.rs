@@ -84,6 +84,7 @@ typsy::call! {
     }
 }
 
+#[allow(clippy::suspicious_operation_groupings)]
 fn is_overlapping(a: Range<usize>, b: Range<usize>) -> bool {
     !b.is_empty()
         && !a.is_empty()
