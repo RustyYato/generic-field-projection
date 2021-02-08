@@ -10,6 +10,7 @@ union Union {
 }
 
 #[test]
+#[allow(clippy::blacklisted_name)]
 fn union() {
     let a = Union {
         bar: [0, 1, 2, 3]

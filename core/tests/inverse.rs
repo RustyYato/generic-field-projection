@@ -9,6 +9,7 @@ struct Foo {
 }
 
 #[test]
+#[allow(clippy::blacklisted_name)]
 fn basic_inverse() {
     let foo = Foo {
         x: 0x89abcdef,

@@ -16,6 +16,17 @@ use core::{marker::PhantomData, ops::Deref, pin::Pin};
 
 use crate::pin::*;
 
+impl<F: Field, T: ProjectTo<F>> ProjectTo<F> for Option<T> {
+    type Projection = Option<T::Projection>;
+
+    fn project_to(self, field: F) -> Self::Projection {
+        match self {
+            Some(value) => Some(value.project_to(field)),
+            None => None,
+        }
+    }
+}
+
 pub struct PtrToRef<'a>(PhantomData<&'a ()>);
 
 typsy::call! {
@@ -73,6 +84,7 @@ typsy::call! {
     }
 }
 
+#[allow(clippy::suspicious_operation_groupings)]
 fn is_overlapping(a: Range<usize>, b: Range<usize>) -> bool {
     !b.is_empty()
         && !a.is_empty()

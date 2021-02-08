@@ -13,6 +13,7 @@ struct Foo<T, U: Copy> {
 #[derive(Field)]
 struct Bar<T>(u32, T);
 
+#[allow(clippy::float_cmp, clippy::blacklisted_name)]
 fn test() {
     let foo_fields = Foo::<Bar<f32>, i32>::fields();
     let bar_fields = Bar::<f32>::fields();

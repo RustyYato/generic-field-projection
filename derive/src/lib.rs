@@ -5,9 +5,6 @@ use proc_macro_roids::*;
 use proc_macro::TokenStream;
 use quote::quote;
 
-use proc_macro2;
-use syn;
-
 /// This macro generates a number of field types and automatically derives
 /// `gfp_core::Field` for them. It will also generate a type to make accessing
 /// these field types easier.
@@ -19,8 +16,8 @@ use syn;
 /// aliasing of unique references and because accessing union fields is
 /// inherently `unsafe`.
 ///
-/// For `struct`, getting the field types is safe because there is no way to
-/// cause UB.
+/// For `struct`, getting the field types is safe since the memory operations
+/// defined use raw pointers to initialized fields so UB is not possible.
 ///
 ///  * note: unit structs don't generate any extra code (i.e. `struct Foo;`)
 ///
@@ -62,15 +59,16 @@ use syn;
 ///         children: Person_fields::children::INIT,
 ///     };
 ///
-///     /// get an instance of `PersonFields` easily by calling
-///     /// `Person::fields()`, then you can use this to access the
-///     ///
-///     /// ```rust
-///     /// let fields = Person::fields();
-///     ///
-///     /// person.project_to(fields.age);
-///     /// person.project_to(fields.name);
-///     /// ```
+///     // get an instance of `PersonFields` easily by calling
+///     // `Person::fields()`, then you can use this to access the
+///     //
+///     // ```rust
+///     // let fields = Person::fields();
+///     //
+///     // person.project_to(fields.name);
+///     // person.project_to(fields.age);
+///     // person.project_to(fields.children);
+///     // ```
 ///     fn fields() -> PersonFields {
 ///         PersonFields {
 ///             name: Person_fields::name::INIT,
@@ -368,9 +366,8 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
     let (generic_header, generic, where_clause) = generics.split_for_impl();
     for (i, field) in fields.unnamed.iter().enumerate() {
-        // TODO: use syn::format_ident
-        let ident =
-            syn::Ident::new(&format!("_{}", i), proc_macro2::Span::call_site());
+        use syn::spanned::Spanned;
+        let ident = quote::format_ident!("_{}", i, span = field.span());
 
         contents.push(item!(
             #[allow(non_camel_case_types)]
