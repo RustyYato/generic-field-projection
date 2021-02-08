@@ -173,7 +173,7 @@ pub fn derive_field(ty: TokenStream) -> TokenStream {
 macro_rules! item {
     ($($tokens:tt)*) => {{
         let quote = TokenStream::from(quote!($($tokens)*));
-        syn::parse_macro_input!(quote as syn::Item)
+        syn::parse::<syn::Item>(quote).unwrap()
     }}
 }
 
@@ -184,13 +184,14 @@ macro_rules! expr {
     }}
 }
 
+// generic header construction for `derive_named()` and `derive_union()`
 fn gen_header(
-    generic_header: syn::ImplGenerics,
-    ident: syn::Ident,
-    input_ident: syn::Ident,
-    generic: syn::TypeGenerics,
-    ty: &syn::Type,
-) -> proc_macro::TokenStream {
+    generic_header: &syn::ImplGenerics,
+    ident: &syn::Ident,
+    input_ident: &syn::Ident,
+    generic: &syn::TypeGenerics<'_>,
+    ty: &&syn::Type,
+) -> syn::Item {
     item!(
         unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
             type Parent = super::#input_ident #generic;
@@ -207,6 +208,122 @@ fn gen_header(
             }
         }
     )
+}
+
+// generic header construction for `derive_unnamed()`
+fn gen_header_unnamed(
+    generic_header: &syn::ImplGenerics,
+    ident: &syn::Ident,
+    input_ident: &syn::Ident,
+    generic: &syn::TypeGenerics<'_>,
+    ty: &&syn::Type,
+    index: &syn::Member,
+) -> syn::Item {
+    item!(
+        unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
+            type Parent = super::#input_ident #generic;
+            type Type = #ty;
+
+            #[inline]
+            unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
+                &(*ptr).#index
+            }
+
+            #[inline]
+            unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
+                &mut (*ptr).#index
+            }
+        }
+    )
+}
+
+// `TokenStream` construction for `derive_struct()` and `derive_named()`
+fn token_fields(
+    field_type_name: &syn::Ident,
+    generic_header: &syn::ImplGenerics,
+    where_clause: &Option<&syn::WhereClause>,
+    fields_marker: &syn::punctuated::Punctuated<syn::Field, syn::token::Comma>,
+    input_ident: &syn::Ident,
+    generic: &syn::TypeGenerics<'_>,
+    fields_new: &syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>,
+    module: &syn::ItemMod,
+) -> proc_macro2::TokenStream {
+    quote! {
+        struct #field_type_name #generic_header #where_clause {
+            #fields_marker
+        }
+
+        impl#generic_header #input_ident #generic #where_clause {
+            const FIELDS: #field_type_name #generic = #field_type_name {
+                #fields_new
+            };
+
+            fn fields() -> #field_type_name #generic {
+                #field_type_name {
+                    #fields_new
+                }
+            }
+        }
+
+        #[allow(non_snake_case)]
+        #module
+    }
+}
+
+// `TokenStream` construction for `derive_unnamed()`
+fn token_fields_unnamed(
+    field_type_name: &syn::Ident,
+    generic_header: &syn::ImplGenerics,
+    where_clause: &Option<&syn::WhereClause>,
+    fields_marker: &syn::punctuated::Punctuated<syn::Field, syn::token::Comma>,
+    input_ident: &syn::Ident,
+    generic: &syn::TypeGenerics<'_>,
+    fields_new: &syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>,
+    module: &syn::ItemMod,
+) -> proc_macro2::TokenStream {
+    quote! {
+        struct #field_type_name #generic_header(#fields_marker) #where_clause;
+
+        impl#generic_header #input_ident #generic #where_clause {
+            const FIELDS: #field_type_name #generic = #field_type_name(#fields_new);
+
+            fn fields() -> #field_type_name #generic {
+                #field_type_name(#fields_new)
+            }
+        }
+
+        #[allow(non_snake_case)]
+        #module
+    }
+}
+
+// `TokenStream` construction for `derive_union()`
+fn token_fields_union(
+    field_type_name: &syn::Ident,
+    generic_header: &syn::ImplGenerics<'_>,
+    where_clause: &Option<&syn::WhereClause>,
+    fields_marker: &syn::punctuated::Punctuated<syn::Field, syn::token::Comma>,
+    input_ident: &syn::Ident,
+    generic: &syn::TypeGenerics<'_>,
+    fields_new: &syn::punctuated::Punctuated<syn::Expr, syn::token::Comma>,
+    module: &syn::ItemMod,
+) -> proc_macro2::TokenStream {
+    quote! {
+        struct #field_type_name #generic_header #where_clause {
+            #fields_marker
+        }
+
+        impl#generic_header #input_ident #generic #where_clause {
+            unsafe fn fields() -> #field_type_name #generic {
+                #field_type_name {
+                    #fields_new
+                }
+            }
+        }
+
+        #[allow(non_snake_case)]
+        #module
+    }
 }
 
 fn derive_struct(ty: syn::DeriveInput) -> TokenStream {
@@ -293,11 +410,11 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
         let ty = &field.ty;
         contents.push(gen_header(
-            generic_header,
-            ident,
-            input_ident,
-            generic,
-            ty,
+            &generic_header,
+            &ident,
+            &input_ident,
+            &generic,
+            &ty,
         ));
 
         let ty = TokenStream::from(quote!(
@@ -322,26 +439,16 @@ fn derive_named(ty: syn::DeriveInput) -> TokenStream {
 
     let field_type_name = input_ident.append("Fields");
 
-    TokenStream::from(quote! {
-        struct #field_type_name #generic_header #where_clause {
-            #fields_marker
-        }
-
-        impl#generic_header #input_ident #generic #where_clause {
-            const FIELDS: #field_type_name #generic = #field_type_name {
-                #fields_new
-            };
-
-            fn fields() -> #field_type_name #generic {
-                #field_type_name {
-                    #fields_new
-                }
-            }
-        }
-
-        #[allow(non_snake_case)]
-        #module
-    })
+    TokenStream::from(token_fields(
+        &field_type_name,
+        &generic_header,
+        &where_clause,
+        &fields_marker,
+        &input_ident,
+        &generic,
+        &fields_new,
+        &module,
+    ))
 }
 
 fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
@@ -412,12 +519,13 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
             span:  proc_macro2::Span::call_site(),
         });
 
-        contents.push(gen_header(
-            generic_header,
-            ident,
-            input_ident,
-            generic,
-            ty,
+        contents.push(gen_header_unnamed(
+            &generic_header,
+            &ident,
+            &input_ident,
+            &generic,
+            &ty,
+            &index,
         ));
 
         let ty = TokenStream::from(quote!(
@@ -440,20 +548,16 @@ fn derive_unnamed(ty: syn::DeriveInput) -> TokenStream {
 
     let field_type_name = input_ident.append("Fields");
 
-    TokenStream::from(quote! {
-        struct #field_type_name #generic_header(#fields_marker) #where_clause;
-
-        impl#generic_header #input_ident #generic #where_clause {
-            const FIELDS: #field_type_name #generic = #field_type_name(#fields_new);
-
-            fn fields() -> #field_type_name #generic {
-                #field_type_name(#fields_new)
-            }
-        }
-
-        #[allow(non_snake_case)]
-        #module
-    })
+    TokenStream::from(token_fields_unnamed(
+        &field_type_name,
+        &generic_header,
+        &where_clause,
+        &fields_marker,
+        &input_ident,
+        &generic,
+        &fields_new,
+        &module,
+    ))
 }
 
 fn derive_union(ty: syn::DeriveInput) -> TokenStream {
@@ -518,22 +622,12 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
         ));
 
         let ty = &field.ty;
-
-        contents.push(item!(
-            unsafe impl #generic_header ::gfp_core::Field for #ident<super::#input_ident #generic> {
-                type Parent = super::#input_ident #generic;
-                type Type = #ty;
-
-                #[inline]
-                unsafe fn project_raw(&self, ptr: *const Self::Parent) -> *const Self::Type {
-                    ::gfp_core::ptr_project!(const ptr #ident)
-                }
-
-                #[inline]
-                unsafe fn project_raw_mut(&self, ptr: *mut Self::Parent) -> *mut Self::Type {
-                    ::gfp_core::ptr_project!(mut ptr #ident)
-                }
-            }
+        contents.push(gen_header(
+            &generic_header,
+            &ident,
+            &input_ident,
+            &generic,
+            &ty,
         ));
 
         let ty = TokenStream::from(quote!(
@@ -557,23 +651,16 @@ fn derive_union(ty: syn::DeriveInput) -> TokenStream {
     }
 
     let field_type_name = input_ident.append("Fields");
-
-    TokenStream::from(quote! {
-        struct #field_type_name #generic_header #where_clause {
-            #fields_marker
-        }
-
-        impl#generic_header #input_ident #generic #where_clause {
-            unsafe fn fields() -> #field_type_name #generic {
-                #field_type_name {
-                    #fields_new
-                }
-            }
-        }
-
-        #[allow(non_snake_case)]
-        #module
-    })
+    TokenStream::from(token_fields_union(
+        &field_type_name,
+        &generic_header,
+        &where_clause,
+        &fields_marker,
+        &input_ident,
+        &generic,
+        &fields_new,
+        &module,
+    ))
 }
 
 fn new_module(ident: syn::Ident) -> syn::ItemMod {
