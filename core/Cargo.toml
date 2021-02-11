@@ -15,4 +15,4 @@ alloc = []
 
 [dependencies]
 gfp-derive = { path = '../derive' }
-typsy = { git = 'https://github.com/RustyYato/typsy', branch = 'main' }
+typsy = { git = 'https://github.com/RustyYato/typsy', branch = 'main', default-features = false }
